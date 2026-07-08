@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ship Supabase apps that don't leak — RLS-safe tools for Next.js</title>
+<meta name="description" content="Free Next.js + Supabase tools that make Row-Level Security the default: a starter, a CLI, and a CI gate. Plus a full SaaS boilerplate on the way.">
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#111820; --panel-2:#0e141b; --line:#1e2a36;
+    --text:#e6edf3; --muted:#8b9bab; --dim:#5c6b7a;
+    --green:#3ecf8e; --green-dim:#1f7a54; --red:#ff5c5c; --amber:#f5c451;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--green);text-decoration:none}
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+
+  nav{padding:22px 0;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px}
+  .logo .dot{width:11px;height:11px;border-radius:3px;background:var(--green);box-shadow:0 0 14px var(--green)}
+  .nav-links{display:flex;gap:20px;font-family:var(--mono);font-size:13px}
+  .nav-links a{color:var(--muted)} .nav-links a:hover{color:var(--text)}
+
+  .hero{padding-top:56px;padding-bottom:56px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--green);border:1px solid var(--green-dim);
+        background:rgba(62,207,142,.07);padding:5px 12px;border-radius:999px;margin-bottom:26px}
+  h1{font-size:44px;line-height:1.12;letter-spacing:-1.2px;font-weight:750;margin-bottom:20px}
+  h1 .hl{color:var(--green)}
+  .sub{font-size:19px;color:var(--muted);max-width:640px;margin-bottom:34px}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-block;font-weight:600;font-size:15px;padding:13px 22px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+  .btn-primary{background:var(--green);color:#04120b}
+  .btn-primary:hover{background:#4fe0a0}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--dim)}
+
+  .term{margin-top:44px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+        box-shadow:0 24px 60px -30px rgba(0,0,0,.8)}
+  .term-bar{display:flex;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line);background:#0b1117}
+  .term-bar i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#2a3744}
+  .term-bar i:first-child{background:#ff5f56}.term-bar i:nth-child(2){background:#ffbd2e}.term-bar i:nth-child(3){background:#27c93f}
+  .term-body{padding:18px 20px;font-family:var(--mono);font-size:13.5px;line-height:1.85;overflow-x:auto}
+  .term-body .c{color:var(--dim)} .term-body .ok{color:var(--green)} .term-body .bad{color:var(--red)}
+  .term-body .warn{color:var(--amber)} .term-body .k{color:#79b8ff}
+
+  h2{font-size:30px;letter-spacing:-.7px;margin-bottom:14px}
+  .lead{color:var(--muted);font-size:17px;max-width:680px;margin-bottom:36px}
+
+  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column}
+  .tool:hover{border-color:var(--green-dim)}
+  .tool .badge{font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:10px}
+  .tool .name{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
+  .tool p{font-size:14px;color:var(--muted);flex:1}
+  .tool .cmd{margin-top:16px;font-family:var(--mono);font-size:12.5px;color:var(--text);background:#0a0f14;border:1px solid var(--line);
+             padding:8px 10px;border-radius:6px;display:block}
+  .tool .cmd:hover{border-color:var(--dim)}
+
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px}
+  .card h3{font-size:15px;font-family:var(--mono);margin-bottom:16px}
+  .card ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+  .card li{font-size:14.5px;color:var(--muted);padding-left:26px;position:relative}
+  .card li::before{position:absolute;left:0;top:0;font-family:var(--mono)}
+  .who .yes h3{color:var(--green)} .who .yes li::before{content:"✓";color:var(--green)} .who .yes li{color:var(--text)}
+  .who .no h3{color:var(--dim)} .who .no li::before{content:"✕";color:var(--dim)}
+
+  .boiler{background:linear-gradient(180deg,rgba(62,207,142,.05),transparent);border:1px solid var(--green-dim);border-radius:12px;padding:32px}
+  .boiler .soon{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.5px}
+  .boiler h2{margin-top:8px}
+  .boiler .feats{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .boiler .feats span{font-family:var(--mono);font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+
+  .signup{text-align:center}
+  .signup h2{font-size:32px}
+  form{display:flex;gap:10px;max-width:460px;margin:28px auto 0;flex-wrap:wrap;justify-content:center}
+  input[type=email]{flex:1;min-width:240px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+        padding:13px 16px;border-radius:9px;font-size:15px;font-family:var(--sans)}
+  input[type=email]:focus{outline:none;border-color:var(--green-dim)}
+  .msg{margin-top:16px;font-family:var(--mono);font-size:14px;min-height:20px}
+  footer{padding:40px 0;color:var(--dim);font-size:13px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+  @media(max-width:720px){
+    h1{font-size:32px}
+    .tools,.cmp{grid-template-columns:1fr}
+    section{padding:48px 0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <div class="logo"><span class="dot"></span>rls-safe</div>
+    <div class="nav-links">
+      <a href="#tools">Free tools</a>
+      <a href="#paid">Products</a>
+      <a href="#list">Reserve</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="pill">for Supabase · free to start</span>
+    <h1>Ship Supabase apps that don't <span class="hl">leak</span>.</h1>
+    <p class="sub">The #1 Supabase footgun is shipping a table with Row-Level Security off. These tools make the safe path the default — scaffold it, gate it in CI, and <em>prove</em> tenant isolation.</p>
+    <div class="cta-row">
+      <button class="btn btn-primary" onclick="document.getElementById('email').focus()">Reserve founding pricing</button>
+      <a class="btn btn-ghost" href="#tools">See the tools →</a>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i></div>
+      <div class="term-body">
+<span class="c"># scaffold a secure Next.js + Supabase app in one command</span><br>
+<span class="k">$</span> npx supabase-saas-kit new my-app<br>
+<span class="ok">✓</span> auth · Row-Level Security · a test that proves tenant isolation<br><br>
+<span class="c"># gate RLS in CI — fails the build if a table ships exposed</span><br>
+<span class="k">$</span> npx airlock-rls<br>
+<span class="bad">✗</span> payments: <span class="bad">RLS DISABLED</span> <span class="c">→ exit 1 · this migration does not merge</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOOLS -->
+  <section id="tools">
+    <h2>The free tools</h2>
+    <p class="lead">Open source, MIT, no signup. Each one makes RLS the default instead of the thing you forgot.</p>
+    <div class="tools">
+      <a class="tool" href="https://github.com/mateuszingano/nextjs-supabase-starter">
+        <span class="badge">FREE · MIT</span>
+        <span class="name">nextjs-supabase-starter</span>
+        <p>Auth + one table with RLS + a test that proves isolation. Clone it and start on your product.</p>
+        <span class="cmd">Use this template →</span>
+      </a>
+      <a class="tool" href="https://www.npmjs.com/package/supabase-saas-kit">
+        <span class="badge">FREE · npm</span>
+        <span class="name">supabase-saas-kit</span>
+        <p>The CLI: scaffold a project, check your env + RLS, and generate migrations that ship RLS-safe by default.</p>
+        <span class="cmd">npx supabase-saas-kit new →</span>
+      </a>
+      <a class="tool" href="https://www.npmjs.com/package/airlock-rls">
+        <span class="badge">FREE · npm</span>
+        <span class="name">airlock-rls</span>
+        <p>The CI gate. Fails your build when a table ships exposed or a policy is permissive. Its paid tier, Airlock Monitor, is in Products.</p>
+        <span class="cmd">npx airlock-rls →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- WHO -->
+  <section>
+    <h2>Who it's for</h2>
+    <div class="cmp who">
+      <div class="card yes">
+        <h3>Built for you if…</h3>
+        <ul>
+          <li>You ship a Supabase app and can't afford a silent data leak</li>
+          <li>You're an indie hacker or small team moving fast</li>
+          <li>You want RLS proven by a test, not hoped for</li>
+          <li>You'd rather steal a secure setup than roll your own</li>
+        </ul>
+      </div>
+      <div class="card no">
+        <h3>Not for you if…</h3>
+        <ul>
+          <li>You're not on Supabase / Postgres RLS</li>
+          <li>You don't use migrations or CI at all</li>
+          <li>You enjoy debugging a tenant-isolation breach in prod</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAID LINEUP -->
+  <section id="paid">
+    <h2>When you're ready to charge customers</h2>
+    <p class="lead">The free tools get you shipping. These get you a real SaaS — multi-tenant, billed, secure, and proven. Launching soon; the list locks in founding pricing.</p>
+
+    <div class="boiler">
+      <span class="soon">FLAGSHIP · AT LAUNCH</span>
+      <h2>The SaaS Boilerplate</h2>
+      <p class="lead" style="margin-bottom:12px">Multi-tenant workspaces, auth, the full RLS isolation suite, tests, and deploy — the boring-but-critical foundation, built and proven. <strong style="color:var(--text)">Pro</strong> adds Lemon Squeezy billing, an admin panel, and web push.</p>
+      <div class="feats">
+        <span>multi-tenant workspaces</span><span>billing (Lemon Squeezy)</span><span>admin panel</span>
+        <span>web push</span><span>RLS isolation suite</span><span>e2e + CI + deploy</span>
+      </div>
+    </div>
+
+    <div class="tools" style="margin-top:16px">
+      <div class="tool">
+        <span class="badge" style="color:var(--amber)">PAID · AT LAUNCH</span>
+        <span class="name">Kit Auth + RLS</span>
+        <p>Already have an app? Just the security layer: multi-tenant auth + RLS + the isolation suite that proves it. Drop it in.</p>
+      </div>
+      <div class="tool">
+        <span class="badge" style="color:var(--amber)">PAID · AT LAUNCH</span>
+        <span class="name">Test Kit</span>
+        <p>The whole testing pyramid for Next + Supabase: unit, component, e2e, and the RLS isolation harness — as a template.</p>
+      </div>
+      <div class="tool">
+        <span class="badge" style="color:var(--amber)">SUBSCRIPTION · AT LAUNCH</span>
+        <span class="name">Airlock Monitor</span>
+        <p>The paid tier of Airlock: watches your live project between CI runs and alerts on RLS drift — the leak the gate can't catch. Runs on a schedule.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:16px;font-size:15px">Or grab a <strong style="color:var(--text)">Combo</strong> and save: Frontend, Security, or the whole line. The more you take, the cheaper each piece gets.</p>
+  </section>
+
+  <!-- SIGNUP -->
+  <section class="signup" id="list">
+    <h2>Reserve founding pricing</h2>
+    <p class="lead" style="margin:14px auto 6px">The free tools are yours today. When the paid boilerplate launches, <strong style="color:var(--text)">the list locks in the founding discount — for life.</strong> Plus a free Supabase RLS cheat sheet now.</p>
+    <p class="lead" style="margin:0 auto 8px;font-size:15px">No charge today. You're reserving the price, not buying — we email your checkout once it's live.</p>
+    <form id="waitlist" onsubmit="return joinList(event)">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required autocomplete="email">
+      <button type="submit" class="btn btn-primary">Reserve my spot →</button>
+    </form>
+    <div class="msg mono" id="msg"></div>
+  </section>
+
+  <footer>
+    <span>RLS-safe · Supabase security tools for Next.js</span>
+    <span>Not affiliated with Supabase. Built by an RLS practitioner.</span>
+  </footer>
+
+</div>
+
+<script>
+  // Same waitlist backend the Airlock landing uses — one list, segmented by source.
+  // The publishable key is anon-level and safe in public: the `waitlist` table has
+  // an INSERT-only RLS policy and no SELECT policy, so this key can add an email
+  // but never read the list.
+  var SUPABASE_URL = 'https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+
+  async function joinList(e){
+    e.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    var msg = document.getElementById('msg');
+    var btn = document.querySelector('#waitlist button');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      msg.style.color = 'var(--red)'; msg.textContent = '✖ enter a valid email';
+      return false;
+    }
+    btn.disabled = true;
+    msg.style.color = 'var(--dim)'; msg.textContent = 'joining…';
+    try {
+      var res = await fetch(SUPABASE_URL + '/rest/v1/waitlist', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ email: email, source: 'hub' })
+      });
+      if (res.ok || res.status === 409) {
+        msg.style.color = 'var(--green)';
+        msg.textContent = "✔ you're on the list — the RLS cheat sheet is on the way.";
+        document.getElementById('waitlist').reset();
+      } else {
+        msg.style.color = 'var(--red)'; msg.textContent = '✖ something went wrong — try again in a moment.';
+      }
+    } catch (err) {
+      msg.style.color = 'var(--red)'; msg.textContent = '✖ network error — try again in a moment.';
+    } finally {
+      btn.disabled = false;
+    }
+    return false;
+  }
+</script>
+</body>
+</html>
