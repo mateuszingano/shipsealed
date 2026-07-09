@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pricing — ShipSealed</title>
-<meta name="description" content="ShipSealed pricing: the secure Next.js + Supabase SaaS boilerplate. Base and Pro, one-time purchase, commercial license, free updates.">
+<meta name="description" content="ShipSealed pricing: the secure Next.js + Supabase SaaS boilerplate. Base and Pro, per-seat licensing, one-time purchase. Plus à-la-carte security, testing, and UI kits.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233ecf8e'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="stylesheet" href="../assets/page.css">
 </head>
@@ -26,20 +26,30 @@
     <span class="kicker">Pricing</span>
     <h1>One purchase. Ship sealed.</h1>
     <p class="mono" style="color:var(--muted);font-size:15px;max-width:620px">
-      The secure Next.js + Supabase SaaS boilerplate — multi-tenant, tested, and RLS-proven.
-      One-time payment, commercial license, free updates. No subscription.
+      The secure Next.js + Supabase SaaS boilerplate. One-time payment, commercial license,
+      free updates. Priced per seat — the more devs, the cheaper each one.
     </p>
   </header>
 
   <section class="pricing">
+    <!-- seat selector -->
+    <div class="seats" id="seats">
+      <button class="seat-btn active" data-i="0" type="button">1 dev</button>
+      <button class="seat-btn" data-i="1" type="button">2 devs</button>
+      <button class="seat-btn" data-i="2" type="button">3 devs</button>
+      <button class="seat-btn" data-i="3" type="button">4 devs</button>
+      <button class="seat-btn" data-i="4" type="button">5–8 devs</button>
+    </div>
+    <p class="seat-hint">How many developers will use the code?</p>
+
     <div class="plans">
 
       <!-- BASE -->
       <div class="plan">
         <span class="tag">Base</span>
         <div class="name">Boilerplate Base</div>
-        <div class="price">$119 <small>USD</small></div>
-        <div class="once">one-time · commercial license</div>
+        <div class="price">$<span id="base-price">119.99</span> <small>USD</small></div>
+        <div class="once">one-time · commercial license · <span id="base-perdev">$119.99</span>/dev</div>
         <ul>
           <li>Multi-tenant workspaces + auth</li>
           <li>Full Row-Level Security isolation suite</li>
@@ -47,8 +57,8 @@
           <li>Member invites</li>
           <li>Unit + e2e tests, CI, and deploy config</li>
           <li>Complete source code, yours to modify</li>
-          <li>Commercial license — unlimited projects</li>
           <li>Free updates</li>
+          <li class="bonus">1 month of Airlock Monitor, <strong>free</strong></li>
         </ul>
         <a class="btn btn-ghost" href="../#list">Reserve founding price →</a>
       </div>
@@ -57,8 +67,8 @@
       <div class="plan featured">
         <span class="tag">Pro · most popular</span>
         <div class="name">Boilerplate Pro</div>
-        <div class="price">$179 <small>USD</small></div>
-        <div class="once">one-time · commercial license</div>
+        <div class="price">$<span id="pro-price">179.99</span> <small>USD</small></div>
+        <div class="once">one-time · commercial license · <span id="pro-perdev">$179.99</span>/dev</div>
         <ul>
           <li><strong>Everything in Base</strong></li>
           <li>Billing integration (subscriptions + one-time)</li>
@@ -75,6 +85,38 @@
       Secure checkout via Paddle, our Merchant of Record — opening soon.
       Join the list to lock the founding price for life. See our
       <a href="../refunds/">refund policy</a> and <a href="../terms/">terms</a>.
+    </p>
+  </section>
+
+  <!-- À-LA-CARTE -->
+  <section class="pricing" style="border-top:1px solid var(--line);padding-top:40px">
+    <header class="page-head addons-head" style="padding-top:0">
+      <span class="kicker">Already have an app?</span>
+      <h1 style="font-size:clamp(24px,4vw,32px)">Grab just the piece you need.</h1>
+      <p class="mono" style="color:var(--muted);font-size:15px;max-width:620px">
+        Drop a single layer into your existing Next.js + Supabase app. No boilerplate required.
+      </p>
+    </header>
+
+    <div class="addons">
+      <div class="addon">
+        <div class="an">Kit Auth + RLS</div>
+        <div class="ap">$39.99</div>
+        <p>Just the security layer: multi-tenant auth + Row-Level Security + the isolation suite that proves tenant separation. Drop it into your app.</p>
+      </div>
+      <div class="addon">
+        <div class="an">Test Kit</div>
+        <div class="ap">$29.99</div>
+        <p>The full testing pyramid for Next + Supabase: unit, component, e2e, and the RLS isolation harness — as a template.</p>
+      </div>
+      <div class="addon">
+        <div class="an">ui-kit</div>
+        <div class="ap">$4.99</div>
+        <p>15 themeable, zero-dependency React components — the pieces that repeat on every screen, retheme from one file.</p>
+      </div>
+    </div>
+    <p class="combo-note">
+      Take <strong>2 or more and save 10%</strong> — all three for <strong>$67.47</strong>.
     </p>
   </section>
 </div>
@@ -96,5 +138,30 @@
   </div>
 </footer>
 
+<script>
+  // Per-seat pricing ladder (one-time, USD). Prices update on seat selection.
+  var SEATS = [
+    { seats: 1, base: 119.99, pro: 179.99 },
+    { seats: 2, base: 199.99, pro: 249.99 },
+    { seats: 3, base: 279.99, pro: 329.99 },
+    { seats: 4, base: 349.99, pro: 399.99 },
+    { seats: 8, base: 399.99, pro: 479.99, range: true } // 5–8 devs
+  ];
+  function money(n){ return n.toFixed(2); }
+  function perDev(total, s){ return (s.range ? 'as low as ' : '') + '$' + (total / s.seats).toFixed(2); }
+  function setSeat(i){
+    var s = SEATS[i];
+    document.getElementById('base-price').textContent = money(s.base);
+    document.getElementById('pro-price').textContent = money(s.pro);
+    document.getElementById('base-perdev').textContent = perDev(s.base, s);
+    document.getElementById('pro-perdev').textContent = perDev(s.pro, s);
+    var btns = document.querySelectorAll('.seat-btn');
+    for (var k = 0; k < btns.length; k++) btns[k].classList.toggle('active', k === i);
+  }
+  document.getElementById('seats').addEventListener('click', function(e){
+    var b = e.target.closest('.seat-btn');
+    if (b) setSeat(parseInt(b.getAttribute('data-i'), 10));
+  });
+</script>
 </body>
 </html>

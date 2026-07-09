@@ -75,6 +75,27 @@ h1{font-size:clamp(30px,5vw,42px);line-height:1.1;letter-spacing:-1.2px;font-wei
 .btn-ghost:hover{border-color:var(--dim);background:rgba(255,255,255,.02)}
 .pay-note{text-align:center;color:var(--dim);font-family:var(--mono);font-size:12.5px;margin-top:24px}
 
+/* seat selector */
+.seats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0 4px}
+.seat-btn{font-family:var(--mono);font-size:13px;padding:9px 16px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s}
+.seat-btn:hover{border-color:var(--dim);color:var(--text)}
+.seat-btn.active{background:var(--green);color:#04120b;border-color:var(--green);font-weight:600}
+.seat-hint{text-align:center;color:var(--dim);font-family:var(--mono);font-size:12px;margin:0 0 18px}
+.per-dev{font-family:var(--mono);font-size:12px;color:var(--green-2);margin-top:-14px;margin-bottom:16px}
+
+/* à-la-carte add-ons */
+.addons-head{margin-top:8px}
+.addons{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.addon{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column}
+.addon .an{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.addon .ap{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--text);margin:6px 0 10px}
+.addon .ap small{font-size:12px;color:var(--dim);font-weight:400}
+.addon p{font-size:13.5px;color:var(--muted);flex:1;margin:0}
+.combo-note{text-align:center;margin-top:20px;font-size:14.5px;color:var(--muted)}
+.combo-note strong{color:var(--green-2)}
+@media(max-width:720px){.addons{grid-template-columns:1fr}}
+
 /* footer (shared, with the policy links Paddle requires) */
 footer{border-top:1px solid var(--line);margin-top:40px;padding:40px 0 56px}
 footer .wrap{max-width:960px}
