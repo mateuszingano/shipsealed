@@ -350,6 +350,7 @@
     <p class="lead" style="margin:14px auto 6px">The free tools are yours today. When the paid boilerplate's checkout opens, <strong style="color:var(--text)">the list locks in the founding discount — for life.</strong> Plus a free Supabase RLS cheat sheet now.</p>
     <p class="lead" style="margin:0 auto 8px;font-size:15px">No charge today. You're reserving the price, not buying — we email your checkout once it's live.</p>
     <form id="waitlist" onsubmit="return joinList(event)">
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
       <input type="email" id="email" placeholder="you@yourstartup.dev" required autocomplete="email">
       <button type="submit" class="btn btn-primary">Reserve my spot →</button>
     </form>
@@ -394,15 +395,26 @@
   // (Entrance animation is pure CSS — see .js .reveal keyframes. No JS gate, so a
   //  section can never be left hidden; content is always visible even if JS fails.)
 
-  // Waitlist → Supabase (project: airlock-waitlist). One list, segmented by source.
-  // The publishable key is anon-level and safe in public: the `waitlist` table has an
-  // INSERT-only RLS policy and no SELECT policy, so this key can add an email but never read the list.
+  // Waitlist signup → /api/join (serverless): saves the email to Supabase and emails
+  // the RLS cheat sheet via Resend. Server-side so the Resend key stays secret.
   var SUPABASE_URL = 'https://ukaelmxvgggvudlwwexk.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+
+  // Fallback: direct Supabase insert if /api/join is unreachable, so signup never breaks
+  // (the publishable key is INSERT-only — it can add an email but never read the list).
+  async function insertDirect(email){
+    var res = await fetch(SUPABASE_URL + '/rest/v1/waitlist', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ email: email, source: 'hub' })
+    });
+    return res.ok || res.status === 409;
+  }
 
   async function joinList(e){
     e.preventDefault();
     var email = document.getElementById('email').value.trim();
+    var website = (document.getElementById('website') || {}).value || '';
     var msg = document.getElementById('msg');
     var btn = document.querySelector('#waitlist button');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
@@ -411,24 +423,24 @@
     }
     btn.disabled = true;
     msg.style.color = 'var(--dim)'; msg.textContent = 'joining…';
+    var ok = false, emailed = false;
     try {
-      var res = await fetch(SUPABASE_URL + '/rest/v1/waitlist', {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ email: email, source: 'hub' })
+      var res = await fetch('/api/join', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, source: 'hub', website: website })
       });
-      if (res.ok || res.status === 409) {
-        msg.style.color = 'var(--green)';
-        msg.textContent = "✔ you're on the list — the RLS cheat sheet is on the way.";
-        document.getElementById('waitlist').reset();
-      } else {
-        msg.style.color = 'var(--red)'; msg.textContent = '✖ something went wrong — try again in a moment.';
-      }
-    } catch (err) {
-      msg.style.color = 'var(--red)'; msg.textContent = '✖ network error — try again in a moment.';
-    } finally {
-      btn.disabled = false;
+      if (res.ok) { ok = true; emailed = true; }
+    } catch (err) { /* fall through to the direct insert */ }
+    if (!ok) { try { ok = await insertDirect(email); } catch (e2) {} }
+    if (ok) {
+      msg.style.color = 'var(--green)';
+      msg.innerHTML = (emailed ? "✔ you're on the list — the cheat sheet is in your inbox. " : "✔ you're on the list. ") +
+        '<a href="/assets/supabase-rls-cheatsheet.pdf" style="color:var(--green);text-decoration:underline">grab the cheat sheet →</a>';
+      document.getElementById('waitlist').reset();
+    } else {
+      msg.style.color = 'var(--red)'; msg.textContent = '✖ something went wrong — try again in a moment.';
     }
+    btn.disabled = false;
     return false;
   }
 </script>

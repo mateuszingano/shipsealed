@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index">
+<title>Supabase RLS Cheat Sheet — ShipSealed</title>
+<meta name="description" content="The one-page Supabase Row-Level Security cheat sheet: the golden rules, the footguns that leak in prod, correct policy snippets, and the test that proves tenant isolation.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233ecf8e'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+  :root{
+    --bg:#0b1016; --panel:#111823; --line:#21303d; --text:#e6edf3; --muted:#8b9bb0;
+    --green:#3ecf8e; --red:#f97066; --amber:#f5c451; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;font-size:14px}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 56px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:24px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+  .brand .dot{width:14px;height:14px;border-radius:4px;background:var(--green)}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0}
+  .kicker{color:var(--green);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+  h2{font-size:15px;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+  h2 .n{font-family:var(--mono);color:var(--green);font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  ul,ol{margin:8px 0;padding-left:20px}
+  li{margin:5px 0}
+  b,strong{color:#fff}
+  code{font-family:var(--mono);font-size:12.5px;background:#0c141d;border:1px solid var(--line);
+    border-radius:5px;padding:1px 5px;color:#cfe8dc}
+  pre{font-family:var(--mono);font-size:12px;background:#0c141d;border:1px solid var(--line);
+    border-radius:9px;padding:12px 14px;overflow:auto;line-height:1.55;margin:8px 0}
+  pre .k{color:var(--green)} pre .c{color:var(--muted)} pre .s{color:#e5b567}
+  .foot-good{color:var(--green)} .foot-bad{color:var(--red)}
+  .rule{border-left:3px solid var(--green);padding:2px 0 2px 14px;margin:0 0 4px}
+  .foot{margin-top:30px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);
+    font-size:12.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .foot code{background:#0c141d}
+  .chk{list-style:none;padding-left:0}
+  .chk li:before{content:"☐ ";color:var(--green);font-family:var(--mono)}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  @media print{
+    :root{--bg:#fff;--panel:#fff;--text:#0b1016;--muted:#556;--line:#dce3ea}
+    body{font-size:11px} .wrap{padding:0} pre,code{background:#f3f6f9;color:#0b1016}
+    pre .k{color:#0a7d4f} pre .s{color:#b7791f} pre .c{color:#667}
+    b,strong{color:#0b1016}
+    .foot code{background:#f3f6f9;color:#0b1016}
+    .foot-good{color:#0a7d4f} .foot-bad{color:#c0392b}
+    .card{break-inside:avoid} h2{break-after:avoid}
+    a{color:#0a7d4f;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <span class="kicker">Cheat sheet</span>
+      <h1>Supabase RLS, on one page</h1>
+      <p class="sub">Row-Level Security done right — the rules, the footguns, the policies, and the test that proves it.</p>
+    </div>
+    <div class="brand"><span class="dot"></span>ShipSealed</div>
+  </header>
+
+  <div class="rule"><strong>The one rule that matters.</strong> Every table is reachable from the browser through the <code>anon</code> key. RLS is the <em>only</em> thing between a user and everyone else's rows. <b>RLS off = the table is public.</b> RLS on with no policy = denies everything. Get this right and the leak can't happen.</div>
+
+  <h2><span class="n">01</span> The 5 golden rules</h2>
+  <div class="grid">
+    <div class="card">
+      <ol>
+        <li><b>Enable RLS on every table</b> — in the same migration that creates it. <code>alter table X enable row level security;</code> No exceptions, even for "internal" tables.</li>
+        <li><b>Scope every row to its owner</b> — store <code>user_id</code> (or <code>workspace_id</code> for teams) and compare it to <code>auth.uid()</code> in every policy.</li>
+        <li><b><code>USING</code> for reads, <code>WITH CHECK</code> for writes.</b> <code>USING</code> filters what they can see/affect; <code>WITH CHECK</code> validates what they may write. No <code>WITH CHECK</code> = they write rows they can't read.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <ol start="4">
+        <li><b>Never ship <code>USING (true)</code></b> — that's "everyone, always," the permissive policy that quietly makes a table public. Need public read? Do it on purpose and scope the columns.</li>
+        <li><b>The <code>service_role</code> key bypasses RLS — keep it server-only.</b> Never in the browser, never in <code>NEXT_PUBLIC_*</code>. Trusted server code only (webhooks, cron).</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2><span class="n">02</span> The footguns — what actually leaks in prod</h2>
+  <div class="card">
+    <ul>
+      <li>New table shipped with RLS <b>off</b> → public. <span class="foot-bad">(The #1 Supabase leak.)</span></li>
+      <li><code>USING (true)</code> left in from a tutorial → public read.</li>
+      <li>INSERT policy with no <code>WITH CHECK</code> → a user inserts rows for another tenant.</li>
+      <li><code>service_role</code> key exposed to the client → RLS is irrelevant.</li>
+      <li>Trusting the app/ORM <code>where</code> instead of RLS → one missing filter is a breach.</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">03</span> The correct pattern — owner-scoped</h2>
+  <pre><span class="c">-- every table, always</span>
+<span class="k">alter table</span> notes <span class="k">enable row level security</span>;
+
+<span class="k">create policy</span> <span class="s">"owner reads own notes"</span> <span class="k">on</span> notes <span class="k">for select</span>
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner inserts own notes"</span> <span class="k">on</span> notes <span class="k">for insert</span>
+  <span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner updates own notes"</span> <span class="k">on</span> notes <span class="k">for update</span>
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()))
+  <span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
+  <p class="sub">Wrapping <code>(select auth.uid())</code> in a subselect lets Postgres cache it per-statement — a real speed win at scale.</p>
+
+  <h2><span class="n">04</span> Multi-tenant (teams / workspaces)</h2>
+  <pre><span class="c">-- resolve membership once, keep policies simple + fast</span>
+<span class="k">create or replace function</span> public.user_workspace_ids()
+  <span class="k">returns setof</span> uuid <span class="k">language</span> sql <span class="k">security definer stable</span> <span class="k">as</span> $$
+    <span class="k">select</span> workspace_id <span class="k">from</span> workspace_members <span class="k">where</span> user_id = auth.uid()
+  $$;
+
+<span class="k">create policy</span> <span class="s">"members read workspace rows"</span> <span class="k">on</span> projects <span class="k">for select</span>
+  <span class="k">using</span> (workspace_id <span class="k">in</span> (<span class="k">select</span> public.user_workspace_ids()));</pre>
+
+  <h2><span class="n">05</span> Prove it — don't hope</h2>
+  <div class="card">
+    <p style="margin:0 0 8px">A policy you didn't test is a policy you don't have. The only proof that holds: <b>sign in as tenant A, try to read tenant B's row, assert you get nothing.</b></p>
+    <pre><span class="foot-good">✓</span> tenant A reads A's rows
+<span class="foot-good">✓</span> tenant A gets <b>0 rows</b> for B  <span class="c">(blocked, not just absent)</span>
+<span class="foot-good">✓</span> tenant A <b>cannot INSERT</b> a row for B  <span class="c">(no WITH CHECK hole)</span>
+<span class="foot-bad">✗</span> any table without RLS  <span class="c">→ fail the build</span></pre>
+    <p style="margin:8px 0 0" class="sub">Run it in CI on every migration. A new table without RLS should turn the build red — before it reaches prod.</p>
+  </div>
+
+  <h2><span class="n">06</span> 30-second checklist</h2>
+  <div class="grid">
+    <div class="card"><ul class="chk">
+      <li>RLS enabled on <b>every</b> table</li>
+      <li>Every policy scoped to <code>auth.uid()</code> / membership</li>
+      <li><code>WITH CHECK</code> on every INSERT / UPDATE</li>
+    </ul></div>
+    <div class="card"><ul class="chk">
+      <li>No <code>USING (true)</code> anywhere</li>
+      <li><code>service_role</code> key server-only</li>
+      <li>An isolation test that fails the build</li>
+    </ul></div>
+  </div>
+
+  <div class="foot">
+    <span>Make it the default, free: <code>npx supabase-saas-kit new</code> · <code>npx airlock-rls</code></span>
+    <span><b style="color:var(--text)">shipsealed.com</b> — ship Supabase apps that don't leak 🦭</span>
+  </div>
+</div>
+</body>
+</html>
