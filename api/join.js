@@ -33,7 +33,9 @@ module.exports = async function handler(req, res) {
   const source = String(body.source || 'hub').slice(0, 40)
   if (!isEmail(email)) return res.status(400).json({ error: 'invalid_email' })
 
-  // 1) Save to the waitlist (idempotent: a duplicate 409 is still success).
+  // 1) Save to the waitlist (idempotent). 201 = a brand-new signup; 409 = already on
+  //    the list (unique email). We only email brand-new signups — never re-send.
+  let isNew = false
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
       method: 'POST',
@@ -48,13 +50,15 @@ module.exports = async function handler(req, res) {
     if (!r.ok && r.status !== 409) {
       return res.status(502).json({ error: 'waitlist_failed' })
     }
+    isNew = r.status === 201 // a fresh insert, not a duplicate
   } catch {
     return res.status(502).json({ error: 'waitlist_unreachable' })
   }
 
-  // 2) Email the cheat sheet — best-effort. A delivery hiccup must not fail signup.
+  // 2) Email the cheat sheet — only to brand-new signups. Best-effort: a delivery
+  //    hiccup must not fail the signup.
   const key = process.env.RESEND_API_KEY
-  if (key) {
+  if (isNew && key) {
     try {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -70,7 +74,7 @@ module.exports = async function handler(req, res) {
     } catch (err) {
       console.error('resend send failed:', err && err.message)
     }
-  } else {
+  } else if (isNew && !key) {
     console.warn('RESEND_API_KEY not set — skipped cheat-sheet email')
   }
 
