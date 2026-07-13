@@ -61,7 +61,7 @@
           <li>Free updates</li>
           <li class="bonus">1 month of Airlock Monitor, <strong>free</strong></li>
         </ul>
-        <a class="btn btn-ghost" href="../#list">Reserve founding price →</a>
+        <a class="btn btn-ghost" href="../#list" data-paddle-plan="base">Reserve founding price →</a>
       </div>
 
       <!-- PRO -->
@@ -78,7 +78,7 @@
           <li class="bonus">ui-kit — 15 themeable React components ($4.99 value), <strong>free</strong></li>
           <li class="bonus">3 months of Airlock Monitor, <strong>free</strong></li>
         </ul>
-        <a class="btn btn-primary" href="../#list">Reserve founding price →</a>
+        <a class="btn btn-primary" href="../#list" data-paddle-plan="pro">Reserve founding price →</a>
       </div>
 
     </div>
@@ -186,5 +186,7 @@
     if (b) setSeat(parseInt(b.getAttribute('data-i'), 10));
   });
 </script>
+<!-- Paddle checkout — dormant until assets/paddle.js has a token; until then the buttons above stay waitlist links. -->
+<script src="../assets/paddle.js" defer></script>
 </body>
 </html>
