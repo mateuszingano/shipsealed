@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/compare/supabase-saas-boilerplate/">
+<title>The best Supabase SaaS boilerplate: an honest comparison (2026)</title>
+<meta name="description" content="Choosing a Next.js + Supabase SaaS boilerplate? An honest comparison of ShipSealed, ShipFast, Makerkit and Supastarter — on Supabase focus, Row-Level Security, tests, and price.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233ecf8e'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/compare/supabase-saas-boilerplate/">
+<meta property="og:title" content="The best Supabase SaaS boilerplate: an honest comparison (2026)">
+<meta property="og:description" content="ShipSealed vs ShipFast vs Makerkit vs Supastarter — compared on Supabase focus, Row-Level Security, tenant-isolation tests, and price.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The best Supabase SaaS boilerplate: an honest comparison (2026)">
+<meta name="twitter:description" content="ShipSealed vs ShipFast vs Makerkit vs Supastarter — Supabase focus, RLS, tests, price.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<style>
+  .cmp-wrap{overflow-x:auto;margin:22px 0}
+  .cmp-table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .cmp-table th,.cmp-table td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line,#1e2a36);vertical-align:top}
+  .cmp-table thead th{font-family:var(--mono);font-size:12.5px;color:var(--muted,#8b9bab);font-weight:600;white-space:nowrap}
+  .cmp-table tbody th{font-weight:600;color:var(--text,#e6edf3);white-space:nowrap}
+  .cmp-table .us{color:var(--green,#3ecf8e);font-weight:600}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","headline":"The best Supabase SaaS boilerplate: an honest comparison (2026)","description":"An honest comparison of Next.js + Supabase SaaS boilerplates — ShipSealed, ShipFast, Makerkit and Supastarter — on Supabase focus, Row-Level Security, tests, and price.","url":"https://shipsealed.com/compare/supabase-saas-boilerplate/","inLanguage":"en","author":{"@type":"Organization","name":"ShipSealed"},"publisher":{"@type":"Organization","name":"ShipSealed"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://shipsealed.com/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://shipsealed.com/compare/"},{"@type":"ListItem","position":3,"name":"Supabase SaaS boilerplate","item":"https://shipsealed.com/compare/supabase-saas-boilerplate/"}]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What makes a Supabase SaaS boilerplate different from a generic Next.js one?","acceptedAnswer":{"@type":"Answer","text":"With Supabase your Postgres is reachable from the browser behind the anon key, so authorization lives in Row-Level Security policies, not just app code. A Supabase-specific boilerplate ships correct multi-tenant RLS and, ideally, a test that proves tenant isolation — a generic Next.js starter usually leaves that to you."}},{"@type":"Question","name":"Is a cheaper boilerplate worse?","acceptedAnswer":{"@type":"Answer","text":"Not necessarily. Price mostly reflects breadth (how many modules) and brand. For a Supabase app, the thing that actually protects you is proven tenant isolation, which isn't a function of price. Pick on fit and on whether the security is tested, not on the sticker."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/pricing/">Pricing</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / Compare / Supabase SaaS boilerplate</p>
+  <p class="eyebrow">Comparison · Next.js + Supabase</p>
+  <h1>The best Supabase SaaS boilerplate: an honest comparison</h1>
+  <div class="byline"><span>Updated 2026</span><span class="ok">✓ written by an RLS practitioner (yes, we're one of the options — we'll be fair)</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>If you want the biggest community and a generalist Next.js base, <b>ShipFast</b>. If you want the most features and don't mind paying for breadth, <b>Makerkit</b>. If you're on Supabase and want <b>multi-tenant security proven by a test</b> at the lowest entry price, that's the gap we built <b>ShipSealed</b> to fill.</p></div>
+
+  <h2><span class="n">01</span> What actually matters for a Supabase app</h2>
+  <p>Most "best boilerplate" lists compare landing pages and Stripe buttons. For a <b>Supabase</b> app, the thing that decides whether you sleep at night is different: your Postgres sits on the internet behind the anon key, so your authorization lives in <b>Row-Level Security policies</b>, not just your app code. One table shipped with RLS off, or a policy that says <code>using (true)</code>, and that table is public.</p>
+  <p>So the questions that matter are:</p>
+  <ul>
+    <li><b>Is it actually built for Supabase</b>, or is Supabase one adapter among many?</li>
+    <li><b>Does it ship correct multi-tenant RLS</b> — and does it <b>prove</b> isolation with a test, or just hope?</li>
+    <li><b>Will a future migration that loosens a policy get caught</b> before it ships?</li>
+    <li>Then the usual: auth, billing, tests, price, and how much you'll fight the code.</li>
+  </ul>
+
+  <h2><span class="n">02</span> The comparison</h2>
+  <p>Fair and high-level — feature sets and prices change, so verify current details on each vendor's site (links below). This is about <b>focus and philosophy</b>, which are stable.</p>
+  <div class="cmp-wrap">
+  <table class="cmp-table">
+    <thead><tr><th></th><th class="us">ShipSealed</th><th>ShipFast</th><th>Makerkit</th><th>Supastarter</th></tr></thead>
+    <tbody>
+      <tr><th>Built for</th><td class="us">Next.js + Supabase, security-first</td><td>Next.js, generalist</td><td>Next.js + Supabase (also Remix)</td><td>Next.js + Supabase</td></tr>
+      <tr><th>Multi-tenant RLS</th><td class="us">Yes — the core of the kit</td><td>Basic / your job</td><td>Yes</td><td>Yes</td></tr>
+      <tr><th>Tenant isolation proven by a test</th><td class="us">Yes — an isolation test that runs against a real DB</td><td>No</td><td>Not as a headline</td><td>Not as a headline</td></tr>
+      <tr><th>CI gate for RLS drift</th><td class="us">Yes — free tool (airlock-rls) + optional monitor</td><td>No</td><td>No</td><td>No</td></tr>
+      <tr><th>Free tools / try before buy</th><td class="us">Yes — free starter + CLI + CI gate on npm</td><td>No</td><td>Limited</td><td>Limited</td></tr>
+      <tr><th>Feature breadth</th><td>Focused (auth, RLS, billing, admin, push)</td><td>Broad, marketing-heavy</td><td class="us">Very broad / mature</td><td>Broad</td></tr>
+      <tr><th>Community size</th><td>New</td><td class="us">Very large</td><td>Established</td><td>Established</td></tr>
+      <tr><th>Entry price</th><td class="us">Lowest of the four ($119.99 one-time)</td><td>Higher (one-time)</td><td>Higher / premium tiers</td><td>Mid–high</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted,#8b9bab)">Check current pricing/features: <a href="https://shipfa.st" rel="nofollow noopener" target="_blank">ShipFast</a> · <a href="https://makerkit.dev" rel="nofollow noopener" target="_blank">Makerkit</a> · <a href="https://supastarter.dev" rel="nofollow noopener" target="_blank">Supastarter</a>. We list ShipSealed's prices openly on our <a href="/pricing/">pricing page</a>.</p>
+
+  <h2><span class="n">03</span> Where each one genuinely wins</h2>
+  <p><b>ShipFast</b> — the community and content are unmatched. If you want a huge network, a proven generalist base, and you're not tied to Supabase, it's a safe, popular pick.</p>
+  <p><b>Makerkit</b> — the most mature and feature-complete. If you want every module already built (teams, roles, billing, admin, i18n) and breadth is worth the price, it's excellent.</p>
+  <p><b>Supastarter</b> — a solid, focused Supabase option in the same family as Makerkit.</p>
+  <p><b>ShipSealed</b> — we didn't try to out-feature Makerkit or out-community ShipFast. We picked one thing the others treat as an afterthought and made it the point: <b>your multi-tenant data actually staying isolated, and proven by a test that fails your build if it ever isn't.</b> Plus the lowest entry price, and free tools so you can try the security approach before paying a cent.</p>
+
+  <h2><span class="n">04</span> So which should you pick?</h2>
+  <div class="prove">
+    <div class="row"><span class="ok">→</span> Want the biggest ecosystem, generalist Next.js → <b>ShipFast</b></div>
+    <div class="row"><span class="ok">→</span> Want the most features, budget for breadth → <b>Makerkit</b></div>
+    <div class="row"><span class="ok">→</span> On Supabase, want isolation <b>proven by a test</b> at the lowest price → <b>ShipSealed</b></div>
+  </div>
+  <p>The honest version: you won't go wrong with any of them for the app scaffold. The difference is what happens the day you add a table and forget the policy. That's the day we built for.</p>
+
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub</span>
+    <h2>Try the security approach free first</h2>
+    <p>Before you buy anything, run <code>airlock-rls</code> on your Supabase project — it's a free CI gate that fails your build when a table ships exposed or a policy is permissive. Or clone the free <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> (auth + RLS + an isolation test). If you like how it thinks, the full boilerplate is the paid step up.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px"><a href="/pricing/">See ShipSealed pricing →</a> — Base and Pro, per-seat, one-time, with the RLS isolation suite baked in.</p>
+  </div>
+
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>What makes a Supabase SaaS boilerplate different from a generic Next.js one?</summary><p>With Supabase your Postgres is reachable from the browser behind the anon key, so authorization lives in Row-Level Security policies, not just app code. A Supabase-specific boilerplate ships correct multi-tenant RLS and, ideally, a test that proves tenant isolation — a generic Next.js starter usually leaves that to you.</p></details>
+  <details><summary>Is a cheaper boilerplate worse?</summary><p>Not necessarily. Price mostly reflects breadth (how many modules) and brand. For a Supabase app, the thing that actually protects you is proven tenant isolation, which isn't a function of price. Pick on fit and on whether the security is tested, not on the sticker.</p></details>
+  <details><summary>Are you biased — you're one of the options?</summary><p>Yes, and we said so up top. We tried to be fair: ShipFast's community and Makerkit's breadth are real strengths we don't have. Our edge is narrow and specific — tenant isolation proven by a test, plus free tools so you can judge for yourself before paying.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/pricing/">Pricing</a>
+      <a href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Not affiliated with Supabase, ShipFast, Makerkit or Supastarter. Trademarks belong to their owners; comparison is our honest opinion, verify current details on each vendor's site.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'compare'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'compare'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>
