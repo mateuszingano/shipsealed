@@ -169,6 +169,20 @@
   .badge-amber{color:var(--amber)!important}
   .badge-amber .live{background:var(--amber);box-shadow:0 0 7px var(--amber)}
 
+  /* "which one do I need?" decision map */
+  .pathmap{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 4px}
+  .pathmap a{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 16px;
+             color:var(--muted);font-size:13.5px;line-height:1.45;transition:border-color .18s,transform .18s}
+  .pathmap a:hover{border-color:var(--green-dim);transform:translateY(-2px)}
+  .pathmap a b{display:block;color:var(--text);font-family:var(--mono);font-size:12.5px;margin-bottom:5px}
+  .pathmap a .go{color:var(--green)}
+  @media(max-width:760px){.pathmap{grid-template-columns:1fr 1fr}}
+  /* buy CTA on a paid card */
+  .tool .buy{margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--green);display:inline-flex;
+             align-items:center;gap:7px}
+  a.tool:hover .buy .arw{transform:translateX(3px)}
+  .noacct{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:9px;line-height:1.4}
+
   /* signup */
   .signup{text-align:center}
   .signup h2{font-size:clamp(28px,4vw,34px)}
@@ -218,7 +232,7 @@
       <div class="nav-links" id="navlinks">
         <a href="#tools">Free tools</a>
         <a href="pricing/">Pricing</a>
-        <a href="#list">Reserve</a>
+        <a href="#list">Cheat sheet</a>
         <a class="gh" href="https://github.com/mateuszingano" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
       <button class="hamburger" id="hb" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks">
@@ -238,7 +252,7 @@
     <p class="sub">The #1 Supabase footgun is shipping a table with Row-Level Security off. These tools make the safe path the default &mdash; scaffold it, gate it in CI, and <em>prove</em> tenant isolation with tests that run against a real database.</p>
     <div class="cta-row">
       <a class="btn btn-primary" href="#tools">Get the free tools →</a>
-      <button class="btn btn-ghost" onclick="document.getElementById('email').focus()">Reserve founding pricing</button>
+      <a class="btn btn-ghost" href="pricing/">See pricing →</a>
     </div>
     <div class="micro">3 tools live on npm &amp; GitHub &middot; MIT &middot; no signup to start</div>
     </div>
@@ -322,7 +336,14 @@
   <!-- PAID LINEUP -->
   <section id="paid" class="reveal">
     <h2>When you're ready to charge customers</h2>
-    <p class="lead">The free tools get you shipping. These get you a real SaaS — multi-tenant, billed, secure, and proven. <em>Built and green in CI today</em>; checkout opens the moment our payment processor clears. Reserve the founding price below.</p>
+    <p class="lead">Row-Level Security you can prove — free tools to start, a boilerplate to build on, a monitor to stay sealed. The paid line gets you a real SaaS: multi-tenant, billed, secure, tested. <em>Built, tested, and on sale now</em> — the founding price locks in when you buy.</p>
+
+    <div class="pathmap">
+      <a href="#tools"><b>Just starting?</b> Grab the free tools <span class="go">↑</span></a>
+      <a href="pricing/"><b>Building a SaaS?</b> The boilerplate <span class="go">→</span></a>
+      <a href="pricing/"><b>Bolting onto an app?</b> A single kit <span class="go">→</span></a>
+      <a href="pricing/"><b>Already live?</b> Airlock Monitor <span class="go">→</span></a>
+    </div>
 
     <div class="boiler">
       <span class="soon">◆ FLAGSHIP · BUILT &amp; PROVEN</span>
@@ -332,37 +353,44 @@
         <span>multi-tenant workspaces</span><span>member invites</span><span>billing integration</span><span>admin panel</span>
         <span>web push</span><span>RLS isolation suite</span><span>e2e + CI + deploy</span>
       </div>
+      <div style="margin-top:22px">
+        <a class="btn btn-primary" href="pricing/">See boilerplate pricing →</a>
+      </div>
     </div>
 
     <div class="tools" style="margin-top:16px">
-      <div class="tool">
+      <a class="tool" href="pricing/">
         <span class="badge badge-amber"><span class="live"></span>PAID · BUILT</span>
         <span class="name">Kit Auth + RLS</span>
         <p>Already have an app? Just the security layer: multi-tenant auth + RLS + the isolation suite that proves it. Drop it in.</p>
-      </div>
-      <div class="tool">
+        <span class="buy">See pricing <span class="arw">→</span></span>
+      </a>
+      <a class="tool" href="pricing/">
         <span class="badge badge-amber"><span class="live"></span>PAID · BUILT</span>
         <span class="name">Test Kit</span>
         <p>The whole testing pyramid for Next + Supabase: unit, component, e2e, and the RLS isolation harness — as a template.</p>
-      </div>
-      <div class="tool">
-        <span class="badge badge-amber"><span class="live"></span>SUBSCRIPTION · PROVEN IN CI</span>
+        <span class="buy">See pricing <span class="arw">→</span></span>
+      </a>
+      <a class="tool" href="pricing/">
+        <span class="badge badge-amber"><span class="live"></span>SUBSCRIPTION · $19.99/mo</span>
         <span class="name">Airlock Monitor</span>
-        <p>The paid tier of Airlock: watches your live project between CI runs and alerts on RLS drift — the leak the gate can't catch. Its audit→drift→alert cycle is tested against a real Postgres.</p>
-      </div>
+        <p>It's <strong style="color:var(--text)">airlock-rls watching your live database</strong>: between CI runs it re-audits production and emails you the moment RLS drifts — the leak the gate can't catch. Tested against a real Postgres.</p>
+        <span class="buy">See pricing <span class="arw">→</span></span>
+        <span class="noacct">No account needed — pay, and we email your login link.</span>
+      </a>
     </div>
     <p class="lead" style="margin-top:18px;font-size:15px">Or grab a <strong style="color:var(--text)">Combo</strong> and save: Frontend, Security, or the whole line. The more you take, the cheaper each piece gets.</p>
   </section>
 
-  <!-- SIGNUP -->
+  <!-- LEAD MAGNET: RLS CHEAT SHEET -->
   <section class="signup reveal" id="list">
-    <h2>Reserve founding pricing</h2>
-    <p class="lead" style="margin:14px auto 6px">The free tools are yours today. When the paid boilerplate's checkout opens, <strong style="color:var(--text)">the list locks in the founding discount — for life.</strong> Plus a free Supabase RLS cheat sheet now.</p>
-    <p class="lead" style="margin:0 auto 8px;font-size:15px">No charge today. You're reserving the price, not buying — we email your checkout once it's live.</p>
+    <h2>Free: the Supabase RLS cheat sheet</h2>
+    <p class="lead" style="margin:14px auto 6px">Every RLS gotcha on one page — the policies, the tests, and the footguns that ship a table exposed. Drop your email and it lands in your inbox.</p>
+    <p class="lead" style="margin:0 auto 8px;font-size:15px">You'll also be first to hear when we ship new tools. No spam, unsubscribe anytime.</p>
     <form id="waitlist" onsubmit="return joinList(event)">
       <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
       <input type="email" id="email" placeholder="you@yourstartup.dev" required autocomplete="email">
-      <button type="submit" class="btn btn-primary">Reserve my spot →</button>
+      <button type="submit" class="btn btn-primary">Send me the cheat sheet →</button>
     </form>
     <div class="msg mono" id="msg"></div>
   </section>
