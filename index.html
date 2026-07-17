@@ -31,11 +31,12 @@
 </script>
 <style>
   :root{
-    --bg:#0b0f14; --panel:#111820; --panel-2:#0e141b; --line:#1e2a36; --line-2:#263444;
-    --text:#e6edf3; --muted:#8b9bab; --dim:#5c6b7a;
-    --green:#3ecf8e; --green-2:#4fe0a0; --green-dim:#1f7a54; --red:#ff5c5c; --amber:#f5c451;
+    --bg:#07080a; --panel:#0f1113; --panel-2:#0c0e11; --line:#20242a; --line-2:#2a3038;
+    --text:#e7ecef; --muted:#8a95a0; --dim:#5b636e;
+    --green:#1fe3b8; --green-2:#4fefc9; --green-dim:#12735c; --red:#ff6b5a; --amber:#f5c451; --wax:#e9603e; --wax-2:#f47a55;
     --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
     --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -48,8 +49,8 @@
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      radial-gradient(680px 420px at 78% -8%, rgba(62,207,142,.14), transparent 70%),
-      radial-gradient(560px 380px at 8% 4%, rgba(62,207,142,.06), transparent 65%);
+      radial-gradient(620px 400px at 82% -8%, rgba(233,96,62,.13), transparent 66%),
+      radial-gradient(680px 440px at 10% 110%, rgba(31,227,184,.10), transparent 68%);
   }
   a{color:var(--green);text-decoration:none}
   .wrap{max-width:960px;margin:0 auto;padding:0 24px}
@@ -79,19 +80,21 @@
   /* hero */
   .hero{padding-top:72px;padding-bottom:64px}
   .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--green);
-        border:1px solid var(--green-dim);background:rgba(62,207,142,.07);padding:6px 13px;border-radius:999px;margin-bottom:28px}
+        border:1px solid var(--green-dim);background:rgba(31,227,184,.07);padding:6px 13px;border-radius:999px;margin-bottom:28px}
   .pill .live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);
               animation:pulse 2.4s ease-in-out infinite}
   @keyframes pulse{50%{opacity:.35}}
-  h1{font-size:clamp(34px,6vw,52px);line-height:1.08;letter-spacing:-1.6px;font-weight:780;margin-bottom:22px}
-  h1 .hl{background:linear-gradient(180deg,var(--green-2),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h1{font-family:var(--mono);font-size:clamp(32px,5.6vw,50px);line-height:1.1;letter-spacing:-2px;font-weight:600;margin-bottom:10px}
+  .hl-wax{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--wax);letter-spacing:-.01em}
+  .hl-mint{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--green);letter-spacing:-.01em}
+  .mantra{font-family:var(--mono);font-weight:600;font-size:clamp(17px,2.6vw,22px);letter-spacing:-.02em;color:var(--muted);margin:-6px 0 30px}
   .sub{font-size:19px;color:var(--muted);max-width:660px;margin-bottom:36px}
   .cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
   .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:10px;
        cursor:pointer;border:1px solid transparent;transition:transform .15s,background .2s,border-color .2s,box-shadow .2s;font-family:var(--sans)}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:var(--green);color:#04120b;box-shadow:0 8px 24px -10px rgba(62,207,142,.6)}
-  .btn-primary:hover{background:var(--green-2);box-shadow:0 12px 30px -10px rgba(62,207,142,.75)}
+  .btn-primary{background:var(--green);color:#04120b;box-shadow:0 8px 24px -10px rgba(31,227,184,.6)}
+  .btn-primary:hover{background:var(--green-2);box-shadow:0 12px 30px -10px rgba(31,227,184,.75)}
   .btn-ghost{background:transparent;border:1px solid var(--line-2);color:var(--text)}
   .btn-ghost:hover{border-color:var(--dim);background:rgba(255,255,255,.02)}
   .micro{color:var(--dim);font-size:13px;margin-top:16px;font-family:var(--mono)}
@@ -99,9 +102,9 @@
   /* hero + Finn mascot */
   .hero-top{display:flex;align-items:center;gap:36px}
   .hero-copy{flex:1;min-width:0}
-  .hero-art{flex-shrink:0;width:300px;display:flex;justify-content:center;align-items:center}
-  .hero-art img{width:100%;max-width:300px;height:auto;
-    filter:drop-shadow(0 18px 36px rgba(62,207,142,.20));animation:finn-float 4.5s ease-in-out infinite}
+  .hero-art{flex-shrink:0;width:340px;display:flex;justify-content:center;align-items:center}
+  .hero-art img{width:100%;max-width:340px;height:auto;
+    filter:drop-shadow(0 18px 36px rgba(31,227,184,.20));animation:finn-float 4.5s ease-in-out infinite}
   @keyframes finn-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   @media(max-width:760px){
     .hero-top{flex-direction:column;gap:8px}
@@ -111,7 +114,7 @@
 
   /* terminal */
   .term{margin-top:44px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
-        box-shadow:0 30px 70px -34px rgba(0,0,0,.85),0 0 0 1px rgba(62,207,142,.04)}
+        box-shadow:0 30px 70px -34px rgba(0,0,0,.85),0 0 0 1px rgba(31,227,184,.04)}
   .term-bar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line);background:#0b1117}
   .term-bar i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#2a3744}
   .term-bar i:first-child{background:#ff5f56}.term-bar i:nth-child(2){background:#ffbd2e}.term-bar i:nth-child(3){background:#27c93f}
@@ -134,7 +137,7 @@
   .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .tool{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;
         display:flex;flex-direction:column;transition:transform .18s,border-color .18s,box-shadow .18s;color:inherit}
-  a.tool:hover{transform:translateY(-3px);border-color:var(--green-dim);box-shadow:0 18px 40px -26px rgba(62,207,142,.5)}
+  a.tool:hover{transform:translateY(-3px);border-color:var(--green-dim);box-shadow:0 18px 40px -26px rgba(31,227,184,.5)}
   .tool .badge{font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:.4px;
                display:inline-flex;align-items:center;gap:7px}
   .tool .badge .live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green)}
@@ -158,10 +161,10 @@
   .who .no h3{color:var(--dim)} .who .no li::before{content:"✕";color:var(--dim)}
 
   /* flagship */
-  .boiler{background:linear-gradient(180deg,rgba(62,207,142,.07),rgba(62,207,142,.01));border:1px solid var(--green-dim);
+  .boiler{background:linear-gradient(180deg,rgba(31,227,184,.07),rgba(31,227,184,.01));border:1px solid var(--green-dim);
           border-radius:var(--radius);padding:34px;position:relative;overflow:hidden}
   .boiler::after{content:"";position:absolute;top:-40%;right:-10%;width:340px;height:340px;
-                 background:radial-gradient(circle,rgba(62,207,142,.10),transparent 70%);pointer-events:none}
+                 background:radial-gradient(circle,rgba(31,227,184,.10),transparent 70%);pointer-events:none}
   .boiler .soon{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.6px}
   .boiler h2{margin-top:10px;margin-bottom:12px}
   .boiler .feats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -189,7 +192,7 @@
   form{display:flex;gap:10px;max-width:480px;margin:30px auto 0;flex-wrap:wrap;justify-content:center}
   input[type=email]{flex:1;min-width:240px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);
         padding:14px 16px;border-radius:10px;font-size:15px;font-family:var(--sans);transition:border-color .2s}
-  input[type=email]:focus{outline:none;border-color:var(--green-dim);box-shadow:0 0 0 3px rgba(62,207,142,.12)}
+  input[type=email]:focus{outline:none;border-color:var(--green-dim);box-shadow:0 0 0 3px rgba(31,227,184,.12)}
   .msg{margin-top:18px;font-family:var(--mono);font-size:14px;min-height:20px}
   footer{padding:44px 0 56px;color:var(--dim);font-size:13px;font-family:var(--mono);
          display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
@@ -248,7 +251,8 @@
    <div class="hero-top">
     <div class="hero-copy">
     <span class="pill"><span class="live"></span>for Supabase &middot; free &amp; open source</span>
-    <h1>Ship Supabase apps<br>that don't <span class="hl">leak</span>.</h1>
+    <h1>Ship Supabase apps<br>that don't <span class="hl-wax">leak.</span></h1>
+    <p class="mantra">So you ship <span class="hl-mint">sealed.</span></p>
     <p class="sub">The #1 Supabase footgun is shipping a table with Row-Level Security off. These tools make the safe path the default &mdash; scaffold it, gate it in CI, and <em>prove</em> tenant isolation with tests that run against a real database.</p>
     <div class="cta-row">
       <a class="btn btn-primary" href="#tools">Get the free tools →</a>
@@ -257,7 +261,7 @@
     <div class="micro">6 tools live on npm &amp; GitHub &middot; MIT &middot; no signup to start</div>
     </div>
     <div class="hero-art">
-      <img src="assets/finn.png" alt="Finn, the ShipSealed seal that seals your app's leaks" width="300">
+      <img src="assets/finn.png" alt="Finn, the ShipSealed seal that seals your app's leaks" width="340">
     </div>
    </div>
 
