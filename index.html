@@ -140,6 +140,7 @@
   .tool .badge .live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green)}
   .tool .name{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
   .tool p{font-size:14px;color:var(--muted);flex:1}
+  .tool p code{font-family:var(--mono);font-size:.9em;color:var(--text);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:5px}
   .tool .cmd{margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--text);background:#0a0f14;
              border:1px solid var(--line);padding:9px 11px;border-radius:7px;display:flex;justify-content:space-between;align-items:center;gap:8px}
   a.tool:hover .cmd{border-color:var(--green-dim)}
@@ -254,7 +255,7 @@
       <a class="btn btn-primary" href="#tools">Get the free tools →</a>
       <a class="btn btn-ghost" href="pricing/">See pricing →</a>
     </div>
-    <div class="micro">3 tools live on npm &amp; GitHub &middot; MIT &middot; no signup to start</div>
+    <div class="micro">6 tools live on npm &amp; GitHub &middot; MIT &middot; no signup to start</div>
     </div>
     <div class="hero-art">
       <img src="assets/finn.png" alt="Finn, the ShipSealed seal that seals your app's leaks" width="300">
@@ -286,7 +287,7 @@
   <!-- TOOLS -->
   <section id="tools" class="reveal">
     <h2>The free tools</h2>
-    <p class="lead">Open source, MIT, no signup. Each one makes RLS the default instead of the thing you forgot.</p>
+    <p class="lead">Open source, MIT, no signup. Each one makes the safe path the default — across RLS, auth, migrations, and abuse.</p>
     <div class="tools">
       <a class="tool" href="https://github.com/mateuszingano/nextjs-supabase-starter" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · TEMPLATE</span>
@@ -303,8 +304,26 @@
       <a class="tool" href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · npm + Action</span>
         <span class="name">airlock-rls</span>
-        <p>The CI gate. Fails your build when a table ships exposed or a policy is permissive. Its paid tier, Airlock Monitor, is below.</p>
+        <p>The CI gate for RLS. Fails your build when a table ships exposed or a policy is permissive. Its paid tier, Airlock Monitor, is below.</p>
         <span class="cmd">npx airlock-rls <span class="arw">→</span></span>
+      </a>
+      <a class="tool" href="https://www.npmjs.com/package/airlock-auth" target="_blank" rel="noopener">
+        <span class="badge"><span class="live"></span>FREE · npm</span>
+        <span class="name">airlock-auth</span>
+        <p>The CI gate for auth mistakes. Fails the build when a server secret leaks via <code>NEXT_PUBLIC_*</code>; warns on unauthed mutations and unverified webhooks.</p>
+        <span class="cmd">npx airlock-auth <span class="arw">→</span></span>
+      </a>
+      <a class="tool" href="https://www.npmjs.com/package/airlock-migrate" target="_blank" rel="noopener">
+        <span class="badge"><span class="live"></span>FREE · npm</span>
+        <span class="name">airlock-migrate</span>
+        <p>The CI gate for dangerous migrations. Fails the build when one ships a table without RLS, disables it, adds <code>USING (true)</code>, or drops a policy. No database needed.</p>
+        <span class="cmd">npx airlock-migrate <span class="arw">→</span></span>
+      </a>
+      <a class="tool" href="https://www.npmjs.com/package/airlock-ratelimit" target="_blank" rel="noopener">
+        <span class="badge"><span class="live"></span>FREE · npm</span>
+        <span class="name">airlock-ratelimit</span>
+        <p>Drop-in rate limiting that doesn't punish families — keys authenticated requests by user, not shared IP. Token bucket, zero deps, typed.</p>
+        <span class="cmd">npm i airlock-ratelimit <span class="arw">→</span></span>
       </a>
     </div>
   </section>
@@ -319,7 +338,7 @@
           <li>You ship a Supabase app and can't afford a silent data leak</li>
           <li>You're an indie hacker or small team moving fast</li>
           <li>You want RLS proven by a test, not hoped for</li>
-          <li>You'd rather steal a secure setup than roll your own</li>
+          <li>You'd rather build on a secure setup than roll your own</li>
         </ul>
       </div>
       <div class="card no">
@@ -327,7 +346,7 @@
         <ul>
           <li>You're not on Supabase / Postgres RLS</li>
           <li>You don't use migrations or CI at all</li>
-          <li>You enjoy debugging a tenant-isolation breach in prod</li>
+          <li>You'd rather debug a tenant-isolation breach in prod than write one test</li>
         </ul>
       </div>
     </div>
