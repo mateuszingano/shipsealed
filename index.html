@@ -171,13 +171,12 @@
   .badge-amber .live{background:var(--amber);box-shadow:0 0 7px var(--amber)}
 
   /* "which one do I need?" decision map */
-  .pathmap{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 4px}
-  .pathmap a{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 16px;
-             color:var(--muted);font-size:13.5px;line-height:1.45;transition:border-color .18s,transform .18s}
-  .pathmap a:hover{border-color:var(--green-dim);transform:translateY(-2px)}
-  .pathmap a b{display:block;color:var(--text);font-family:var(--mono);font-size:12.5px;margin-bottom:5px}
-  .pathmap a .go{color:var(--green)}
-  @media(max-width:760px){.pathmap{grid-template-columns:1fr 1fr}}
+  .pathmap{display:flex;flex-wrap:wrap;gap:10px 22px;margin:18px 0 8px;font-size:13px}
+  .pathmap a{color:var(--muted);line-height:1.4;transition:color .18s}
+  .pathmap a:hover{color:var(--text)}
+  .pathmap a b{color:var(--text);font-family:var(--mono);font-size:12px;font-weight:600;margin-right:5px}
+  .pathmap a .go{color:var(--green);margin-left:3px}
+  @media(max-width:760px){.pathmap{flex-direction:column;gap:9px}}
   /* buy CTA on a paid card */
   .tool .buy{margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--green);display:inline-flex;
              align-items:center;gap:7px}
@@ -304,19 +303,19 @@
       <a class="tool" href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · npm + Action</span>
         <span class="name">airlock-rls</span>
-        <p>The CI gate for RLS. Fails your build when a table ships exposed or a policy is permissive. Its paid tier, Airlock Monitor, is below.</p>
+        <p>Stops the classic Supabase leak: a table shipped public. Fails the build when RLS is off or a policy is <code>USING (true)</code>. Its paid tier, Airlock Monitor, is below.</p>
         <span class="cmd">npx airlock-rls <span class="arw">→</span></span>
       </a>
       <a class="tool" href="https://www.npmjs.com/package/airlock-auth" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · npm</span>
         <span class="name">airlock-auth</span>
-        <p>The CI gate for auth mistakes. Fails the build when a server secret leaks via <code>NEXT_PUBLIC_*</code>; warns on unauthed mutations and unverified webhooks.</p>
+        <p>Catches a server secret about to ship in the browser bundle. Fails the build on <code>NEXT_PUBLIC_</code> secrets; warns on unauthed mutations and unverified webhooks.</p>
         <span class="cmd">npx airlock-auth <span class="arw">→</span></span>
       </a>
       <a class="tool" href="https://www.npmjs.com/package/airlock-migrate" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · npm</span>
         <span class="name">airlock-migrate</span>
-        <p>The CI gate for dangerous migrations. Fails the build when one ships a table without RLS, disables it, adds <code>USING (true)</code>, or drops a policy. No database needed.</p>
+        <p>Catches a migration that quietly turns RLS off in prod. Fails the build on a new table without RLS, a disabled policy, or a dropped one. No database needed.</p>
         <span class="cmd">npx airlock-migrate <span class="arw">→</span></span>
       </a>
       <a class="tool" href="https://www.npmjs.com/package/airlock-ratelimit" target="_blank" rel="noopener">
@@ -355,10 +354,10 @@
   <!-- PAID LINEUP -->
   <section id="paid" class="reveal">
     <h2>When you're ready to charge customers</h2>
-    <p class="lead">Row-Level Security you can prove — free tools to start, a boilerplate to build on, a monitor to stay sealed. The paid line gets you a real SaaS: multi-tenant, billed, secure, tested. <em>Built, tested, and on sale now</em> — the founding price locks in when you buy.</p>
+    <p class="lead">The free tools catch the common Supabase footguns. The paid line is the whole app, already built — the weeks of wiring you'd skip to start charging customers sooner. <em>On sale now</em> — the founding price locks in when you buy.</p>
 
     <div class="pathmap">
-      <a href="#tools"><b>Just starting?</b> Grab the free tools <span class="go">↑</span></a>
+      <a href="#tools"><b>Just starting?</b> Grab the free tools <span class="go">→</span></a>
       <a href="pricing/"><b>Building a SaaS?</b> The boilerplate <span class="go">→</span></a>
       <a href="pricing/"><b>Bolting onto an app?</b> A single kit <span class="go">→</span></a>
       <a href="pricing/"><b>Already live?</b> Airlock Monitor <span class="go">→</span></a>
@@ -367,7 +366,7 @@
     <div class="boiler">
       <span class="soon">◆ FLAGSHIP · BUILT &amp; PROVEN</span>
       <h2>The SaaS Boilerplate</h2>
-      <p class="lead" style="margin-bottom:4px">Multi-tenant workspaces, auth, the full RLS isolation suite, tests, and deploy — the boring-but-critical foundation, built and proven. <strong style="color:var(--text)">Pro</strong> adds billing (subscriptions + one-time), an admin panel, and web push.</p>
+      <p class="lead" style="margin-bottom:4px">The boring-but-critical foundation, built and proven — so you start on your product, not on plumbing. <strong style="color:var(--text)">Pro</strong> adds billing (subscriptions + one-time), an admin panel, and web push.</p>
       <div class="feats">
         <span>multi-tenant workspaces</span><span>member invites</span><span>billing integration</span><span>admin panel</span>
         <span>web push</span><span>RLS isolation suite</span><span>e2e + CI + deploy</span>
