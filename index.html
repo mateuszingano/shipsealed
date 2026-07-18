@@ -40,7 +40,7 @@
     --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;scroll-snap-type:y proximity}
   body{
     background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;
     -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative;
@@ -55,7 +55,7 @@
   a{color:var(--green);text-decoration:none}
   .wrap{max-width:960px;margin:0 auto;padding:0 24px}
   .mono{font-family:var(--mono)}
-  section{padding:72px 0;border-bottom:1px solid var(--line)}
+  section{padding:52px 0;border-bottom:1px solid var(--line);scroll-snap-align:start}
   em{font-style:normal;color:var(--text)}
 
   /* nav */
@@ -78,7 +78,7 @@
   nav.open .hamburger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
   /* hero */
-  .hero{padding-top:72px;padding-bottom:64px}
+  .hero{padding-top:48px;padding-bottom:32px;scroll-snap-align:start}
   .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--green);
         border:1px solid var(--green-dim);background:rgba(31,227,184,.07);padding:6px 13px;border-radius:999px;margin-bottom:28px}
   .pill .live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);
@@ -88,7 +88,7 @@
   .hl-wax{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--wax);letter-spacing:-.01em}
   .hl-mint{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--green);letter-spacing:-.01em}
   .mantra{font-family:var(--mono);font-weight:600;font-size:clamp(17px,2.6vw,22px);letter-spacing:-.02em;color:var(--muted);margin:-6px 0 30px}
-  .sub{font-size:19px;color:var(--muted);max-width:660px;margin-bottom:36px}
+  .sub{font-size:18px;color:var(--muted);max-width:640px;margin-bottom:24px}
   .cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
   .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:10px;
        cursor:pointer;border:1px solid transparent;transition:transform .15s,background .2s,border-color .2s,box-shadow .2s;font-family:var(--sans)}
@@ -113,7 +113,7 @@
   @media(prefers-reduced-motion:reduce){.hero-art img{animation:none}}
 
   /* terminal */
-  .term{margin-top:44px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  .term{margin-top:22px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
         box-shadow:0 30px 70px -34px rgba(0,0,0,.85),0 0 0 1px rgba(31,227,184,.04)}
   .term-bar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line);background:#0b1117}
   .term-bar i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#2a3744}
@@ -279,7 +279,7 @@
   </header>
 
   <!-- PROOF STRIP -->
-  <section class="reveal" style="border-top:none">
+  <section class="reveal" style="border-top:none;padding-top:2px">
     <div class="proof">
       <div class="p"><b>proven, not hoped</b><span>Tenant isolation is asserted by tests against a real Supabase/Postgres — not mocked.</span></div>
       <div class="p"><b>on every pull request</b><span>The gate fails the build before an exposed table can merge to production.</span></div>
