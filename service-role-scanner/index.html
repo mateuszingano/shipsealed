@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Is your Supabase service_role key exposed? — free scanner</title>
+<meta name="description" content="A leaked service_role key bypasses all Row Level Security — full DB access. Scan your live site's HTML and JS for it with one command. Free, no signup.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/service-role-scanner/">
+<link rel="stylesheet" href="../assets/page.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/service-role-scanner/">
+<meta property="og:title" content="Is your Supabase service_role key exposed? — free scanner">
+<meta property="og:description" content="A leaked service_role key bypasses all RLS — full access to your database. Scan your live site for it with one command. Free, no signup.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Free scanner for an exposed Supabase service_role key">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Is your Supabase service_role key exposed? — free scanner">
+<meta name="twitter:description" content="A leaked service_role key bypasses all RLS. Scan your live site with one command. Free.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Airlock — service_role key scanner","applicationCategory":"DeveloperApplication","operatingSystem":"Web, Node.js","description":"Scan your deployed site's HTML and JavaScript for an exposed Supabase service_role key, which bypasses all Row Level Security. Free CLI and GitHub Action.","url":"https://shipsealed.com/service-role-scanner/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Organization","name":"ShipSealed","url":"https://shipsealed.com/"}}
+</script>
+<style>
+  .term{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin:16px 0;overflow-x:auto}
+  .term pre{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--muted);white-space:pre}
+  .term .ok{color:var(--green)} .term .bad{color:var(--wax)} .term .cmd{color:var(--text)} .term .dim{color:var(--dim)}
+  .lede{font-size:16px;color:var(--muted);max-width:640px}
+  .cta-band{background:linear-gradient(180deg,rgba(31,227,184,.06),rgba(31,227,184,.01));
+    border:1px solid var(--green-dim);border-radius:var(--radius);padding:26px 28px;margin:34px 0 8px}
+  .cta-band h2{margin:0 0 6px} .cta-band p{margin:0 0 16px}
+  .inline-links{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../cheatsheet/">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MIOLO ===== -->
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Free · npm + GitHub Action</span>
+    <h1>Is your Supabase service key <span class="hl-wax">exposed?</span></h1>
+    <p class="lede">
+      The <span class="mono">service_role</span> key bypasses <strong>every</strong> Row Level
+      Security policy at once. If it ends up in your frontend, anyone who views your page has
+      full read and write access to your database. Scan your live site for it in seconds — no
+      database, no signup.
+    </p>
+  </header>
+
+  <div class="prose">
+    <div class="term" aria-label="Run the scan">
+<pre><span class="dim">$</span> <span class="cmd">npx airlock-rls --site https://your-app.com</span>
+
+<span class="bad">✗ 1 problem(s):</span>
+    <span class="bad">✗</span> https://your-app.com/app.js  <span class="dim">Supabase service key exposed in the</span>
+      <span class="dim">browser — it bypasses ALL Row Level Security. Rotate it now.</span>
+
+<span class="bad">RLS audit failed: 1 problem(s) found.</span>  <span class="dim">(exit 1)</span></pre>
+    </div>
+    <p class="mono" style="color:var(--dim);font-size:13px">On a clean site it stays quiet:</p>
+    <div class="term">
+<pre><span class="dim">$</span> <span class="cmd">npx airlock-rls --site https://your-app.com</span>
+<span class="ok">✓ No problems.  RLS audit passed.</span>  <span class="dim">(exit 0)</span></pre>
+    </div>
+
+    <h2>Why a leaked service key is the worst case</h2>
+    <ul>
+      <li>Your app ships two Supabase keys. The <strong>anon</strong> key is public by design — that one is fine in the browser.</li>
+      <li>The <strong>service_role</strong> key is the master key. It runs <em>past</em> RLS entirely, so it reads and writes every row of every table.</li>
+      <li>Vibe-coded and rushed apps leak it constantly — pasted into a client component, an env var prefixed for the browser, or bundled into the JS.</li>
+    </ul>
+
+    <h2>What the scan does</h2>
+    <ul>
+      <li>Fetches your live page and the JavaScript it loads, and looks for a <span class="mono">service_role</span> JWT or a new-format <span class="mono">sb_secret_…</span> key.</li>
+      <li><strong>Never flags the anon key</strong> — it decodes each token and only fires on the real master key. No crying wolf.</li>
+      <li><strong>Never prints the key</strong> it finds — a security tool must not echo the secret.</li>
+      <li>Exits <span class="mono">1</span> when it finds one, so you can drop it straight into CI.</li>
+    </ul>
+
+    <div class="box">
+      <p style="margin:0"><strong>Found one?</strong> Rotate the key in your Supabase dashboard
+      (Settings → API), move it to a server-only environment variable, and never prefix it for
+      the browser. Then re-run the scan to confirm it's sealed.</p>
+    </div>
+
+    <h2>Open source, and it proves what it claims</h2>
+    <p>Airlock is MIT-licensed and tested. The same engine also runs the full RLS audit —
+      disabled RLS, permissive policies, public storage buckets, and functions that bypass RLS —
+      and can prove a leak by reading your tables with the anon key.</p>
+    <div class="inline-links">
+      <a href="https://www.npmjs.com/package/airlock-rls">npm ↗</a>
+      <a href="https://github.com/mateuszingano/airlock-rls">GitHub ↗</a>
+      <a href="../rls/supabase-security-checklist-before-launch/">Launch security checklist →</a>
+    </div>
+  </div>
+
+  <!-- ===== CTA → the paid monitor (the funnel) ===== -->
+  <div class="cta-band">
+    <h2>One scan tells you today. Airlock watches it <span class="hl-mint">forever.</span></h2>
+    <p class="mono" style="color:var(--muted);font-size:14px">
+      A key you rotated today can leak again on the next deploy. Airlock Monitor re-checks your
+      app on a schedule and alerts you the moment something reopens — the service key, RLS drift,
+      a newly public table.
+    </p>
+    <a class="btn btn-primary" style="width:auto" href="../pricing/">See Airlock Monitor →</a>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed is a brand operated by Mateus Zingano Mendes Eventos, an individual entrepreneur (empresário individual) registered in Brazil, CNPJ 23.878.157/0001-10, Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. Not affiliated with Supabase. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
