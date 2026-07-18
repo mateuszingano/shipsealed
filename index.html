@@ -265,17 +265,6 @@
     </div>
    </div>
 
-    <div class="term">
-      <div class="term-bar"><i></i><i></i><i></i><span class="ttl">bash</span></div>
-      <div class="term-body">
-<span class="c"># scaffold a secure Next.js + Supabase app in one command</span><br>
-<span class="k">$</span> npx supabase-saas-kit new my-app<br>
-<span class="ok">✓</span> auth &middot; Row-Level Security &middot; a test that proves tenant isolation<br><br>
-<span class="c"># gate RLS in CI — fails the build if a table ships exposed</span><br>
-<span class="k">$</span> npx airlock-rls<br>
-<span class="bad">✗</span> payments: <span class="bad">RLS DISABLED</span> <span class="c">→ exit 1 · this migration does not merge</span>
-      </div>
-    </div>
   </header>
 
   <!-- PROOF STRIP -->
@@ -291,6 +280,17 @@
   <section id="tools" class="reveal">
     <h2>The free tools</h2>
     <p class="lead">Open source, MIT, no signup. Each one makes the safe path the default — across RLS, auth, migrations, and abuse.</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="ttl">bash</span></div>
+      <div class="term-body">
+<span class="c"># scaffold a secure Next.js + Supabase app in one command</span><br>
+<span class="k">$</span> npx supabase-saas-kit new my-app<br>
+<span class="ok">✓</span> auth &middot; Row-Level Security &middot; a test that proves tenant isolation<br><br>
+<span class="c"># gate RLS in CI — fails the build if a table ships exposed</span><br>
+<span class="k">$</span> npx airlock-rls<br>
+<span class="bad">✗</span> payments: <span class="bad">RLS DISABLED</span> <span class="c">→ exit 1 · this migration does not merge</span>
+      </div>
+    </div>
     <div class="tools">
       <a class="tool" href="https://github.com/mateuszingano/nextjs-supabase-starter" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · TEMPLATE</span>
