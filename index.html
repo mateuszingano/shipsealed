@@ -181,7 +181,7 @@
   .anchor{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin:0 0 12px;max-width:680px}
   .anchor b{color:var(--green)}
   .tools-h{margin-top:40px;scroll-margin-top:80px}
-  .who-tools{padding:110px 0 14px;justify-content:flex-start;scroll-margin-top:62px}
+  .who-tools{padding:110px 0 14px;justify-content:flex-start}
   .who-tools h2{margin-bottom:8px}
   .who-tools .cmp{gap:10px}
   .who-tools .card{padding:11px 16px}
@@ -196,9 +196,82 @@
   .who-tools .tool .name{margin-bottom:4px}
   .who-tools .tool p{line-height:1.38}
   .who-tools .tool .cmd{margin-top:7px}
-  #paid{justify-content:flex-start;padding-top:100px;padding-bottom:31px;scroll-margin-top:62px}
+  #paid{justify-content:flex-start;padding-top:100px;padding-bottom:31px}
   #paid .lead{max-width:820px}
-  #list{justify-content:flex-start;padding-top:220px;scroll-margin-top:62px}
+  #paid .trust{display:flex;flex-wrap:wrap;gap:5px 16px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:4px 0 14px}
+  #paid .trust b{color:var(--green)} #paid .trust .s{color:var(--dim)}
+  .paidgrid{display:grid;grid-template-columns:1.62fr 1fr;gap:14px;align-items:stretch}
+  @media(max-width:820px){.paidgrid{grid-template-columns:1fr}}
+  .flag2{background:linear-gradient(180deg,rgba(31,227,184,.06),rgba(31,227,184,.012));border:1px solid var(--green-dim);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column}
+  .flag2 .kick{font-family:var(--mono);font-size:11.5px;letter-spacing:.6px;color:var(--green)}
+  .flag2 h3{font-family:var(--mono);font-size:20px;letter-spacing:-.4px;margin:3px 0;display:inline}
+  .flag2 .pin{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-left:9px}
+  .flag2 .fd{color:var(--muted);font-size:13px;margin-top:4px}
+  .flag2 .fd strong{color:var(--text)}
+  .proof2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:11px 0 0}
+  .proof2 pre{font-family:var(--mono);font-size:10.5px;line-height:1.5;color:var(--muted);background:#0a0f14;border:1px solid var(--line-2);border-radius:10px;padding:9px 11px;overflow:auto;margin:0;white-space:pre}
+  .proof2 .tree .dir{color:var(--green-2)} .proof2 .tree .hl{color:var(--text)}
+  .proof2 .testsnip .c{color:var(--dim)} .proof2 .testsnip .k{color:#79b8ff} .proof2 .testsnip .ok{color:var(--green)}
+  .flag2 .testline{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:9px;display:flex;flex-wrap:wrap;gap:5px 12px;align-items:center}
+  .flag2 .testline .ok{color:var(--green)} .flag2 .testline a{color:var(--green);text-decoration:none;font-weight:600} .flag2 .testline .s{color:var(--dim)}
+  .flag2 .demolink{display:block;font-family:var(--mono);font-size:12.5px;color:var(--green);text-decoration:none;margin:11px 0 0;padding:9px 12px;border:1px solid var(--green-dim);border-radius:10px;background:rgba(31,227,184,.04);transition:background .15s}
+  .flag2 .demolink:hover{background:rgba(31,227,184,.1)}
+  .flag2 .demolink .ok{color:var(--green)} .flag2 .demolink .arw{margin-left:2px}
+  .flag2 .feats{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0}
+  .flag2 .feats span{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:7px;padding:3px 8px}
+  .seatfoot{margin-top:auto;padding-top:12px}
+  .seatrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .seat-btn{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px solid var(--line-2);background:transparent;border-radius:20px;padding:4px 12px;cursor:pointer}
+  .seat-btn.active{background:var(--green);color:#03251c;border-color:var(--green);font-weight:600}
+  .prices{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline;margin-bottom:9px}
+  .ptier{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .ptier b{color:var(--green);font-size:17px;margin-left:3px}
+  .ptier .tag{color:var(--amber);font-size:9.5px;letter-spacing:.4px;margin-left:5px}
+  .flag2 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .flag2 .btns .lnk{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-decoration:none}
+  .flag2 .btns .lnk.demo{color:var(--green)}
+  .menu2{border:1px solid var(--line);border-radius:14px;padding:2px 16px 12px;background:var(--panel-2);display:flex;flex-direction:column}
+  .fam2{font-family:var(--mono);font-size:11px;letter-spacing:.8px;color:var(--green);text-transform:uppercase;margin:9px 0 0;padding-top:9px;border-top:1px solid var(--line)}
+  .fam2:first-of-type{border-top:0;padding-top:6px}
+  .it2{padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;display:block;transition:background .15s}
+  .it2:last-of-type{border-bottom:0}
+  .it2:hover{background:rgba(255,255,255,.02)}
+  .it2 .top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .it2 .n{font-family:var(--mono);font-size:13.5px;color:var(--text)}
+  .it2 .p{font-family:var(--mono);font-size:13px;color:var(--green)}
+  .it2 .d{color:var(--dim);font-size:12px;margin-top:2px}
+  .it2 .act{font-family:var(--mono);font-size:11.5px;margin-top:5px;display:inline-block}
+  .it2 .buy{color:#03251c;background:var(--green);padding:3px 9px;border-radius:6px}
+  .it2 .det{color:var(--green)}
+  .combo2{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:auto;padding-top:10px}
+  /* vertical paid stack: flagship / 3 pieces / monitor band */
+  .paidstack{display:flex;flex-direction:column;gap:12px}
+  .seatfoot-row{display:flex;align-items:center;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
+  .seatfoot-row .seatrow{margin-bottom:0}
+  .seatfoot-row .prices{margin-bottom:0}
+  .pieces3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:760px){.pieces3{grid-template-columns:1fr}}
+  .piece{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:12px 14px;text-decoration:none;display:flex;flex-direction:column;transition:border-color .15s}
+  .piece:hover{border-color:var(--line-2)}
+  .piece .pt{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .piece .pn{font-family:var(--mono);font-size:14px;color:var(--text)}
+  .piece .pp{font-family:var(--mono);font-size:13.5px;color:var(--green)}
+  .piece .pd{color:var(--dim);font-size:12px;margin:5px 0 9px;line-height:1.45;flex:1}
+  .piece .pa{font-family:var(--mono);font-size:11.5px;align-self:flex-start}
+  .piece .pa.det{color:var(--green)}
+  .piece .pa.buy{color:#03251c;background:var(--green);padding:3px 10px;border-radius:6px}
+  .piece-note{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+  .monitor-band{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;border:1px solid var(--green-dim);border-radius:14px;padding:16px 22px;background:linear-gradient(180deg,rgba(31,227,184,.08),rgba(31,227,184,.02))}
+  @media(max-width:760px){.monitor-band{grid-template-columns:1fr}}
+  .mb-kick{font-family:var(--mono);font-size:11px;letter-spacing:.6px;color:var(--green)}
+  .mb-title{font-family:var(--mono);font-size:21px;letter-spacing:-.4px;margin:4px 0 5px}
+  .mb-pitch{color:var(--muted);font-size:13px;line-height:1.5;max-width:660px}
+  .mb-pitch strong{color:var(--text)}
+  .mb-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;text-align:right}
+  .mb-price{font-family:var(--mono);font-size:27px;color:var(--text);line-height:1}
+  .mb-price small{font-size:14px;color:var(--dim)}
+  .mb-note{font-family:var(--mono);font-size:10.5px;color:var(--dim);max-width:210px;text-align:right}
+  #list{justify-content:flex-start;padding-top:220px}
   .menu{border:1px solid var(--line);border-radius:var(--radius);padding:4px 24px 22px;background:var(--panel-2)}
   .menu .fam{display:flex;align-items:baseline;gap:10px;margin:14px 0 0;padding-top:11px;border-top:1px solid var(--line)}
   .menu .fam:first-of-type{border-top:0;padding-top:4px}
@@ -277,6 +350,7 @@
       <a href="#top" class="logo" aria-label="Back to top"><span class="dot"></span>ShipSealed</a>
       <div class="nav-links" id="navlinks">
         <a href="#tools">Free tools</a>
+        <a href="#demo">Live demo</a>
         <a href="#paid">Pricing</a>
         <a href="#list">Cheat sheet</a>
         <a class="gh" href="https://github.com/mateuszingano" target="_blank" rel="noopener">GitHub ↗</a>
@@ -384,30 +458,70 @@
     </div>
   </section>
 
+  <!-- DEMO -->
+  <section id="demo" class="reveal" style="padding:0;overflow:hidden">
+    <iframe src="demo/" title="Live isolation demo — watch RLS block a cross-tenant leak" style="width:100%;height:calc(100svh - 1px);border:0;display:block"></iframe>
+  </section>
+
   <!-- PAID LINEUP -->
   <section id="paid" class="reveal">
     <h2 style="margin-bottom:8px">When you're ready to charge customers</h2>
     <p class="lead" style="margin-bottom:10px">The paid line is the whole app, already built. <em>On sale now</em> — the founding price locks in when you buy.</p>
-    <p class="anchor">Most teams start with <b>the whole app</b>. The pieces below are for when you've already shipped.</p>
+    <div class="trust">
+      <span><b>Runs in your CI</b> — nothing leaves your repo</span><span class="s">·</span>
+      <span><b>6 tools</b> free on npm · MIT</span><span class="s">·</span>
+      <span><b>Proven by tests</b> on a real Postgres</span>
+    </div>
 
-    <div class="menu">
-      <div class="flagwrap">
-        <div class="fam"><span class="flabel">◆ The whole app</span><span class="fhint">built &amp; proven · one-time</span></div>
-        <a class="item" href="pricing/" data-paddle-plan="base"><span class="n">Boilerplate Base</span><span class="d">Multi-tenant workspaces + full RLS isolation suite, proven by tests against a real Postgres.</span><span class="p">$119.99</span></a>
-        <a class="item" href="pricing/" data-paddle-plan="pro"><span class="n">Boilerplate Pro <span class="tag">MOST POPULAR</span></span><span class="d">Everything in Base + billing (subscriptions + one-time), admin panel, and web push.</span><span class="p">$179.99</span></a>
+    <div class="paidstack">
+      <!-- FLAGSHIP (full width) -->
+      <div class="flag2">
+        <div><span class="kick">◆ FLAGSHIP · THE WHOLE APP</span></div>
+        <div><h3>The SaaS Boilerplate</h3><span class="pin">Next.js + Supabase</span></div>
+        <p class="fd">The whole app, built and proven — start on your product, not on plumbing. <strong>Pro</strong> adds billing (Paddle), an admin panel, and web push.</p>
+        <a class="demolink" href="#demo"><span class="ok">✓</span> Tenant isolation, proven live — watch a cross-tenant leak get blocked <span class="arw">→</span></a>
+        <div class="feats"><span>multi-tenant</span><span>billing (Paddle)</span><span>admin panel</span><span>web push</span><span>RLS isolation suite</span><span>e2e + CI</span></div>
+        <div class="seatfoot-row">
+          <div class="seatrow" id="phseats">
+            <button class="seat-btn active" data-i="0" type="button">1 dev</button>
+            <button class="seat-btn" data-i="1" type="button">2 devs</button>
+            <button class="seat-btn" data-i="2" type="button">3 devs</button>
+            <button class="seat-btn" data-i="3" type="button">4 devs</button>
+            <button class="seat-btn" data-i="4" type="button">5–8 devs</button>
+          </div>
+          <div class="prices">
+            <span class="ptier">Base <b id="pb">$119.99</b></span>
+            <span class="ptier">Pro <b id="pp">$179.99</b> <span class="tag">MOST POPULAR</span></span>
+          </div>
+          <div class="btns">
+            <a class="btn btn-ghost" href="pricing/" data-paddle-plan="base">Get Base →</a>
+            <a class="btn btn-primary" href="pricing/" data-paddle-plan="pro">Get Pro →</a>
+            <a class="lnk" href="pricing/">compare →</a>
+          </div>
+        </div>
       </div>
 
-      <div class="fam"><span class="flabel">Single pieces</span><span class="fhint">already shipping? drop one layer in · one-time</span></div>
-      <a class="item" href="pricing/" data-paddle-plan="kit-auth-rls"><span class="n">Kit Auth + RLS</span><span class="d">Just the security layer: multi-tenant auth + RLS + the isolation suite that proves it.</span><span class="p">$39.99</span></a>
-      <a class="item" href="pricing/" data-paddle-plan="test-kit"><span class="n">Test Kit</span><span class="d">The full testing pyramid for Next + Supabase: unit, component, e2e + the RLS harness.</span><span class="p">$29.99</span></a>
-      <a class="item" href="pricing/" data-paddle-plan="ui-kit"><span class="n">ui-kit</span><span class="d">15 themeable, zero-dependency React components — retheme from one file.</span><span class="p">$4.99</span></a>
-      <p class="subnote">Take <strong>2 or more and save 10%</strong> — all three for <strong>$67.47</strong>.</p>
+      <!-- 3 PIECES side by side -->
+      <div class="pieces3">
+        <a class="piece" href="pricing/"><div class="pt"><span class="pn">Kit Auth + RLS</span><span class="pp">$39.99</span></div><p class="pd">the security layer + the suite that proves it</p><span class="pa det">Details →</span></a>
+        <a class="piece" href="pricing/"><div class="pt"><span class="pn">Test Kit</span><span class="pp">$29.99</span></div><p class="pd">the full testing pyramid + RLS harness</p><span class="pa det">Details →</span></a>
+        <a class="piece" href="pricing/" data-paddle-plan="ui-kit"><div class="pt"><span class="pn">ui-kit</span><span class="pp">$4.99</span></div><p class="pd">15 themeable React components</p><span class="pa buy">Buy now</span></a>
+      </div>
+      <div class="piece-note">Take 2 or more pieces and save 10%.</div>
 
-      <div class="fam"><span class="flabel">Live watch</span><span class="fhint">catches drift after merge · subscription</span></div>
-      <a class="item" href="pricing/" data-paddle-plan="monitor"><span class="n">Airlock Monitor</span><span class="d">Watches your live Supabase project between CI runs and emails you the moment RLS drifts.</span><span class="p">$19.99<small>/mo</small></span></a>
-      <p class="subnote">No account needed — subscribe, and we email your one-click login link.</p>
-
-      <div style="margin-top:24px"><a class="btn btn-primary" href="pricing/">See full pricing →</a></div>
+      <!-- AIRLOCK MONITOR band — recurring, the long-term asset -->
+      <div class="monitor-band">
+        <div class="mb-left">
+          <span class="mb-kick">● LIVE WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
+          <h3 class="mb-title">Airlock Monitor</h3>
+          <p class="mb-pitch">CI catches leaks before they merge. <strong>Airlock Monitor catches the ones that drift into production afterward</strong> — it re-audits your live database around the clock and emails you the moment RLS drifts. The leak the gate can't see.</p>
+        </div>
+        <div class="mb-right">
+          <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
+          <a class="btn btn-primary" href="pricing/" data-paddle-plan="monitor">Start monitoring →</a>
+          <span class="mb-note">No account needed — subscribe, we email your login link.</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -519,6 +633,23 @@
     btn.disabled = false;
     return false;
   }
+</script>
+<script>
+  // Paid flagship — seat selector: updates Base/Pro price; paddle.js reads .seat-btn.active for the priceId.
+  (function(){
+    var BASE=[119.99,199.99,279.99,349.99,399.99];
+    var PRO =[179.99,249.99,329.99,399.99,479.99];
+    var seats=document.getElementById('phseats'); if(!seats) return;
+    var pb=document.getElementById('pb'), pp=document.getElementById('pp');
+    function m(n){return '$'+n.toFixed(2);}
+    seats.addEventListener('click',function(e){
+      var b=e.target.closest('.seat-btn'); if(!b) return;
+      var i=parseInt(b.getAttribute('data-i'),10);
+      pb.textContent=m(BASE[i]); pp.textContent=m(PRO[i]);
+      var all=seats.querySelectorAll('.seat-btn');
+      for(var k=0;k<all.length;k++) all[k].classList.toggle('active', k===i);
+    });
+  })();
 </script>
 <script src="assets/paddle.js"></script>
 </body>

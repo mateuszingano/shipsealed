@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live demo — the exact RLS policy + test, proven against a real Postgres · ShipSealed</title>
+<meta name="description" content="The real RLS policy, a real HTTP request as one tenant, the raw response from a live Postgres. One app leaks, one blocks. Verify it yourself.">
+<style>
+  :root{
+    --bg:#07080a;--panel:#0f1113;--panel-2:#0c0e11;--line:#20242a;--line-2:#2a3038;
+    --text:#e7ecef;--muted:#8a95a0;--dim:#5b636e;
+    --green:#1fe3b8;--green-2:#4fefc9;--green-dim:#12735c;--wax:#e9603e;--wax-2:#f47a55;--red:#ff6b5a;--amber:#f5c451;--blue:#79b8ff;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;padding:68px 20px 20px}
+  .wrap{max-width:1040px;margin:0 auto}
+  a{color:var(--green);text-decoration:none}
+  .kick{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--green)}
+  h1{font-family:var(--mono);font-size:clamp(21px,3vw,29px);letter-spacing:-1px;margin:5px 0 6px}
+  h1 .leak{font-family:var(--serif);font-style:italic;color:var(--wax)}
+  h1 .seal{font-family:var(--serif);font-style:italic;color:var(--green)}
+  .sub{color:var(--muted);font-size:14px;max-width:760px}
+  .sub b{color:var(--text)}
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--green);border:1px solid var(--green-dim);border-radius:20px;padding:3px 11px;margin-top:9px}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:p 1.4s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .contrast{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:760px){.contrast{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+  .card.leaky{border-color:#3a2620} .card.sealed{border-color:var(--green-dim)}
+  .ctag{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.3px}
+  .card.leaky .ctag{color:var(--red)} .card.sealed .ctag{color:var(--green)}
+  .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
+  .code{font-family:var(--mono);font-size:11px;line-height:1.55;background:#08110d;border:1px solid var(--line-2);border-radius:9px;padding:8px 10px;white-space:pre-wrap;word-break:break-all}
+  .code .kw{color:var(--blue)} .code .str{color:var(--green-2)} .code .cmt{color:var(--dim)} .code .bad{color:var(--red)} .code .ok{color:var(--green)}
+  .code.policy{min-height:70px}
+  #leak-res,#seal-res{min-height:70px}
+  .code.policy .fn{color:var(--amber)}
+  .btn{font-family:var(--mono);font-size:12.5px;font-weight:600;padding:10px 14px;border-radius:9px;border:0;cursor:pointer;text-align:left}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-attack{background:var(--wax);color:#2a0f07} .btn-seal{background:var(--green);color:#03251c}
+  .playrow{display:flex;align-items:center;gap:12px;margin-top:11px;flex-wrap:wrap}
+  .btn-play{background:var(--green);color:#03251c;font-size:13.5px;padding:11px 20px;border-radius:10px}
+  .playrow .live{margin-top:0}
+  .io{min-height:20px}
+  .verdict{display:none;font-family:var(--mono);font-weight:700;font-size:12px;border-radius:9px;padding:9px 11px;line-height:1.4}
+  .verdict.show{display:block}
+  .verdict.leaked{background:rgba(255,107,90,.12);border:1px solid var(--red);color:var(--red)}
+  .verdict.blocked{background:rgba(31,227,184,.1);border:1px solid var(--green-dim);color:var(--green-2)}
+  .foot{margin-top:9px;color:var(--dim);font-family:var(--mono);font-size:12px}
+  .foot a{font-weight:600}
+  .verify{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+  .verify .vh{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:8px}
+  .verify .vh b{color:var(--green)}
+  .vitem{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.5;border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:7px;background:var(--panel-2)}
+  .vitem:hover{border-color:var(--green-dim)}
+  .vitem code{color:var(--green);background:rgba(31,227,184,.08);padding:1px 5px;border-radius:4px}
+  .vitem b{color:var(--text)}
+  .testline{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+  .testline .ok{color:var(--green)} .testline b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kick">◆ LIVE DEMO · REAL POSTGRES · VERIFY IT YOURSELF</span>
+  <h1>Same request, same database. One policy <span class="leak">leaks.</span> One <span class="seal">blocks.</span></h1>
+  <p class="sub">You're <b>Acme</b>. <b>Globex</b> is another tenant with a confidential memo. Below are the <b>real RLS policies</b> and a <b>real HTTP request</b> sent as Acme — the raw response comes straight from a live Postgres. No mockups, no JavaScript theater.</p>
+  <div class="playrow">
+    <button class="btn btn-play" id="play-btn" disabled>▶ Play the demo</button>
+    <span class="live"><span class="dot"></span>signed in as Acme · live Supabase</span>
+  </div>
+
+  <div class="contrast">
+    <!-- LEAKY -->
+    <div class="card leaky">
+      <div class="ctag">✗ WITHOUT ShipSealed</div>
+      <div>
+        <div class="lbl">the RLS policy (the footgun)</div>
+        <div class="code policy"><span class="kw">create policy</span> <span class="str">"read"</span> <span class="kw">on</span> demo_leaky_notes
+  <span class="kw">for select using</span> (<span class="bad">true</span>);  <span class="cmt">-- forgot the tenant</span></div>
+      </div>
+      <div class="io">
+        <div class="lbl">request</div>
+        <div class="code" id="leak-req"><span class="cmt">// press ▶ Play</span></div>
+      </div>
+      <div class="io" id="leak-res-wrap" style="display:none">
+        <div class="lbl">raw response from Postgres</div>
+        <div class="code" id="leak-res"></div>
+      </div>
+      <div class="verdict" id="leak-verdict"></div>
+    </div>
+
+    <!-- SEALED -->
+    <div class="card sealed">
+      <div class="ctag">✓ WITH ShipSealed</div>
+      <div>
+        <div class="lbl">the RLS policy (tenant-scoped)</div>
+        <div class="code policy"><span class="kw">create policy</span> <span class="str">"read"</span> <span class="kw">on</span> notes
+  <span class="kw">for select using</span> (workspace_id <span class="kw">in</span>
+    (<span class="kw">select</span> <span class="fn">user_workspace_ids</span>()));</div>
+      </div>
+      <div class="io">
+        <div class="lbl">request</div>
+        <div class="code" id="seal-req"><span class="cmt">// press ▶ Play</span></div>
+      </div>
+      <div class="io" id="seal-res-wrap" style="display:none">
+        <div class="lbl">raw response from Postgres</div>
+        <div class="code" id="seal-res"></div>
+      </div>
+      <div class="verdict" id="seal-verdict"></div>
+    </div>
+  </div>
+
+  <div class="verify">
+    <div class="vh">Don't trust this page — <b>prove it yourself, free.</b> The same isolation lives in our open-source tools:</div>
+    <a class="vitem" href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener"><code>npx airlock-rls</code> → runs on <b>your own</b> database and fails the build on the exact <code>using (true)</code> footgun you just saw. MIT, on npm.</a>
+    <a class="vitem" href="https://github.com/mateuszingano/nextjs-supabase-starter" target="_blank" rel="noopener"><code>nextjs-supabase-starter</code> → the free template ships this isolation test. Clone it, run <code>npm run test:rls</code>, watch it pass against a real Postgres.</a>
+    <div class="foot">The paid boilerplate is all of this — hardened, multi-tenant, complete. <a href="../#paid">See the boilerplate →</a></div>
+  </div>
+</div>
+
+<script>
+  var SB_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrYWVsbXh2Z2dndnVkbHd3ZXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNjIzMjAsImV4cCI6MjA5ODkzODMyMH0.vbyYH5wEdJv7g2LDd63NGWgwvkVsuGHSnL9nvrqz9Qk';
+  var GLOBEX_SECRET_ID='4ba6e87d-059b-4865-843d-222081f159dc';
+  var token=null;
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+  (async function(){
+    try{
+      var r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({email:'demo@shipsealed.dev',password:'demo1234'})});
+      var j=await r.json(); token=j.access_token;
+      if(token){document.getElementById('play-btn').disabled=false;}
+    }catch(e){}
+  })();
+
+  function bearer(){return token?('Bearer '+token.slice(0,24)+'…'):'Bearer …';}
+
+  async function run(path, reqEl, resWrap, resEl, verdict, isSealed){
+    var url=SB_URL+'/rest/v1/'+path;
+    reqEl.innerHTML='<span class="ok">GET</span> '+esc(url)+'\n<span class="cmt">apikey:</span> '+ANON.slice(0,18)+'…\n<span class="cmt">authorization:</span> '+esc(bearer())+'  <span class="cmt">← Acme</span>';
+    var t0=performance.now();
+    var r=await fetch(url,{headers:{apikey:ANON,authorization:'Bearer '+token}});
+    var ms=Math.round(performance.now()-t0);
+    var body=await r.text();
+    var rows; try{rows=JSON.parse(body);}catch(_){rows=[];}
+    resWrap.style.display='';
+    resEl.innerHTML='<span class="cmt">HTTP</span> <span class="ok">'+r.status+'</span> <span class="cmt">· '+ms+'ms · rows: '+(rows.length)+'</span>\n'+(rows.length? '<span class="bad">'+esc(body)+'</span>' : '<span class="ok">'+esc(body)+'</span>');
+    if(isSealed){
+      verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
+      verdict.innerHTML=rows.length?'✗ leaked (unexpected)':'✓ BLOCKED — Postgres returned 0 rows to Acme. The scoped policy did it, before any app code ran. No leak.';
+    }else{
+      verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
+      verdict.innerHTML=rows.length?'✗ LEAKED — Globex\'s memo came back to Acme. This is the exact bug airlock-rls fails your build on.':'blocked';
+    }
+  }
+
+  document.getElementById('play-btn').addEventListener('click',function(){
+    this.textContent='▶ Replay';
+    run('demo_leaky_notes?select=title,body&tenant=eq.Globex', document.getElementById('leak-req'), document.getElementById('leak-res-wrap'), document.getElementById('leak-res'), document.getElementById('leak-verdict'), false);
+    run('notes?select=*&id=eq.'+GLOBEX_SECRET_ID, document.getElementById('seal-req'), document.getElementById('seal-res-wrap'), document.getElementById('seal-res'), document.getElementById('seal-verdict'), true);
+  });
+</script>
+</body>
+</html>
