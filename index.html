@@ -291,19 +291,13 @@
   .already a{color:var(--green);font-weight:700}
   .already a:hover{text-decoration:underline}
   .already .s{color:var(--dim)}
-  /* Collapsed by default: answers "what's inside?" without costing grid height. */
-  .pdet{margin:0 0 8px}
-  .pdet summary{font-family:var(--mono);font-size:11px;color:var(--green);cursor:pointer;list-style:none}
-  .pdet summary::-webkit-details-marker{display:none}
-  .pdet summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
-  .pdet[open] summary::before{content:"▾ "}
-  .pdet ul{margin:7px 0 0;padding-left:14px}
-  .pdet li{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:4px}
-  .pdet code{font-family:var(--mono);font-size:10.5px;color:var(--green-2)}
-  .mbmail{margin-top:8px}
-  .mbmail summary{font-family:var(--mono);font-size:11.5px;color:var(--green);cursor:pointer;list-style:none}
-  .mbmail summary::-webkit-details-marker{display:none}
-  .mbmail summary::before{content:"▸ "} .mbmail[open] summary::before{content:"▾ "}
+  /* Visible, not behind a click: this is the answer to "what am I buying?" */
+  .plist{list-style:none;margin:7px 0 10px;padding:0;flex:1}
+  .plist li{font-size:11.5px;color:var(--muted);line-height:1.45;margin-bottom:5px;display:flex;gap:6px}
+  .plist li::before{content:"▪";color:var(--green);flex:none}
+  .plist code{font-family:var(--mono);font-size:10.5px;color:var(--green-2)}
+  .mbmail{margin-top:10px}
+  .mbml{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--dim);text-transform:uppercase}
   .mbmail pre{font-family:var(--mono);font-size:10.5px;line-height:1.5;color:var(--muted);background:#08110d;
               border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;margin:8px 0 0;
               white-space:pre-wrap;word-break:break-word;overflow-x:auto}
@@ -317,6 +311,17 @@
   .mb-price{font-family:var(--mono);font-size:27px;color:var(--text);line-height:1}
   .mb-price small{font-size:14px;color:var(--dim)}
   .mb-note{font-family:var(--mono);font-size:10.5px;color:var(--dim);max-width:210px;text-align:right}
+  .mb-note b{color:var(--green)}
+  /* The leak surfaces most devs never think about: this is what the product
+     actually buys you, so it is stated instead of implied. */
+  .mb-surf{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;margin:10px 0 0;
+           font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  @media(max-width:700px){.mb-surf{grid-template-columns:1fr}}
+  .mb-surf span{display:flex;gap:7px;line-height:1.45}
+  .mb-surf span::before{content:"▪";color:var(--green);flex:none}
+  .mb-surf code{font-family:var(--mono);color:var(--green-2);font-size:10.5px}
+  .mb-first{font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:1.5;margin-top:10px;max-width:660px}
+  .mb-first b{color:var(--green)}
   #list{justify-content:flex-start;padding-top:220px}
   .menu{border:1px solid var(--line);border-radius:var(--radius);padding:4px 24px 22px;background:var(--panel-2)}
   .menu .fam{display:flex;align-items:baseline;gap:10px;margin:14px 0 0;padding-top:11px;border-top:1px solid var(--line)}
@@ -599,29 +604,29 @@
         <div class="piece">
           <div class="pt"><span class="pn">Kit Auth + RLS</span><span class="pp">$39.99</span></div>
           <p class="pd">the security layer + the suite that proves it</p>
-          <details class="pdet"><summary>what's inside</summary><ul>
+          <ul class="plist">
             <li>login, signup, password reset + update</li>
             <li>3 migrations: workspaces, notes, tightened grants</li>
             <li>5 test files, incl. <code>rls.test.ts</code> (isolation) and <code>rls.meta.test.ts</code> (every table has a policy)</li>
-          </ul></details>
+          </ul>
           <a class="pa buy" href="checkout/?plan=kit-auth-rls" data-paddle-plan="kit-auth-rls">Get it →</a>
         </div>
         <div class="piece">
           <div class="pt"><span class="pn">Test Kit</span><span class="pp">$29.99</span></div>
           <p class="pd">the full testing pyramid + RLS harness</p>
-          <details class="pdet"><summary>what's inside</summary><ul>
+          <ul class="plist">
             <li>7 test files, wired and passing</li>
             <li>Playwright e2e + config; Vitest for units and components</li>
             <li>the RLS harness: <code>rls.test.ts</code> + <code>rls.meta.test.ts</code></li>
-          </ul></details>
+          </ul>
           <a class="pa buy" href="checkout/?plan=test-kit" data-paddle-plan="test-kit">Get it →</a>
         </div>
         <div class="piece">
           <div class="pt"><span class="pn">ui-kit</span><span class="pp">$4.99</span></div>
           <p class="pd">15 themeable React components</p>
-          <details class="pdet"><summary>see all 15</summary><ul>
+          <ul class="plist">
             <li>Alert · Avatar · Badge · Button · Card · Collapsible · EmptyState · Input · LegendRow · Modal · Skeleton · Spinner · StatCard · Switch · Tabs</li>
-          </ul></details>
+          </ul>
           <a class="pa buy" href="checkout/?plan=ui-kit" data-paddle-plan="ui-kit">Get it →</a>
         </div>
       </div>
@@ -630,13 +635,20 @@
       <!-- AIRLOCK MONITOR band — recurring, the long-term asset -->
       <div class="monitor-band">
         <div class="mb-left">
-          <span class="mb-kick">● LIVE WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
+          <span class="mb-kick">● DAILY WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
           <h3 class="mb-title">Airlock Monitor</h3>
-          <p class="mb-pitch">CI catches leaks before they merge. <strong>Airlock Monitor catches the ones that drift into production afterward</strong> — it re-audits your live database around the clock and emails you the moment RLS drifts. The leak the gate can't see.</p>
-          <details class="mbmail"><summary>see the email it sends</summary>
+          <p class="mb-pitch">CI checks the migrations you write. <strong>Airlock Monitor checks everything else your live database exposes</strong> — the surfaces that leak without a migration ever touching them. It re-audits every morning and emails you the moment one opens.</p>
+          <div class="mb-surf">
+            <span>Tables with RLS turned off</span>
+            <span><code>USING(true)</code> / <code>WITH CHECK(true)</code></span>
+            <span>Storage buckets left public</span>
+            <span>Realtime tables readable by <code>anon</code></span>
+            <span><code>SECURITY DEFINER</code> functions that bypass RLS</span>
+            <span>Views running as owner, ignoring RLS</span>
+          </div>
+          <p class="mb-first">Findings come ranked <b>CRITICAL → LOW</b>, plus a monthly report of what's still open. The first scan runs the moment you connect a project, so you find out today whether any of the above is already true of your database.</p>
+          <div class="mbmail"><span class="mbml">the email it sends</span>
 <pre>Subject: Airlock detected 2 NEW RLS exposure(s) in acme-prod
-
-Airlock detected 2 NEW RLS exposure(s) in acme-prod
 
   • invoices — table in "public" has RLS DISABLED — every
     row is exposed to the API roles
@@ -644,13 +656,12 @@ Airlock detected 2 NEW RLS exposure(s) in acme-prod
     (cross-tenant) — USING(true)
 
 These rows are reachable with the anon key. Fix the migration
-or add an allow-rule for intentionally-public policies.</pre>
-          </details>
+or add an allow-rule for intentionally-public policies.</pre></div>
         </div>
         <div class="mb-right">
           <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
           <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start monitoring →</a>
-          <span class="mb-note">No account needed — subscribe, we email your login link.</span>
+          <span class="mb-note">No account needed — subscribe, we email your login link.<br><b>Cancel anytime · 14-day refund</b></span>
         </div>
       </div>
     </div>
