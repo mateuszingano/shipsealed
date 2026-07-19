@@ -440,10 +440,10 @@
       <div class="card yes">
         <h3>Built for you if…</h3>
         <ul>
-          <li>You ship a Supabase app and can't afford a silent data leak</li>
-          <li>You're an indie hacker or small team moving fast</li>
-          <li>You want RLS proven by a test, not hoped for</li>
-          <li>You'd rather build on a secure setup than roll your own</li>
+          <li>RLS is on, but no test proves tenants stay apart</li>
+          <li>A migration could ship with RLS off, unnoticed</li>
+          <li>Ownership logic is copy-pasted across tenant tables</li>
+          <li>CI runs your tests, but none check isolation</li>
         </ul>
       </div>
       <div class="card no">
@@ -451,7 +451,8 @@
         <ul>
           <li>You're not on Supabase / Postgres RLS</li>
           <li>You don't use migrations or CI at all</li>
-          <li>You'd rather debug a tenant-isolation breach in prod than write one test</li>
+          <li>Your app is single-user, so there's no tenant to isolate</li>
+          <li>You want a UI kit or a landing page, not security plumbing</li>
         </ul>
       </div>
     </div>
