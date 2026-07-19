@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — ShipSealed</title>
+<meta name="description" content="Finish your ShipSealed purchase, or get a direct payment link if the checkout window was blocked.">
+<meta name="robots" content="noindex,follow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/checkout/">
+<link rel="stylesheet" href="../assets/page.css">
+<style>
+  .ck{border:1px solid var(--green-dim);border-radius:14px;background:rgba(31,227,184,.05);padding:16px 18px;margin:0 0 18px}
+  .ck .what{font-family:var(--mono);font-size:15px;color:var(--text)}
+  .ck .what b{color:var(--green)}
+  .ck .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .ck .b{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:14px;padding:11px 18px;border-radius:10px;text-decoration:none}
+  .ck .b.primary{background:var(--green);color:#04120b}
+  .ck .b.ghost{border:1px solid var(--line-2);color:var(--text)}
+  .ck .note{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:10px}
+  .why li{margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../#paid">Pricing</a>
+      <a href="../#list">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Checkout</span>
+    <h1>Let's finish this</h1>
+    <p class="updated">If you landed here, the payment window didn't open on its own.</p>
+  </header>
+
+  <div class="prose">
+    <div class="ck">
+      <div class="what" id="what">You're buying a <b>ShipSealed</b> product.</div>
+      <div class="btnrow">
+        <a class="b primary" href="#" id="retry">Open the payment window →</a>
+        <a class="b ghost" href="mailto:support@shipsealed.com?subject=Direct%20payment%20link" id="mail">Email me a direct link</a>
+      </div>
+      <p class="note">Mateus answers the support address personally. Include the product name and I'll send a payment link you can open anywhere.</p>
+    </div>
+
+    <h2>Why this happens</h2>
+    <p>Payments run through <strong>Paddle</strong>, our Merchant of Record, and the payment window is loaded from Paddle's servers. A few things can stop it from opening:</p>
+    <ul class="why">
+      <li>An ad blocker or privacy extension blocking <code>cdn.paddle.com</code></li>
+      <li>A corporate proxy or firewall filtering third-party scripts</li>
+      <li>JavaScript disabled, or a script that failed to load on a flaky connection</li>
+    </ul>
+    <p>None of that is your fault, and none of it means the product is unavailable. Use the button above to retry, or email me and I'll send a direct link that bypasses the overlay entirely.</p>
+
+    <h2>What you get either way</h2>
+    <p>Access to the private GitHub repository. After payment you enter your GitHub username on the receipt page and the invite lands in your inbox, so you can clone and start. The licence covers unlimited projects you own or build for clients, and every purchase carries a <a href="../refunds/">14-day money-back guarantee</a>.</p>
+
+    <p><a href="../#paid">← Back to pricing</a></p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../#paid">Pricing</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/paddle.js"></script>
+<script>
+(function () {
+  // Which product were they trying to buy? The buy links pass ?plan=, so this
+  // page can name it, prefill the support email, and retry the right checkout.
+  var PLANS = {
+    'base':         { name: 'the SaaS Boilerplate — Base', price: 'from $119.99' },
+    'pro':          { name: 'the SaaS Boilerplate — Pro',  price: 'from $179.99' },
+    'kit-auth-rls': { name: 'Kit Auth + RLS',              price: '$39.99' },
+    'test-kit':     { name: 'Test Kit',                    price: '$29.99' },
+    'ui-kit':       { name: 'ui-kit',                      price: '$4.99' },
+    'monitor':      { name: 'Airlock Monitor',             price: '$19.99/mo' }
+  };
+
+  var plan = (new URLSearchParams(location.search).get('plan') || '').toLowerCase();
+  var p = PLANS[plan];
+
+  if (p) {
+    document.getElementById('what').innerHTML =
+      'You\'re buying <b>' + p.name + '</b> · ' + p.price;
+    document.getElementById('mail').href =
+      'mailto:support@shipsealed.com?subject=' +
+      encodeURIComponent('Direct payment link — ' + p.name);
+  }
+
+  // Retry: ask paddle.js to open the overlay for this plan. If Paddle is still
+  // blocked nothing opens, so say so plainly instead of leaving a dead button.
+  document.getElementById('retry').addEventListener('click', function (e) {
+    e.preventDefault();
+    var P = window.PADDLE || {};
+    var entry = p && P.priceIds && P.priceIds[plan];
+    var priceId = Array.isArray(entry) ? entry[0] : entry;
+
+    if (!priceId || typeof window.Paddle === 'undefined') {
+      this.textContent = 'Still blocked — email me instead ↓';
+      this.classList.remove('primary');
+      this.classList.add('ghost');
+      return;
+    }
+    try {
+      window.Paddle.Checkout.open({
+        settings: {
+          successUrl: plan === 'monitor'
+            ? 'https://shipsealed.com/welcome/'
+            : 'https://boilerplate-delivery.vercel.app/'
+        },
+        items: [{ priceId: priceId, quantity: 1 }]
+      });
+    } catch (err) {
+      this.textContent = 'Still blocked — email me instead ↓';
+      this.classList.remove('primary');
+      this.classList.add('ghost');
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -285,6 +285,12 @@
   .piece .pa.det{color:var(--green)}
   .piece .pa.buy{color:#03251c;background:var(--green);padding:3px 10px;border-radius:6px}
   .piece-note{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+  /* The page used to end on an email form: whoever already decided had to
+     scroll back up to find a buy button. */
+  .already{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
+  .already a{color:var(--green);font-weight:700}
+  .already a:hover{text-decoration:underline}
+  .already .s{color:var(--dim)}
   /* Collapsed by default: answers "what's inside?" without costing grid height. */
   .pdet{margin:0 0 8px}
   .pdet summary{font-family:var(--mono);font-size:11px;color:var(--green);cursor:pointer;list-style:none}
@@ -576,8 +582,8 @@
             <span class="ptier">Pro <b id="pp">$179.99</b> <span class="tag">MOST POPULAR</span></span>
           </div>
           <div class="btns">
-            <a class="btn btn-ghost" href="#paid" data-paddle-plan="base">Get Base →</a>
-            <a class="btn btn-primary" href="#paid" data-paddle-plan="pro">Get Pro →</a>
+            <a class="btn btn-ghost" href="checkout/?plan=base" data-paddle-plan="base">Get Base →</a>
+            <a class="btn btn-primary" href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro →</a>
           </div>
         </div>
         <div class="buyband">
@@ -598,7 +604,7 @@
             <li>3 migrations: workspaces, notes, tightened grants</li>
             <li>5 test files, incl. <code>rls.test.ts</code> (isolation) and <code>rls.meta.test.ts</code> (every table has a policy)</li>
           </ul></details>
-          <a class="pa buy" href="#paid" data-paddle-plan="kit-auth-rls">Get it →</a>
+          <a class="pa buy" href="checkout/?plan=kit-auth-rls" data-paddle-plan="kit-auth-rls">Get it →</a>
         </div>
         <div class="piece">
           <div class="pt"><span class="pn">Test Kit</span><span class="pp">$29.99</span></div>
@@ -608,7 +614,7 @@
             <li>Playwright e2e + config; Vitest for units and components</li>
             <li>the RLS harness: <code>rls.test.ts</code> + <code>rls.meta.test.ts</code></li>
           </ul></details>
-          <a class="pa buy" href="#paid" data-paddle-plan="test-kit">Get it →</a>
+          <a class="pa buy" href="checkout/?plan=test-kit" data-paddle-plan="test-kit">Get it →</a>
         </div>
         <div class="piece">
           <div class="pt"><span class="pn">ui-kit</span><span class="pp">$4.99</span></div>
@@ -616,7 +622,7 @@
           <details class="pdet"><summary>see all 15</summary><ul>
             <li>Alert · Avatar · Badge · Button · Card · Collapsible · EmptyState · Input · LegendRow · Modal · Skeleton · Spinner · StatCard · Switch · Tabs</li>
           </ul></details>
-          <a class="pa buy" href="#paid" data-paddle-plan="ui-kit">Get it →</a>
+          <a class="pa buy" href="checkout/?plan=ui-kit" data-paddle-plan="ui-kit">Get it →</a>
         </div>
       </div>
       <div class="piece-note">Each piece is a slice of the boilerplate, sold on its own. Same repo, same tests, same 14-day refund.</div>
@@ -643,7 +649,7 @@ or add an allow-rule for intentionally-public policies.</pre>
         </div>
         <div class="mb-right">
           <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
-          <a class="btn btn-primary" href="#paid" data-paddle-plan="monitor">Start monitoring →</a>
+          <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start monitoring →</a>
           <span class="mb-note">No account needed — subscribe, we email your login link.</span>
         </div>
       </div>
@@ -664,6 +670,7 @@ or add an allow-rule for intentionally-public policies.</pre>
           <button type="submit" class="btn btn-primary">Send me the cheat sheet →</button>
         </form>
         <div class="msg mono" id="msg"></div>
+        <p class="already">Already convinced? <a href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro — $179.99</a> <span class="s">· one payment · 14-day refund</span></p>
       </div>
       <div class="signup-peek">
         <img src="assets/cheatsheet-preview.png" alt="Preview of the Supabase RLS cheat sheet — the golden rules, the footguns, and the correct owner-scoped policy" loading="lazy">
