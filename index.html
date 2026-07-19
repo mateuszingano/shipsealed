@@ -144,6 +144,8 @@
   .tool .badge{font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:.4px;
                display:inline-flex;align-items:center;gap:7px}
   .tool .badge .live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green)}
+  /* Third-party number, right-aligned inside the badge row: no extra line. */
+  .tool .badge .dl{margin-left:auto;color:var(--dim);letter-spacing:0}
   .tool .name{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
   .tool p{font-size:13px;color:var(--muted);flex:1;line-height:1.5}
   .tool p code{font-family:var(--mono);font-size:.9em;color:var(--text);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:5px}
@@ -470,7 +472,7 @@
         <span class="cmd">npx supabase-saas-kit new <span class="arw">→</span></span>
       </a>
       <a class="tool" href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener">
-        <span class="badge"><span class="live"></span>FREE · npm + Action</span>
+        <span class="badge"><span class="live"></span>FREE · npm + Action<span class="dl">1,423 ↓ last month</span></span>
         <span class="name">airlock-rls</span>
         <p>Stops the classic Supabase leak: a table shipped public. Fails the build when RLS is off or a policy is <code>USING (true)</code>. Its paid tier, Airlock Monitor, is below.</p>
         <span class="cmd">npx airlock-rls <span class="arw">→</span></span>
