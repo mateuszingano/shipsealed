@@ -125,3 +125,43 @@ footer .wrap{max-width:960px}
   html{scroll-behavior:auto}
   .btn:hover{transform:none}
 }
+
+/* ============================================================
+   PAGINAS LEGAIS (terms / privacy / refunds) — <body class="legal">
+   Fica TUDO escopado aqui de proposito: este arquivo e compartilhado com
+   checkout, service-role-scanner, us-sales-tax e as ferramentas, e nenhuma
+   delas entrou neste ajuste. Nao promover nada daqui pro escopo global sem
+   conferir as outras paginas uma a uma.
+   ============================================================ */
+
+/* mesma medida da landing: 960 de caixa - 24 de respiro de cada lado = 912
+   uteis, entao o texto alinha com o logo da nav e com o rodape. */
+body.legal .wrap{max-width:960px}
+
+/* sobe o bloco 50px em relacao ao padrao (64 -> 14) */
+body.legal .page-head{padding-top:14px}
+
+/* entrelinha 1.25 no titulo: ele herdava o 1.65 do corpo, que e medida de
+   texto corrido — num titulo de uma linha vira ~6px de vazio dentro da propria
+   caixa, e o texto parecia mais longe do que a margem dizia. */
+body.legal .prose h2{font-size:18px;line-height:1.25;margin:34px 0 8px}
+body.legal .prose h3{font-size:14px;margin:15px 0 8px}
+
+/* justificado + hifenizacao: sem hyphens o justificado abre "rios" de espaco
+   branco na linha larga. O <html lang="en"> e o que permite hifenizar certo. */
+body.legal .prose p{font-size:12px;text-align:justify;hyphens:auto}
+body.legal .prose li{font-size:12px}
+
+/* 15 embaixo pra casar com o margin-top do h3: margens verticais colapsam
+   (vale a MAIOR das duas), entao com 16 aqui o gap ficaria 16, nao 15. */
+body.legal .prose ul{margin-bottom:15px}
+
+/* verde cheio, nao o --green-dim, que ficava apagado */
+body.legal .prose li::before{color:var(--green)}
+
+/* rodape com a mesma geometria e tipografia do rodape da landing */
+body.legal footer{padding:12px 0}
+body.legal .foot-links{margin-bottom:9px}
+body.legal .foot-links a{transition:color .2s}
+body.legal .foot-links a:hover{color:var(--green)}
+body.legal .foot-legal{font-size:13px;line-height:1.6;max-width:880px}
