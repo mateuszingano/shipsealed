@@ -6,3 +6,4 @@ __pycache__/
 # Docs internos — NÃO deployar (a Vercel serve o root; isto vazaria estratégia/preço)
 CLAUDE.md
 .claude/
+_internal/
