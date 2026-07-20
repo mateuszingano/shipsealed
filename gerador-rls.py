@@ -64,14 +64,15 @@ FOOTER = """<footer>
   <div class="wrap">
     <div class="links">
       <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
-      <a href="/pricing/">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
     </div>
     <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Not affiliated with Supabase. Code samples are provided as-is; test against your own database.</div>
   </div>
 </footer>"""
 
 FAVICON = ("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
-           "<rect width='32' height='32' rx='8' fill='%233ecf8e'/><path d='M9 16.5l4.5 4.5L23 10' "
+           "<rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' "
            "stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>")
 
 
@@ -108,6 +109,9 @@ def render(p):
     doc = """<!doctype html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index,follow">
@@ -285,6 +289,9 @@ def build_index():
     doc = """<!doctype html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index,follow">

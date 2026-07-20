@@ -44,6 +44,9 @@ window.PADDLE = {
     // Monitor webhook provisions the account from the buyer's email and mails a
     // login link, so the success page just says "check your email".
     'monitor':      'pri_01kxgz2x3bnkhgt6xtcdmctj7p', // $19.99/mo
+    // 'combo' NAO tem price proprio: e um carrinho com as 3 pecas + COMBO10.
+    // Montado por itensDoPlano(); nunca resolva por priceIds['combo'].
+    'combo':        null,
   },
 };
 
@@ -65,6 +68,24 @@ window.PADDLE = {
   };
   document.head.appendChild(s);
 
+  // O carrinho de cada plano, em UM lugar so — a landing e a /checkout/ usam a
+  // mesma funcao, entao nao ha como uma cobrar diferente da outra.
+  window.PADDLE.itensDoPlano = function (plan, seat) {
+    if (plan === 'combo') {
+      return [
+        { priceId: P.priceIds['kit-auth-rls'], quantity: 1 },
+        { priceId: P.priceIds['test-kit'],     quantity: 1 },
+        { priceId: P.priceIds['ui-kit'],       quantity: 1 },
+      ];
+    }
+    var entry = P.priceIds && P.priceIds[plan];
+    var priceId = Array.isArray(entry) ? entry[seat || 0] : entry;
+    return priceId ? [{ priceId: priceId, quantity: 1 }] : null;
+  };
+  window.PADDLE.cupomDoPlano = function (plan) {
+    return plan === 'combo' ? 'COMBO10' : null;
+  };
+
   // Which seat tier is selected right now (0..4). Mirrors the seat selector on the pricing page.
   function currentSeat() {
     var active = document.querySelector('.seat-btn.active');
@@ -77,20 +98,18 @@ window.PADDLE = {
     for (var i = 0; i < buttons.length; i++) {
       buttons[i].addEventListener('click', function (e) {
         var plan = this.getAttribute('data-paddle-plan');
-        var entry = P.priceIds && P.priceIds[plan];
-        // Base/Pro are seat arrays; à-la-carte add-ons are a flat string.
-        var priceId = Array.isArray(entry) ? entry[currentSeat()] : entry;
-        if (!priceId) return;              // no id → let the link fall through
+        var itens = P.itensDoPlano(plan, currentSeat());
+        if (!itens) return;                // sem carrinho → segue o href
         e.preventDefault();
         // The Monitor is a subscription (provisioned by email post-payment), so it
         // lands on the "check your email" page; one-time products go to delivery.
         var successUrl = plan === 'monitor'
           ? 'https://shipsealed.com/welcome/'
           : 'https://boilerplate-delivery.vercel.app/';
-        Paddle.Checkout.open({
-          settings: { successUrl: successUrl },
-          items: [{ priceId: priceId, quantity: 1 }],
-        });
+        var opcoes = { settings: { successUrl: successUrl }, items: itens };
+        var cupom = P.cupomDoPlano(plan);
+        if (cupom) opcoes.discountCode = cupom;
+        Paddle.Checkout.open(opcoes);
       });
     }
   }

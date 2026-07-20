@@ -69,7 +69,11 @@
   .logo{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px;color:var(--text);text-decoration:none}
   .logo .dot{width:11px;height:11px;border-radius:3px;background:var(--green);box-shadow:0 0 14px var(--green)}
   .nav-links{display:flex;gap:22px;font-family:var(--mono);font-size:13px;align-items:center}
-  .nav-links a{color:var(--muted);transition:color .2s} .nav-links a:hover{color:var(--text)}
+  /* verde no hover: mesma linguagem dos cards do closer e das ferramentas.
+     Na marca, verde = acao. */
+  .nav-links a{color:var(--muted);transition:color .2s} .nav-links a:hover{color:var(--green)}
+  /* seção em que o visitante está: fica marcada, não só no hover */
+  .nav-links a.active{color:var(--green)}
   .nav-links .gh{color:var(--dim)}
   .hamburger{display:none;background:none;border:0;cursor:pointer;width:42px;height:42px;padding:10px;border-radius:9px}
   .hamburger:hover{background:rgba(255,255,255,.05)}
@@ -90,7 +94,7 @@
   .hl-wax{font-family:var(--serif);font-style:italic;font-weight:700;color:var(--wax);letter-spacing:-.01em}
   .hl-mint{font-family:var(--serif);font-style:italic;font-weight:700;color:var(--green);letter-spacing:-.01em}
   .mantra{font-family:var(--mono);font-weight:600;font-size:clamp(17px,2.6vw,22px);letter-spacing:-.02em;color:var(--muted);margin:-6px 0 30px}
-  .sub{font-size:18px;color:var(--muted);max-width:640px;margin-bottom:24px}
+
   .cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
   .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:10px;
        cursor:pointer;border:1px solid transparent;transition:transform .15s,background .2s,border-color .2s,box-shadow .2s;font-family:var(--sans)}
@@ -125,8 +129,6 @@
   .term-body .c{color:var(--dim)} .term-body .ok{color:var(--green)} .term-body .bad{color:var(--wax-2)}
   .term-body .warn{color:var(--amber)} .term-body .k{color:#79b8ff}
 
-  /* proof strip */
-  .hero-proof{margin-top:16px}
   .proof{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
          border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
   .proof .p{background:var(--panel);padding:26px 24px}
@@ -165,25 +167,18 @@
   .who .yes h3{color:var(--green)} .who .yes li::before{content:"✓";color:var(--green)} .who .yes li{color:var(--text)}
   .who .no h3{color:var(--dim)} .who .no li::before{content:"✕";color:var(--dim)}
 
-  /* flagship */
-  .boiler{background:linear-gradient(180deg,rgba(31,227,184,.07),rgba(31,227,184,.01));border:1px solid var(--green-dim);
-          border-radius:var(--radius);padding:34px;position:relative;overflow:hidden}
-  .boiler::after{content:"";position:absolute;top:-40%;right:-10%;width:340px;height:340px;
-                 background:radial-gradient(circle,rgba(31,227,184,.10),transparent 70%);pointer-events:none}
-  .boiler .soon{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.6px}
-  .boiler h2{margin-top:10px;margin-bottom:12px}
-  .boiler .feats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-  .boiler .feats span{font-family:var(--mono);font-size:12.5px;color:var(--muted);border:1px solid var(--line-2);
-                      border-radius:7px;padding:5px 11px;background:rgba(0,0,0,.15)}
-  .badge-amber{color:var(--amber)!important}
+
+
+
+
+
+
   .badge-amber .live{background:var(--amber);box-shadow:0 0 7px var(--amber)}
 
-  /* "which one do I need?" decision map */
-  .paid-sub{font-size:clamp(19px,2.6vw,23px);letter-spacing:-.5px;margin:38px 0 4px;color:var(--text)}
-  .anchor{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin:0 0 12px;max-width:680px}
-  .anchor b{color:var(--green)}
+
+
   .tools-h{margin-top:40px;scroll-margin-top:80px}
-  .who-tools{padding:160px 0 14px;justify-content:flex-start}
+  .who-tools{padding:110px 0 14px;justify-content:flex-start}
   .who-tools h2{margin-bottom:8px}
   .who-tools .cmp{gap:10px}
   .who-tools .card{padding:11px 16px}
@@ -200,11 +195,12 @@
   .who-tools .tool .cmd{margin-top:7px}
   /* The selling section carries the most: flagship + proof + 3 pieces + Monitor.
      It gets TWO slots of the grid, so it still starts and ends on a multiple. */
-  #paid{min-height:200svh;justify-content:flex-start;padding-top:100px;padding-bottom:31px}
+  #paid{justify-content:flex-start;padding-top:75px;padding-bottom:25px}
+  #monitor{justify-content:flex-start;padding-top:80px;padding-bottom:39px}
   #paid .lead{max-width:820px}
-  #paid .trust{display:flex;flex-wrap:wrap;gap:5px 16px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:4px 0 14px}
-  #paid .trust b{color:var(--green)} #paid .trust .s{color:var(--dim)}
-  .paidgrid{display:grid;grid-template-columns:1.62fr 1fr;gap:14px;align-items:stretch}
+
+ #paid .trust .s{color:var(--dim)}
+
   @media(max-width:820px){.paidgrid{grid-template-columns:1fr}}
   .flag2{background:linear-gradient(180deg,rgba(31,227,184,.06),rgba(31,227,184,.012));border:1px solid var(--green-dim);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column}
   .flag2 .kick{font-family:var(--mono);font-size:11.5px;letter-spacing:.6px;color:var(--green)}
@@ -217,8 +213,6 @@
   .proof2 pre{font-family:var(--mono);font-size:10.5px;line-height:1.5;color:var(--muted);background:#0a0f14;border:1px solid var(--line-2);border-radius:10px;padding:9px 11px;overflow:auto;margin:0;white-space:pre}
   .proof2 .tree .dir{color:var(--green-2)} .proof2 .tree .hl{color:var(--text)}
   .proof2 .testsnip .c{color:var(--dim)} .proof2 .testsnip .k{color:#79b8ff} .proof2 .testsnip .ok{color:var(--green)}
-  .flag2 .testline{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:9px;display:flex;flex-wrap:wrap;gap:5px 12px;align-items:center}
-  .flag2 .testline .ok{color:var(--green)} .flag2 .testline a{color:var(--green);text-decoration:none;font-weight:600} .flag2 .testline .s{color:var(--dim)}
   .flag2 .demolink{display:block;font-family:var(--mono);font-size:12.5px;color:var(--green);text-decoration:none;margin:11px 0 0;padding:9px 12px;border:1px solid var(--green-dim);border-radius:10px;background:rgba(31,227,184,.04);transition:background .15s}
   .flag2 .demolink:hover{background:rgba(31,227,184,.1)}
   .flag2 .demolink .ok{color:var(--green)} .flag2 .demolink .arw{margin-left:2px}
@@ -251,39 +245,43 @@
   .flag2 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .flag2 .btns .lnk{font-family:var(--mono);font-size:11.5px;color:var(--dim);text-decoration:none}
   .flag2 .btns .lnk.demo{color:var(--green)}
-  .menu2{border:1px solid var(--line);border-radius:14px;padding:2px 16px 12px;background:var(--panel-2);display:flex;flex-direction:column}
-  .fam2{font-family:var(--mono);font-size:11px;letter-spacing:.8px;color:var(--green);text-transform:uppercase;margin:9px 0 0;padding-top:9px;border-top:1px solid var(--line)}
-  .fam2:first-of-type{border-top:0;padding-top:6px}
-  .it2{padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;display:block;transition:background .15s}
-  .it2:last-of-type{border-bottom:0}
-  .it2:hover{background:rgba(255,255,255,.02)}
+
+
+
+
+
+
   .it2 .top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
   .it2 .n{font-family:var(--mono);font-size:13.5px;color:var(--text)}
   .it2 .p{font-family:var(--mono);font-size:13px;color:var(--green)}
   .it2 .d{color:var(--dim);font-size:12px;margin-top:2px}
-  .it2 .act{font-family:var(--mono);font-size:11.5px;margin-top:5px;display:inline-block}
+
   .it2 .buy{color:#03251c;background:var(--green);padding:3px 9px;border-radius:6px}
-  .it2 .det{color:var(--green)}
-  .combo2{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:auto;padding-top:10px}
+
+
   /* vertical paid stack: flagship / 3 pieces / monitor band */
   /* Two slots tall: let the four blocks breathe into the space instead of
      leaving a hole at the bottom. */
   #paid>.wrap{display:flex;flex-direction:column;flex:1}
   .paidstack{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:space-between}
+  /* aqui os blocos sobem junto com o padding em vez de a faixa do Monitor
+     ficar ancorada no fim da seção. */
+  #monitor .paidstack{justify-content:flex-start;gap:7px}
   .seatfoot-row{display:flex;align-items:center;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
   .seatfoot-row .seatrow{margin-bottom:0}
   .seatfoot-row .prices{margin-bottom:0}
   .pieces3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   @media(max-width:760px){.pieces3{grid-template-columns:1fr}}
-  .piece{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:12px 14px;text-decoration:none;display:flex;flex-direction:column;transition:border-color .15s}
-  .piece:hover{border-color:var(--line-2)}
+  .piece{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px 13px;text-decoration:none;display:flex;flex-direction:column;transition:border-color .15s,background .15s}
+  /* mesmo idioma dos cards do closer e da nav: verde onde o mouse está */
+  .piece:hover{border-color:var(--green);background:linear-gradient(180deg,rgba(31,227,184,.07),rgba(31,227,184,.02))}
   .piece .pt{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .piece .pn{font-family:var(--mono);font-size:14px;color:var(--text)}
   .piece .pp{font-family:var(--mono);font-size:13.5px;color:var(--green)}
   .piece .pd{color:var(--dim);font-size:12px;margin:5px 0 9px;line-height:1.45;flex:1}
   .piece .pa{font-family:var(--mono);font-size:11.5px;align-self:flex-start}
   .piece .pa.det{color:var(--green)}
-  .piece .pa.buy{color:#03251c;background:var(--green);padding:3px 10px;border-radius:6px}
+  .piece .pa.buy{color:#03251c;background:var(--green);padding:3px 10px;border-radius:6px;font-weight:600}
   /* The floor sits underneath; the iframe covers it on desktop. Below 760px the
      iframe is dropped entirely — its content is ~1400px tall on a phone, so it
      would eat the page scroll on the one section carrying all the proof. */
@@ -294,55 +292,83 @@
   #demo .demo-floor p{color:var(--muted);font-size:15px;max-width:620px;margin-bottom:20px}
   #demo iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:var(--bg)}
   @media(max-width:760px){#demo iframe{display:none}}
-  .kitsbox{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px 14px}
-  .kitsbox summary{font-family:var(--mono);font-size:12.5px;color:var(--muted);cursor:pointer;list-style:none}
-  .kitsbox summary::-webkit-details-marker{display:none}
-  .kitsbox summary::before{content:"▸ ";color:var(--green)}
-  .kitsbox[open] summary::before{content:"▾ ";color:var(--green)}
-  .kitsbox summary b{color:var(--green)}
-  .kitsbox .pieces3{margin-top:12px}
+  .treebox{margin:11px 0 0}
+  .treebox summary{font-family:var(--mono);font-size:12px;color:var(--green);cursor:pointer;list-style:none}
+  .treebox summary::-webkit-details-marker{display:none}
+  .treebox summary::before{content:"▸ "}
+  .treebox[open] summary::before{content:"▾ "}
+  .treebox code{color:var(--green-2)}
+  .kitsrow{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:9px 13px}
+  .kitshead{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:8px}
+
+  .kitsrow .pieces3{margin-top:0}
   .piece-note{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:2px}
-  .piece-note code,.kitsbox .combo code{font-family:var(--mono);color:var(--green);background:rgba(31,227,184,.1);padding:1px 6px;border-radius:5px}
+  .piece-note code,.kitsrow .combo code{font-family:var(--mono);color:var(--green);background:rgba(31,227,184,.1);padding:1px 6px;border-radius:5px}
   .piece-note b{color:var(--green)}
-  .kitsbox .combo{color:var(--dim);margin-left:6px}
+  /* o combo precisava de um BOTAO: antes o preco mais atraente da secao
+     era o unico item sem como comprar. */
+  .combobtn{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:600;
+            color:#03251c;background:var(--green);padding:4px 11px;border-radius:7px;margin-left:8px}
+  .combobtn b{color:#03251c}
+  .combobtn:hover{background:var(--green-2)}
+  .kitsrow .combo{color:var(--dim);margin-left:6px}
   /* The page used to end on an email form: whoever already decided had to
      scroll back up to find a buy button. */
-  .already{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
-  .already a{color:var(--green);font-weight:700}
-  .already a:hover{text-decoration:underline}
-  .already .s{color:var(--dim)}
+  .closer{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:7px}
+  @media(max-width:760px){.closer{grid-template-columns:1fr}}
+  /* iguais por padrao: nenhum produto ganha destaque de graca.
+     O verde aparece so onde o mouse esta. */
+  .cl{border:1px solid var(--line-2);border-radius:12px;background:var(--panel-2);padding:11px 14px;
+      display:flex;flex-direction:column;transition:border-color .15s,background .15s}
+  .cl:hover{border-color:var(--green);background:linear-gradient(180deg,rgba(31,227,184,.07),rgba(31,227,184,.02))}
+  .clk{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--green)}
+  .cl h3{font-family:var(--mono);font-size:16px;letter-spacing:-.3px;margin:3px 0 3px}
+  .cl p{font-size:12.5px;color:var(--muted);line-height:1.4;flex:1;margin-bottom:9px}
+  .clbuy{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .clp{font-family:var(--mono);font-size:19px;color:var(--green);font-weight:700;line-height:1}
+  .clp i{font-style:normal;font-size:11.5px;color:var(--dim)}
+  .clp small{font-size:12px;color:var(--dim)}
+  .clbuy .btn{font-size:13px;padding:9px 15px;min-width:168px;justify-content:center}
   /* Visible, not behind a click: this is the answer to "what am I buying?" */
   .plist{list-style:none;margin:7px 0 10px;padding:0;flex:1}
-  .plist li{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:5px;display:flex;gap:6px}
-  .plist li::before{content:"▪";color:var(--green);flex:none}
+  .plist li{font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:4px;
+            position:relative;padding-left:13px}
+  .plist li::before{content:"▪";color:var(--green);position:absolute;left:0;top:0}
   .plist code{font-family:var(--mono);font-size:11.5px;color:var(--green-2)}
-  .mbmail{margin-top:10px}
-  .mbml{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--dim);text-transform:uppercase}
-  .mbmail pre{font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--muted);background:#08110d;
-              border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;margin:8px 0 0;
-              white-space:pre-wrap;word-break:break-word;overflow-x:auto}
-  .monitor-band{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;border:1px solid var(--green-dim);border-radius:14px;padding:12px 22px;background:linear-gradient(180deg,rgba(31,227,184,.08),rgba(31,227,184,.02))}
+
+  .mbml{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--dim);
+        text-transform:uppercase;margin-bottom:6px}
+
+  .monitor-band{display:block;border:1px solid var(--green-dim);border-radius:14px;padding:10px 20px;background:linear-gradient(180deg,rgba(31,227,184,.08),rgba(31,227,184,.02))}
   @media(max-width:760px){.monitor-band{grid-template-columns:1fr}}
   .mb-kick{font-family:var(--mono);font-size:11px;letter-spacing:.6px;color:var(--green)}
   .mb-title{font-family:var(--mono);font-size:21px;letter-spacing:-.4px;margin:4px 0 5px}
-  .mb-pitch{color:var(--muted);font-size:13px;line-height:1.5;max-width:660px}
+  .mb-pitch{color:var(--muted);font-size:13px;line-height:1.45;max-width:475px}
   .mb-pitch strong{color:var(--text)}
   .mb-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;text-align:right}
-  .mb-price{font-family:var(--mono);font-size:27px;color:var(--text);line-height:1}
+  .mb-right .btn{padding:8px 22px}
+  .mb-price{font-family:var(--mono);font-size:27px;color:var(--green);font-weight:700;line-height:1}
   .mb-price small{font-size:14px;color:var(--dim)}
   .mb-note{font-family:var(--mono);font-size:11.5px;color:var(--dim);max-width:210px;text-align:right}
   .mb-note b{color:var(--green)}
   /* The leak surfaces most devs never think about: this is what the product
      actually buys you, so it is stated instead of implied. */
-  .mb-surf{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;margin:10px 0 0;
+  .mb-head{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center}
+  /* os dois cards: mesma caixa, mesmo topo, esticados na mesma altura */
+  .mb-body{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;margin-top:27px}
+  .mbc{border:1px solid var(--line-2);border-radius:10px;background:rgba(7,8,10,.45);padding:10px 12px;
+       display:flex;flex-direction:column}
+  .mbc pre{font-family:var(--mono);font-size:11.5px;line-height:1.4;color:var(--muted);white-space:pre-wrap;
+           word-break:break-word;margin:0;flex:1}
+  @media(max-width:760px){.mb-body{grid-template-columns:1fr}.mb-head{grid-template-columns:1fr}}
+  .mb-surf{display:grid;grid-template-columns:1fr;gap:3px;margin:0;
            font-family:var(--mono);font-size:12px;color:var(--muted)}
-  @media(max-width:700px){.mb-surf{grid-template-columns:1fr}}
-  .mb-surf span{display:flex;gap:7px;line-height:1.45}
-  .mb-surf span::before{content:"▪";color:var(--green);flex:none}
+  .mb-surf span{position:relative;padding-left:13px;line-height:1.45}
+  .mb-surf span::before{content:"▪";color:var(--green);position:absolute;left:0;top:0}
   .mb-surf code{font-family:var(--mono);color:var(--green-2);font-size:10.5px}
-  .mb-first{font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.5;margin-top:10px;max-width:660px}
+  .mb-first{font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.45;margin-top:8px;max-width:660px}
   .mb-first b{color:var(--green)}
-  #list{justify-content:flex-start;padding-top:220px}
+  #list{justify-content:flex-start;padding-top:170px}
   .menu{border:1px solid var(--line);border-radius:var(--radius);padding:4px 24px 22px;background:var(--panel-2)}
   .menu .fam{display:flex;align-items:baseline;gap:10px;margin:14px 0 0;padding-top:11px;border-top:1px solid var(--line)}
   .menu .fam:first-of-type{border-top:0;padding-top:4px}
@@ -358,17 +384,17 @@
   .menu .item .p small{color:var(--dim);font-size:12px}
   .menu .subnote{color:var(--dim);font-size:13px;margin:6px 2px 0}
   .menu .subnote strong{color:var(--text)}
-  .flagwrap{background:linear-gradient(180deg,rgba(31,227,184,.07),rgba(31,227,184,.015));border:1px solid var(--green-dim);border-radius:12px;padding:2px 16px 6px;margin:4px 0 0}
-  .flagwrap .fam{border-top:0;padding-top:8px;margin-top:4px}
-  .flagwrap .item .p{font-size:17px}
+
+
   @media(max-width:680px){.menu .item{flex-wrap:wrap}.menu .item .d{order:3;flex-basis:100%}.menu .item .n{min-width:0}.menu .item .p{min-width:0}}
   /* buy CTA on a paid card */
   .tool .buy{margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--green);display:inline-flex;
              align-items:center;gap:7px}
   a.tool:hover .buy .arw{transform:translateX(3px)}
-  .noacct{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:9px;line-height:1.4}
+
 
   /* signup */
+  /* posição vertical do bloco: mexer no #list (ID vence esta classe). */
   .signup{text-align:center}
   .signup h2{font-size:clamp(28px,4vw,34px)}
   form{display:flex;gap:10px;max-width:480px;margin:30px auto 0;flex-wrap:wrap;justify-content:center}
@@ -379,11 +405,12 @@
   .signup-grid{display:flex;align-items:center;justify-content:center;gap:46px;text-align:left;flex-wrap:wrap;max-width:900px;margin:0 auto}
   .signup-copy{flex:1;min-width:300px;max-width:460px}
   .signup-copy form{margin:24px 0 0;justify-content:flex-start}
-  .signup-peek img{display:block;width:288px;max-width:100%;height:auto;border-radius:12px;border:1px solid var(--line-2);box-shadow:0 30px 70px -24px rgba(0,0,0,.7);transform:rotate(1.6deg)}
+  .signup-peek img{display:block;width:288px;max-width:100%;height:auto;border-radius:12px;border:1px solid var(--line-2);box-shadow:0 30px 70px -24px rgba(0,0,0,.7);transform:rotate(1.6deg);position:relative;top:-20px}
   @media(max-width:760px){.signup-peek{display:none}.signup-grid{text-align:center}.signup-copy form{justify-content:center;margin:24px auto 0}}
-  footer{padding:26px 0 30px;color:var(--dim);font-size:13px;font-family:var(--mono);
+  footer{padding:12px 0 12px;color:var(--dim);font-size:13px;font-family:var(--mono);
          display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-  footer a{color:var(--muted)}
+  footer a{color:var(--muted);transition:color .2s}
+  footer a:hover{color:var(--green)}
 
   /* .reveal is inert by design: no opacity/animation gate, so every section is
      always visible — no JS, no observer, no frozen-animation edge case can hide it. */
@@ -422,8 +449,8 @@
       <div class="nav-links" id="navlinks">
         <a href="#tools">Free tools</a>
         <a href="#demo">Live demo</a>
-      <a href="rls/">RLS guides</a>
-        <a href="#paid">Pricing</a>
+        <a href="#paid">Boilerplate</a>
+        <a href="#monitor">Airlock &amp; kits</a>
         <a href="#list">Cheat sheet</a>
         <a class="gh" href="https://github.com/mateuszingano" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
@@ -543,7 +570,7 @@
         <a class="btn btn-primary" href="demo/">Run the live demo →</a>
       </div>
     </div>
-    <iframe src="demo/" title="Live isolation demo — watch RLS block a cross-tenant leak"></iframe>
+    <iframe data-src="demo/" loading="lazy" title="Live isolation demo — watch RLS block a cross-tenant leak"></iframe>
   </section>
 
   <!-- PAID LINEUP -->
@@ -558,7 +585,9 @@
         <div><h3>The SaaS Boilerplate</h3><span class="pin">Next.js + Supabase</span></div>
         <p class="fd">The whole app, built and proven — start on your product, not on plumbing. <strong>Pro</strong> adds billing (Paddle), an admin panel, and web push.</p>
         <a class="demolink" href="#demo"><span class="ok">✓</span> Tenant isolation, proven live — watch a cross-tenant leak get blocked <span class="arw">→</span></a>
-        <div class="proof2">
+        <details class="treebox">
+          <summary>What's in the box — file tree + <code>npm test</code> output</summary>
+          <div class="proof2">
           <pre class="tree"><span class="dir">src/app/</span>
   <span class="dir">(app)/</span>     <span class="hl">notes · settings · billing</span>
   <span class="dir">(auth)/</span>    login · signup · reset
@@ -583,7 +612,8 @@
  <span class="k">Test Files</span>  <span class="ok">11 passed</span> (11)
       <span class="k">Tests</span>  <span class="ok">59 passed</span>
  <span class="c">RLS isolation suite runs green on a local DB.</span></pre>
-        </div>
+          </div>
+        </details>
         <div class="whatyouget">
           <div class="wyg base">
             <h4>BASE — the foundation</h4>
@@ -615,7 +645,7 @@
           </div>
           <div class="prices">
             <span class="ptier">Base <b id="pb">$119.99</b></span>
-            <span class="ptier">Pro <b id="pp">$179.99</b> <span class="tag">MOST POPULAR</span></span>
+            <span class="ptier">Pro <b id="pp">$179.99</b></span>
           </div>
           <div class="btns">
             <a class="btn btn-ghost" href="checkout/?plan=base" data-paddle-plan="base">Get Base →</a>
@@ -631,15 +661,68 @@
         </div>
       </div>
 
-      <!-- Collapsed by default: the flagship is the main path; the pieces
-           are for the minority who only want one, and three extra buy
-           buttons in everyone else's way was costing the Pro sale. -->
-      <details class="kitsbox">
-        <summary>Just need one piece? <b>Kit Auth + RLS</b> · <b>Test Kit</b> · <b>ui-kit</b> — from $4.99 <span class="combo">2+ = 10% off with <code>COMBO10</code></span></summary>
+    </div>
+  </section>
+
+  <!-- AIRLOCK MONITOR + peças avulsas — o boilerplate é one-time, este slot é o
+       recorrente e os add-ons. Seção própria de 900: o boilerplate não divide
+       tela com produto de outro modelo de compra. -->
+  <section id="monitor" class="reveal">
+    <h2 style="margin-bottom:8px">Keep it sealed after launch</h2>
+    <p class="lead" style="margin-bottom:8px"><em>Airlock Monitor</em> watches the database once real customers are in it.</p>
+
+    <div class="paidstack">
+      <div class="monitor-band">
+        <div class="mb-head">
+          <div class="mb-left">
+            <span class="mb-kick">● DAILY WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
+            <h3 class="mb-title">Airlock Monitor</h3>
+            <p class="mb-pitch">CI checks the migrations you write. <strong>Airlock Monitor checks everything else your live database exposes</strong> — the surfaces that leak without a migration ever touching them. It re-audits every morning and emails you the moment one opens.</p>
+          </div>
+          <div class="mb-right">
+            <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
+            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start monitoring →</a>
+            <span class="mb-note">No account needed — subscribe, we email your login link.<br><b>Cancel anytime · 14-day refund</b></span>
+          </div>
+        </div>
+
+        <!-- Dois cards irmãos: mesma caixa, mesmo topo, mesma altura. O
+             alinhamento vira consequência da estrutura, não de ajuste fino. -->
+        <div class="mb-body">
+          <div class="mbc">
+            <span class="mbml">what it watches</span>
+            <div class="mb-surf">
+              <span>Tables with RLS turned off</span>
+              <span><code>USING(true)</code> / <code>WITH CHECK(true)</code></span>
+              <span>Storage buckets left public</span>
+              <span>Realtime tables readable by <code>anon</code></span>
+              <span><code>SECURITY DEFINER</code> functions that bypass RLS</span>
+              <span>Views running as owner, ignoring RLS</span>
+            </div>
+            <p class="mb-first">Findings come ranked <b>CRITICAL → LOW</b>, plus a monthly report of what's still open. The first scan runs the moment you connect a project.</p>
+          </div>
+          <div class="mbc">
+            <span class="mbml">the email it sends</span>
+            <pre>Subject: Airlock detected 2 NEW RLS exposure(s) in acme-prod
+
+  • invoices — table in "public" has RLS DISABLED — every
+    row is exposed to the API roles
+  • notes — [SELECT] any authenticated user reads all rows
+    (cross-tenant) — USING(true)
+
+These rows are reachable with the anon key. Fix the migration
+or add an allow-rule for intentionally-public policies.</pre>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- As 3 peças avulsas (rodapé desta seção) -->
+      <div class="kitsrow">
+        <div class="kitshead">Just need one piece?</div>
       <div class="pieces3">
         <div class="piece">
           <div class="pt"><span class="pn">Kit Auth + RLS</span><span class="pp">$39.99</span></div>
-          <p class="pd">the security layer + the suite that proves it</p>
           <ul class="plist">
             <li>login, signup, password reset + update</li>
             <li>3 migrations: workspaces, notes, tightened grants</li>
@@ -649,7 +732,6 @@
         </div>
         <div class="piece">
           <div class="pt"><span class="pn">Test Kit</span><span class="pp">$29.99</span></div>
-          <p class="pd">the full testing pyramid + RLS harness</p>
           <ul class="plist">
             <li>7 test files, wired and passing</li>
             <li>Playwright e2e + config; Vitest for units and components</li>
@@ -658,49 +740,14 @@
           <a class="pa buy" href="checkout/?plan=test-kit" data-paddle-plan="test-kit">Get it →</a>
         </div>
         <div class="piece">
-          <div class="pt"><span class="pn">ui-kit</span><span class="pp">$4.99</span></div>
-          <p class="pd">15 themeable React components</p>
+          <div class="pt"><span class="pn">UI Kit</span><span class="pp">$4.99</span></div>
           <ul class="plist">
             <li>Alert · Avatar · Badge · Button · Card · Collapsible · EmptyState · Input · LegendRow · Modal · Skeleton · Spinner · StatCard · Switch · Tabs</li>
           </ul>
           <a class="pa buy" href="checkout/?plan=ui-kit" data-paddle-plan="ui-kit">Get it →</a>
         </div>
       </div>
-      <div class="piece-note">Taking two or more? Enter <code>COMBO10</code> at checkout for <b>10% off</b>. Each piece is a slice of the boilerplate, sold on its own: same repo, same tests, same 14-day refund.</div>
-      </details>
-
-      <!-- AIRLOCK MONITOR band — recurring, the long-term asset -->
-      <div class="monitor-band">
-        <div class="mb-left">
-          <span class="mb-kick">● DAILY WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
-          <h3 class="mb-title">Airlock Monitor</h3>
-          <p class="mb-pitch">CI checks the migrations you write. <strong>Airlock Monitor checks everything else your live database exposes</strong> — the surfaces that leak without a migration ever touching them. It re-audits every morning and emails you the moment one opens.</p>
-          <div class="mb-surf">
-            <span>Tables with RLS turned off</span>
-            <span><code>USING(true)</code> / <code>WITH CHECK(true)</code></span>
-            <span>Storage buckets left public</span>
-            <span>Realtime tables readable by <code>anon</code></span>
-            <span><code>SECURITY DEFINER</code> functions that bypass RLS</span>
-            <span>Views running as owner, ignoring RLS</span>
-          </div>
-          <p class="mb-first">Findings come ranked <b>CRITICAL → LOW</b>, plus a monthly report of what's still open. The first scan runs the moment you connect a project, so you find out today whether any of the above is already true of your database.</p>
-          <div class="mbmail"><span class="mbml">the email it sends</span>
-<pre>Subject: Airlock detected 2 NEW RLS exposure(s) in acme-prod
-
-  • invoices — table in "public" has RLS DISABLED — every
-    row is exposed to the API roles
-  • notes — [SELECT] any authenticated user reads all rows
-    (cross-tenant) — USING(true)
-
-These rows are reachable with the anon key. Fix the migration
-or add an allow-rule for intentionally-public policies.</pre></div>
-        </div>
-        <div class="mb-right">
-          <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
-          <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start monitoring →</a>
-          <span class="mb-note">No account needed — subscribe, we email your login link.<br><b>Cancel anytime · 14-day refund</b></span>
-        </div>
-      </div>
+      <div class="piece-note">Every piece is cut from the boilerplate itself: same repo, same tests. <a class="combobtn" href="checkout/?plan=combo" data-paddle-plan="combo">Get all three — <b>$67.47</b> (COMBO10 applied)</a></div>
     </div>
   </section>
 
@@ -710,30 +757,52 @@ or add an allow-rule for intentionally-public policies.</pre></div>
     <div class="signup-grid">
       <div class="signup-copy">
         <h2>Free: the Supabase RLS cheat&nbsp;sheet</h2>
-        <p class="lead" style="margin:14px 0 6px">The common RLS gotchas on one page — the policies, the tests, and the footguns that ship a table exposed. Drop your email and it lands in your inbox.</p>
-        <p class="lead" style="margin:0 0 8px;font-size:15px">You'll also be first to hear when we ship new tools. No spam, unsubscribe anytime.</p>
+        <p class="lead" style="margin:10px 0 5px">The common RLS gotchas on one page: the policies, the tests, and the footguns that ship a table exposed.</p>
+        <p class="lead" style="margin:0 0 8px;font-size:15px">No spam, unsubscribe anytime.</p>
         <form id="waitlist" onsubmit="return joinList(event)">
           <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
           <input type="email" id="email" placeholder="you@yourstartup.dev" required autocomplete="email">
           <button type="submit" class="btn btn-primary">Send me the cheat sheet →</button>
         </form>
         <div class="msg mono" id="msg"></div>
-        <p class="already">Already convinced? <a href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro — <b id="ppEnd">$179.99</b></a> <span class="s">· one payment · 14-day refund</span></p>
       </div>
       <div class="signup-peek">
         <img src="assets/cheatsheet-preview.png" alt="Preview of the Supabase RLS cheat sheet — the golden rules, the footguns, and the correct owner-scoped policy" loading="lazy">
       </div>
     </div>
+
+      <!-- CLOSER — último bloco da página. Os dois produtos têm modelos de compra
+           diferentes (one-time x assinatura); lado a lado o kicker diz isso sem
+           precisar escrever. "from" mantém o rótulo verdadeiro em qualquer
+           assento selecionado, então nunca anuncia um preço e abre outro. -->
+      <div class="closer">
+        <div class="cl">
+          <span class="clk">ONE-TIME · YOURS FOREVER</span>
+          <h3>The SaaS Boilerplate</h3>
+          <p>Auth, RLS and the tests that prove isolation, already built.</p>
+          <div class="clbuy">
+            <span class="clp"><i>from</i> <b id="ppEnd">$179.99</b></span>
+            <a class="btn btn-primary" href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro →</a>
+          </div>
+        </div>
+        <div class="cl">
+          <span class="clk">SUBSCRIPTION · AFTER LAUNCH</span>
+          <h3>Airlock Monitor</h3>
+          <p>Re-audits your live database every morning and emails you the moment something opens.</p>
+          <div class="clbuy">
+            <span class="clp">$19.99<small>/mo</small></span>
+            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start watching →</a>
+          </div>
+        </div>
+      </div>
   </section>
 
   <footer style="flex-direction:column;align-items:flex-start;gap:9px">
     <div style="display:flex;gap:20px;flex-wrap:wrap">
-      <a href="#paid">Pricing</a>
       <a href="terms/">Terms</a>
       <a href="privacy/">Privacy</a>
       <a href="refunds/">Refunds</a>
       <a href="mailto:support@shipsealed.com">Contact</a>
-      <a href="https://github.com/mateuszingano" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
     <span style="max-width:880px;line-height:1.6">ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil.<br>Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</span>
   </footer>
@@ -746,6 +815,61 @@ or add an allow-rule for intentionally-public policies.</pre></div>
   var nav = document.getElementById('nav');
   var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 8); };
   window.addEventListener('scroll', onScroll, { passive:true }); onScroll();
+
+  // O demo só carrega quando a seção se aproxima. Antes, cada pageview da home
+  // disparava 1 login + 3 requisições num Supabase free — num pico de tráfego o
+  // auth rate-limita e TODO visitante vê o modo offline. De quebra, o visitante
+  // volta a chegar no demo ANTES dele rodar, que é o que a seção promete.
+  (function(){
+    var ifr = document.querySelector('#demo iframe');
+    if (!ifr || !ifr.dataset.src) return;
+    var carregar = function(){
+      if (ifr.src) return;
+      ifr.src = ifr.dataset.src;
+    };
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function(es, obs){
+        es.forEach(function(e){ if (e.isIntersecting) { carregar(); obs.disconnect(); } });
+      }, { rootMargin: '300px 0px' }).observe(document.getElementById('demo'));
+    } else {
+      carregar();
+    }
+  })();
+
+  // Scrollspy: marca na nav a seção em que o visitante está. Feito por geometria
+  // no scroll (e não com IntersectionObserver) porque assim a decisão fica numa
+  // função pura, testável passando uma posição qualquer.
+  (function(){
+    var links = {}, alvos = [];
+    document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(a){
+      var id = a.getAttribute('href').slice(1);
+      var sec = document.getElementById(id);
+      if (sec) { links[id] = a; alvos.push(sec); }
+    });
+    if (!alvos.length) return;
+
+    // Qual seção ocupa o meio da tela nesta posição de rolagem.
+    function secaoNoMeio(y, alturaTela){
+      var linha = y + alturaTela / 2, achou = null;
+      alvos.forEach(function(sec){
+        var topo = sec.offsetTop, base = topo + sec.offsetHeight;
+        if (linha >= topo && linha < base) achou = sec.id;
+      });
+      return achou;
+    }
+    window.__secaoNoMeio = secaoNoMeio; // usado só para testar
+
+    var atual = null;
+    function atualizar(){
+      var id = secaoNoMeio(window.scrollY, window.innerHeight);
+      if (id === atual) return;
+      atual = id;
+      for (var k in links) links[k].classList.toggle('active', k === id);
+    }
+    window.addEventListener('scroll', atualizar, { passive:true });
+    window.addEventListener('resize', atualizar);
+    atualizar();
+  })();
 
   // hamburger menu (mobile)
   var hb = document.getElementById('hb');
@@ -821,9 +945,9 @@ or add an allow-rule for intentionally-public policies.</pre></div>
     var PRO =[179.99,249.99,329.99,399.99,479.99];
     var seats=document.getElementById('phseats'); if(!seats) return;
     var pb=document.getElementById('pb'), pp=document.getElementById('pp');
-    // The closing CTA buys the SAME seat tier (paddle.js reads .seat-btn.active
-    // globally), so its label has to follow the selector or it would advertise
-    // one price and open another.
+    // O card final compra o MESMO tier de assento (paddle.js le .seat-btn.active
+    // globalmente), entao o rotulo dele TEM que seguir o seletor. Sem isto ele
+    // anuncia $179.99 e abre $479.99 — ja aconteceu duas vezes.
     var ppEnd=document.getElementById('ppEnd');
     function m(n){return '$'+n.toFixed(2);}
     seats.addEventListener('click',function(e){

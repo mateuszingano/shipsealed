@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>if(window.top!==window.self)document.documentElement.className+=" embedded";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Live demo — the exact RLS policy + test, proven against a real Postgres · ShipSealed</title>
 <meta name="description" content="The real RLS policy, a real HTTP request as one tenant, the raw response from a live Postgres. One app leaks, one blocks. Verify it yourself.">
@@ -21,7 +22,13 @@
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;padding:118px 20px 6px}
+  /* Embutido na landing: a barra de rolagem não pode existir. Não é "caber no
+     tamanho que eu testei" — é o navegador não ter como criar barra. Fora do
+     iframe (página direta) o scroll normal continua valendo. */
+  html.embedded, html.embedded body{height:100%;overflow:auto}
+  html.embedded body{padding-left:0;padding-right:0}
+  html.embedded .wrap{max-width:none}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;padding:88px 20px 2px}
   .wrap{max-width:1040px;margin:0 auto}
   a{color:var(--green);text-decoration:none}
   .kick{font-family:var(--mono);font-size:12px;letter-spacing:.6px;color:var(--green)}
@@ -30,29 +37,40 @@
   h1 .seal{font-family:var(--serif);font-style:italic;color:var(--green)}
   .sub{color:var(--muted);font-size:14px;max-width:760px}
   .sub b{color:var(--text)}
+  .sub .dom{font-family:var(--mono);color:var(--green)}
+  .code a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
+  .code a:hover{color:var(--green-2)}
   .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--green);border:1px solid var(--green-dim);border-radius:20px;padding:3px 11px;margin-top:9px}
   .live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:p 1.4s infinite}
   @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
-  .contrast{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+  .contrast{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:3px}
   @media(max-width:760px){.contrast{grid-template-columns:1fr}}
-  .card{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:13px 15px;display:flex;flex-direction:column;gap:7px}
-  .card.leaky{border-color:#3a2620} .card.sealed{border-color:var(--green-dim)}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:7px 13px;display:flex;flex-direction:column;gap:4px}
+  .card.leaky{border-color:var(--wax)} .card.sealed{border-color:var(--green-dim)}
   .ctag{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.3px}
   .card.leaky .ctag{color:var(--red)} .card.sealed .ctag{color:var(--green)}
   .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
   .code{font-family:var(--mono);font-size:11px;line-height:1.55;background:#08110d;border:1px solid var(--line-2);border-radius:9px;padding:8px 10px;white-space:pre-wrap;word-break:break-all}
   .code .kw{color:var(--blue)} .code .str{color:var(--green-2)} .code .cmt{color:var(--dim)} .code .bad{color:var(--red)} .code .ok{color:var(--green)}
-  .code.policy{min-height:58px}
-  #leak-res,#seal-res{min-height:56px}
+  .code.policy{min-height:69px}
+  #leak-res,#seal-res{min-height:69px}
   .code.policy .fn{color:var(--amber)}
+  .lbl .viva{color:var(--green);text-transform:none;letter-spacing:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+  /* a requisicao que trouxe a politica: sem isso o bloco de SQL era o unico
+     elemento da pagina que pedia confianca em vez de mostrar a prova. */
+  .polreq{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:2px;word-break:break-all;line-height:1.3}
+  .polreq .ok{color:var(--green)} .polreq .bad{color:var(--red)}
   .btn{font-family:var(--mono);font-size:12.5px;font-weight:600;padding:10px 14px;border-radius:9px;border:0;cursor:pointer;text-align:left}
   .btn:disabled{opacity:.5;cursor:default}
   .btn-attack{background:var(--wax);color:#2a0f07} .btn-seal{background:var(--green);color:#03251c}
-  .playrow{display:flex;align-items:center;gap:12px;margin-top:9px;flex-wrap:wrap}
-  .btn-play{background:var(--green);color:#03251c;font-size:13.5px;padding:11px 20px;border-radius:10px}
+  .playrow{display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap}
+  .btn-play{background:var(--green);color:#03251c;font-size:13.5px;padding:6px 20px;border-radius:10px}
   .btn-play.btn-off{background:transparent;border:1px solid var(--wax);color:var(--wax-2);opacity:1}
-  .playrow .live{margin-top:0}
+  /* Mesma altura dos botões (30) e colada na direita: o texto muda de estado
+     (conectando / logado / acordando), então a âncora é a borda DIREITA —
+     assim ela nunca dança quando a frase troca de tamanho. */
+  .playrow .live{margin-top:0;margin-left:auto;height:30px;box-sizing:border-box}
   .live.off{color:var(--wax-2);border-color:var(--wax)}
   .live.off .dot{background:var(--wax);box-shadow:0 0 8px var(--wax);animation:none}
   .verify.spotlight{border-top-color:var(--wax);box-shadow:0 0 0 1px var(--wax) inset;border-radius:11px;padding:11px 12px}
@@ -61,33 +79,62 @@
   .verdict.show{display:block}
   .verdict.leaked{background:rgba(255,107,90,.12);border:1px solid var(--red);color:var(--red)}
   .verdict.blocked{background:rgba(31,227,184,.1);border:1px solid var(--green-dim);color:var(--green-2)}
-  .verdict.proof{background:rgba(233,96,62,.1);border:1px solid var(--wax);color:var(--wax-2);margin-top:7px}
+  .gate{margin-top:auto;padding-top:6px}
+  .gate .lbl{margin-bottom:3px}
+  .gate .lbl a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
+  .gate pre{font-family:var(--mono);font-size:10.5px;line-height:1.4;color:var(--red);
+            background:#140b09;border:1px solid #3a2620;border-radius:8px;padding:6px 9px;
+            margin:0;white-space:pre-wrap;word-break:break-word}
+  .gate pre b{color:var(--red)}
+  .gate .gatefoot{display:block;font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px;line-height:1.4}
+  .verdict.proof{background:rgba(233,96,62,.1);border:1px solid var(--wax);color:var(--wax-2)}
   /* Standalone only: inside the home iframe the site nav is already there. */
   .homelink{display:none;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green);text-decoration:none;margin-bottom:14px}
   .homelink:hover{text-decoration:underline}
-  .btn-proof{background:transparent;border:1px solid var(--line-2);color:var(--muted);font-size:12px;padding:10px 14px;border-radius:10px}
-  .btn-proof:not(:disabled):hover{border-color:var(--wax);color:var(--wax-2)}
+  /* standalone-only, igual ao homelink: dentro do iframe custaria altura
+     e a demo cabe em 899px com 17px de folga. */
+  .legalbar{display:none;font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px}
+  .legalbar a{color:var(--dim)} .legalbar a:hover{color:var(--green)}
+  /* Mesma altura do Replay (30). Borda laranja: este é o botão da DÚVIDA,
+     o lado do vazamento — verde na marca é ação segura, laranja é o alerta. */
+  .btn-proof{background:transparent;border:1px solid var(--wax);color:var(--wax-2);font-size:12px;padding:7px 14px;border-radius:10px}
+  .btn-proof:not(:disabled):hover{background:rgba(233,96,62,.1);color:var(--wax-2)}
   .foot{margin-top:7px;color:var(--dim);font-family:var(--mono);font-size:12px}
   .foot a{font-weight:600}
-  .verify{margin-top:8px;border-top:1px solid var(--line);padding-top:9px}
-  .verify .vh{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:8px}
+  .verify{margin-top:3px;border-top:1px solid var(--line);padding-top:5px}
+  .verify .vh{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:6px}
+  .vitem{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:5px}
+  /* O link do card selado ia como ANON — abria [] e nao provava isolamento.
+     A alegacao central (Acme ve 0, Globex ve 1, mesma URL) so e reproduzivel
+     COM identidade, entao ela sai daqui em curl copiavel. */
+  .repro{font-family:var(--mono);font-size:9.5px;line-height:1.4;color:var(--muted);
+         background:#08110d;border:1px solid var(--line-2);border-radius:9px;
+         padding:7px 10px;margin-top:5px;white-space:pre-wrap;word-break:break-all}
+  .repro b{color:var(--green)} .repro i{font-style:normal;color:var(--dim)}
+  .reprowrap{position:relative}
+  .copiar{position:absolute;top:50%;transform:translateY(-50%);right:6px;z-index:2;font-family:var(--mono);font-size:10px;
+          color:var(--green);background:var(--bg);border:1px solid var(--green-dim);
+          border-radius:6px;padding:2px 8px;cursor:pointer}
+  .copiar:hover{background:rgba(31,227,184,.1)}
+  .vitem:hover{color:var(--text)}
+  .verify code{color:var(--green);background:rgba(31,227,184,.08);padding:1px 5px;border-radius:4px}
   .verify .vh b{color:var(--green)}
   .vlist{display:grid;grid-template-columns:1fr 1fr;gap:7px}
   @media(max-width:700px){.vlist{grid-template-columns:1fr}}
-  .vitem{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.45;border:1px solid var(--line);border-radius:9px;padding:7px 10px;background:var(--panel-2)}
-  .vitem:hover{border-color:var(--green-dim)}
   .vitem code{color:var(--green);background:rgba(31,227,184,.08);padding:1px 5px;border-radius:4px}
   .vitem b{color:var(--text)}
-  .testline{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+  .testline{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:9px;border-top:1px solid var(--line);padding-top:8px}
   .testline .ok{color:var(--green)} .testline b{color:var(--text)}
+
 </style>
 </head>
 <body>
 <div class="wrap">
   <a class="homelink" id="homelink" href="/">◆ ShipSealed</a>
+  <div class="legalbar" id="legalbar"><a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a> · <a href="/refunds/">Refunds</a> · <a href="mailto:support@shipsealed.com">Contact</a></div>
   <span class="kick">◆ LIVE DEMO · REAL POSTGRES · VERIFY IT YOURSELF</span>
-  <h1>Same database, same tenant, same goal. One policy <span class="leak">leaks.</span> One <span class="seal">blocks.</span></h1>
-  <p class="sub">You're <b>Acme</b>. <b>Globex</b> is another tenant with a confidential memo. Below are the <b>real RLS policies</b> and a <b>real HTTP request</b> sent as Acme — the raw response comes straight from a live Postgres. No mockups, no JavaScript theater.</p>
+  <h1>Same row. One policy <span class="leak">leaks</span> it. One <span class="seal">blocks</span> it.</h1>
+  <p class="sub">You're <b>Acme</b>. <b>Globex</b> is another tenant with a confidential memo. Every URL below is a live link to <code class="dom">supabase.co</code>.</p>
   <div class="playrow">
     <button class="btn btn-play" id="play-btn" disabled>▶ Play the demo</button>
     <button class="btn btn-proof" id="proof-btn" disabled>“0 rows just means the table is empty” — prove me wrong →</button>
@@ -99,9 +146,8 @@
     <div class="card leaky">
       <div class="ctag">✗ WITHOUT ShipSealed</div>
       <div>
-        <div class="lbl">the RLS policy (the footgun)</div>
-        <div class="code policy"><span class="kw">create policy</span> <span class="str">"read"</span> <span class="kw">on</span> demo_leaky_notes
-  <span class="kw">for select using</span> (<span class="bad">true</span>);  <span class="cmt">-- forgot the tenant</span></div>
+        <div class="lbl">the RLS policy <a class="viva" id="leak-pollink" target="_blank" rel="noopener">· read live from pg_policies ↗</a></div>
+        <div class="code policy" id="leak-policy"><span class="cmt">// loading from the database…</span></div>
       </div>
       <div class="io">
         <div class="lbl">request</div>
@@ -112,16 +158,20 @@
         <div class="code" id="leak-res"></div>
       </div>
       <div class="verdict" id="leak-verdict"></div>
+      <div class="gate">
+        <span class="lbl">what <a href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener"><code>npx airlock-rls</code></a> says about this policy</span>
+<pre>✗ <b>fail</b> · demo_leaky_notes."leaky read all"
+  [SELECT] USING(true) — anon reads every row</pre>
+        <span class="gatefoot">this is the free CLI reading the same policy — it fails the build before this ships</span>
+      </div>
     </div>
 
     <!-- SEALED -->
     <div class="card sealed">
       <div class="ctag">✓ WITH ShipSealed</div>
       <div>
-        <div class="lbl">the RLS policy (tenant-scoped)</div>
-        <div class="code policy"><span class="kw">create policy</span> <span class="str">"read"</span> <span class="kw">on</span> notes
-  <span class="kw">for select using</span> (workspace_id <span class="kw">in</span>
-    (<span class="kw">select</span> <span class="fn">user_workspace_ids</span>()));</div>
+        <div class="lbl">the RLS policy <a class="viva" id="seal-pollink" target="_blank" rel="noopener">· read live from pg_policies ↗</a></div>
+        <div class="code policy" id="seal-policy"><span class="cmt">// loading from the database…</span></div>
       </div>
       <div class="io">
         <div class="lbl">request</div>
@@ -132,6 +182,7 @@
         <div class="code" id="seal-res"></div>
       </div>
       <div class="verdict" id="seal-verdict"></div>
+      <div class="verdict" id="proof-verdict"></div>
       <div class="io" id="proof-wrap" style="display:none">
         <div class="code" id="proof-res"></div>
       </div>
@@ -139,12 +190,8 @@
   </div>
 
   <div class="verify">
-    <div class="vh">Don't trust this page — <b>prove it yourself, free:</b></div>
-    <div class="vlist">
-      <a class="vitem" href="https://www.npmjs.com/package/airlock-rls" target="_blank" rel="noopener"><code>npx airlock-rls</code> → fails your build on this exact <code>using (true)</code> footgun. MIT, on npm.</a>
-      <a class="vitem" href="https://github.com/mateuszingano/nextjs-supabase-starter" target="_blank" rel="noopener"><code>nextjs-supabase-starter</code> → free template, ships this test. <code>npm run test:rls</code>.</a>
-    </div>
-    <div class="foot">The paid boilerplate is all of this — hardened, multi-tenant, complete. <a href="/#paid" target="_top">See the boilerplate →</a></div>
+    <div class="vh">Don't trust this page — <b>reproduce it in your terminal.</b> The demo login and the anon key are public by design.</div>
+    <div class="reprowrap"><button class="copiar" id="copiar" type="button">copy</button><pre class="repro" id="repro"></pre></div>
   </div>
 </div>
 
@@ -155,58 +202,191 @@
   var token=null;
   // Embedded in the home, the site nav is right there; standalone (Google, a
   // shared link) the page would be a dead end without a way back.
-  if(window.top===window.self){document.getElementById('homelink').style.display='inline-block';}
+  if(window.top===window.self){document.getElementById('homelink').style.display='inline-block';document.getElementById('legalbar').style.display='block';}
+
+  // Embutido na landing o demo NUNCA rola e NUNCA corta: mede a altura natural
+  // do conteúdo e encolhe proporcionalmente até caber. Roda no load, no resize
+  // e depois de cada ação que muda a altura (play / prova).
+  // Tipografia FIXA: um tamanho só, em qualquer janela — nada aqui redimensiona
+  // texto. Se a janela do visitante for baixa demais para o conteúdo, o bloco
+  // rola (overflow:auto); antes ele era cortado e ficava inalcançável.
+  window.__ajustarEscala = function(){};
   function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
   function status(txt,cls){var s=document.getElementById('live-status');s.innerHTML='<span class="dot"></span>'+txt;s.className='live'+(cls?' '+cls:'');}
 
+  // Um projeto Supabase free HIBERNA e acorda na primeira requisição: a 1ª
+  // falha e a 2ª costuma passar. Por isso aqui não se desiste — o botão vira
+  // "tentar de novo" e continua clicável. Só depois de insistir é que o caminho
+  // vira "roda no teu próprio banco".
+  var tentativas = 0;
   function offline(){
-    // Honest failure: the free DB may be asleep. Don't fake "signed in", don't leave a dead button.
-    status('the live database is asleep right now — prove it yourself below ↓','off');
+    tentativas++;
     var b=document.getElementById('play-btn');
-    b.disabled=true; b.classList.add('btn-off');
-    b.textContent='Demo offline — run it on YOUR db: npx airlock-rls ↓';
-    var v=document.querySelector('.verify'); if(v) v.classList.add('spotlight');
+    b.classList.add('btn-off');
+    b.disabled=false;
+    if (tentativas < 3){
+      status('the live database is waking up — hit retry','off');
+      b.textContent='↻ Retry — the demo database is waking up';
+    } else {
+      status('the live database is not answering — prove it yourself below ↓','off');
+      b.textContent='Demo offline — run it on YOUR db: npx airlock-rls ↓';
+      var v=document.querySelector('.verify'); if(v) v.classList.add('spotlight');
+    }
+    window.__ajustarEscala();
+  }
+
+  // Uma tentativa de login: usada no carregamento e a cada clique em retry.
+  async function conectar(){
+    try{
+      var r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({email:'demo@shipsealed.dev',password:'demo1234'})});
+      var j=await r.json(); token=j.access_token;
+      if(!token) return offline();
+      tentativas=0;
+      var b=document.getElementById('play-btn');
+      b.classList.remove('btn-off'); b.disabled=false;
+      var v=document.querySelector('.verify'); if(v) v.classList.remove('spotlight');
+      status('signed in as Acme · live Supabase');
+      autoRun();
+    }catch(e){ offline(); }
   }
   function autoRun(){
     var b=document.getElementById('play-btn'); b.textContent='▶ Replay';
     var p=document.getElementById('proof-btn');
     p.disabled=false; p.textContent='“0 rows just means the table is empty” — prove me wrong →';
     document.getElementById('proof-wrap').style.display='none';
+    document.getElementById('proof-res').innerHTML='';
+    var pv=document.getElementById('proof-verdict');
+    pv.className='verdict'; pv.innerHTML='';
+    p.classList.remove('btn-off');
+    setTimeout(window.__ajustarEscala,50);
     run('demo_leaky_notes?select=title,body&tenant=eq.Globex', document.getElementById('leak-req'), document.getElementById('leak-res-wrap'), document.getElementById('leak-res'), document.getElementById('leak-verdict'), false);
     run('notes?select=*&id=eq.'+GLOBEX_SECRET_ID, document.getElementById('seal-req'), document.getElementById('seal-res-wrap'), document.getElementById('seal-res'), document.getElementById('seal-verdict'), true);
   }
 
-  (async function(){
+
+  // As políticas na tela vinham escritas no HTML — ou seja, eram uma AFIRMAÇÃO
+  // nossa, não prova. Agora vêm de pg_policies pela API pública: o que aparece
+  // é o que o banco responde sobre si mesmo. Qualquer um repete o GET abaixo.
+  async function carregarPoliticas(){
+    var alvos = {
+      'demo_leaky_notes': document.getElementById('leak-policy'),
+      'notes':            document.getElementById('seal-policy')
+    };
     try{
-      var r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({email:'demo@shipsealed.dev',password:'demo1234'})});
-      var j=await r.json(); token=j.access_token;
-      if(token){
-        status('signed in as Acme · live Supabase');
-        document.getElementById('play-btn').disabled=false;
-        autoRun(); // auto-play: the reward shows without a click
-      } else { offline(); }
-    }catch(e){ offline(); }
+      var url = SB_URL + '/rest/v1/demo_policies?select=*&comando=eq.SELECT';
+      var t0 = performance.now();
+      var r = await fetch(url, {headers:{apikey:ANON}});
+      var ms = Math.round(performance.now() - t0);
+      var bruto = await r.text();
+      var linhas = null; try{ linhas = JSON.parse(bruto); }catch(_){}
+      if(!r.ok || !Array.isArray(linhas)) throw new Error('sem resposta');
+
+      // Mostra a requisição que trouxe o SQL acima. Sem isto, o bloco de
+      // política seria o único da página pedindo para acreditar: qualquer um
+      // cola esta URL no navegador e compara com o que está na tela.
+      ['leak','seal'].forEach(function(lado){
+        var a = document.getElementById(lado + '-pollink');
+        if (a) a.href = url + '&apikey=' + ANON;
+      });
+      linhas.forEach(function(l){
+        var el = alvos[l.tabela]; if(!el) return;
+        var expr = String(l.usando||'').replace(/\s+/g,' ').trim();
+        var perigoso = (expr === 'true');
+        el.innerHTML =
+          '<span class="kw">create policy</span> <span class="str">"' + esc(l.politica) + '"</span> <span class="kw">on</span> ' + esc(l.tabela) + '\n' +
+          '  <span class="kw">for select using</span> (' +
+          (perigoso ? '<span class="bad">true</span>' : '<span class="fn">' + esc(expr) + '</span>') + ');' +
+          (perigoso ? '  <span class="cmt">← no tenant</span>' : '');
+      });
+      Object.keys(alvos).forEach(function(k){
+        if(alvos[k].textContent.indexOf('loading')>=0)
+          alvos[k].innerHTML='<span class="cmt">// no SELECT policy returned for '+esc(k)+'</span>';
+      });
+    }catch(e){
+      // Sem inventar: se não deu pra ler do banco, dizer isso.
+      Object.keys(alvos).forEach(function(k){
+        alvos[k].innerHTML='<span class="bad">// could not read the policy from the database</span>';
+      });
+      ['leak','seal'].forEach(function(lado){
+        var a=document.getElementById(lado+'-pollink');
+        if(a){ a.removeAttribute('href'); a.textContent='· could not read from pg_policies'; }
+      });
+    }
+    window.__ajustarEscala();
+  }
+
+  // O curl é montado com as MESMAS constantes que a página usa nas requisições
+  // acima, então não há como o comando divergir do que o demo executa. A chave
+  // vai numa variável: ela é longa e aparecia duas vezes, custando altura.
+  (function(){
+    var el = document.getElementById('repro');
+    if (!el) return;
+    var linhas = [
+      'ANON="' + ANON + '"',
+      'TOKEN=$(curl -s "' + SB_URL + '/auth/v1/token?grant_type=password" -H "apikey: $ANON" \\',
+      '  -H "content-type: application/json" -d \'{"email":"demo@shipsealed.dev","password":"demo1234"}\' | jq -r .access_token)',
+      'curl "' + SB_URL + '/rest/v1/notes?id=eq.' + GLOBEX_SECRET_ID + '" -H "apikey: $ANON" -H "authorization: Bearer $TOKEN"',
+      '<i># as Acme →</i> <b>[]</b>   <i>· log in as globex@shipsealed.dev instead and the same URL returns</i> <b>1 row</b>'
+    ];
+    el.innerHTML = linhas.join('\n');
+    var b = document.getElementById('copiar');
+    if (b) b.addEventListener('click', function(){
+      navigator.clipboard.writeText(el.innerText).then(function(){
+        b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy'; }, 1600);
+      }).catch(function(){ b.textContent = 'select it manually'; });
+    });
   })();
+
+  carregarPoliticas();
+
+  conectar(); // auto-play: a recompensa aparece sem precisar clicar
 
   function bearer(){return token?('Bearer '+token.slice(0,24)+'…'):'Bearer …';}
 
   async function run(path, reqEl, resWrap, resEl, verdict, isSealed){
     var url=SB_URL+'/rest/v1/'+path;
-    reqEl.innerHTML='<span class="ok">GET</span> '+esc(url)+'\n<span class="cmt">apikey:</span> '+ANON.slice(0,18)+'…\n<span class="cmt">authorization:</span> '+esc(bearer())+'  <span class="cmt">← Acme</span>';
-    var t0=performance.now();
-    var r=await fetch(url,{headers:{apikey:ANON,authorization:'Bearer '+token}});
-    var ms=Math.round(performance.now()-t0);
-    var body=await r.text();
-    var rows; try{rows=JSON.parse(body);}catch(_){rows=[];}
+    // O link abre a MESMA consulta no domínio da Supabase, numa aba do visitante.
+    // É o único jeito de isto provar algo: fora da nossa página, renderizado pelo
+    // navegador dele. A chave publica vai na URL porque o PostgREST aceita.
+    var aberto = url + (url.indexOf('?')<0?'?':'&') + 'apikey=' + ANON;
+    reqEl.innerHTML='<span class="ok">GET</span> <a href="'+esc(aberto)+'" target="_blank" rel="noopener">'+esc(url)+'</a>'
+      +'\n<span class="cmt">authorization:</span> '+esc(bearer())+'  <span class="cmt">← Acme</span>';
     resWrap.style.display='';
-    resEl.innerHTML='<span class="cmt">HTTP</span> <span class="ok">'+r.status+'</span> <span class="cmt">· '+ms+'ms · rows: '+(rows.length)+'</span>\n'+(rows.length? '<span class="bad">'+esc(body)+'</span>' : '<span class="ok">'+esc(body)+'</span>');
-    if(isSealed){
-      verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
-      verdict.innerHTML=rows.length?'✗ leaked (unexpected)':'✓ BLOCKED — Postgres returned 0 rows to Acme. The scoped policy did it, before any app code ran. No leak.';
-    }else{
-      verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
-      verdict.innerHTML=rows.length?'✗ LEAKED — Globex\'s memo came back to Acme. This is the exact bug airlock-rls fails your build on.':'blocked';
+    try{
+      var t0=performance.now();
+      var r=await fetch(url,{headers:{apikey:ANON,authorization:'Bearer '+token}});
+      var ms=Math.round(performance.now()-t0);
+      var body=await r.text();
+      var dados=null; try{dados=JSON.parse(body);}catch(_){}
+
+      // Só uma LISTA prova alguma coisa. Um objeto de erro (token expirado, 401)
+      // tem length undefined e cairia no ramo "0 linhas", estampando BLOCKED
+      // para uma requisição que FALHOU. Este demo é a prova da marca: não pode
+      // alegar sucesso sem resposta boa.
+      if(!r.ok || !Array.isArray(dados)){
+        resEl.innerHTML='<span class="cmt">HTTP</span> <span class="bad">'+r.status+'</span> <span class="cmt">· '+ms+'ms</span>\n<span class="bad">'+esc(body.slice(0,140))+'</span>';
+        verdict.className='verdict proof show';
+        verdict.innerHTML='◆ This request did not come back clean, so this run proves nothing. Hit ▶ Replay, or run it on your own database: npx airlock-rls.';
+        window.__ajustarEscala();
+        return;
+      }
+
+      var rows=dados;
+      resEl.innerHTML='<span class="cmt">HTTP</span> <span class="ok">'+r.status+'</span> <span class="cmt">· '+ms+'ms · rows: '+(rows.length)+'</span>\n'+(rows.length? '<span class="bad">'+esc(body)+'</span>' : '<span class="ok">'+esc(body)+'</span>');
+      if(isSealed){
+        verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
+        verdict.innerHTML=rows.length?'✗ leaked (unexpected)':'✓ BLOCKED — Postgres returned 0 rows to Acme. The scoped policy did it, before any app code ran. No leak.';
+      }else{
+        verdict.className=rows.length?'verdict leaked show':'verdict blocked show';
+        verdict.innerHTML=rows.length?'✗ LEAKED — Globex\'s memo came back to Acme. This is the exact bug airlock-rls fails your build on.':'◆ The leaky table came back empty this run, so there is nothing to leak. Hit ▶ Replay.';
+      }
+    }catch(e){
+      // Rede caiu no meio: dizer isso, em vez de deixar a tela congelada.
+      resEl.innerHTML='<span class="bad">could not reach the database ('+esc(String(e.message||e).slice(0,60))+')</span>';
+      verdict.className='verdict proof show';
+      verdict.innerHTML='◆ Network failed mid-request, so this run proves nothing. Hit ▶ Replay.';
     }
+    window.__ajustarEscala();
   }
 
   // The skeptic's out: "0 rows just means the row isn't there." So run the EXACT
@@ -232,14 +412,16 @@
       document.getElementById('proof-res').innerHTML=
         '<span class="cmt">same URL ·</span> authorization: Bearer '+gtok.slice(0,14)+'… <span class="cmt">← Globex, not Acme</span>\n'+
         '<span class="cmt">HTTP</span> <span class="ok">'+r.status+'</span> <span class="cmt">· '+ms+'ms · rows: '+rows.length+'</span>  <span class="bad">'+esc(String(title).slice(0,58))+'</span>';
-      // Evolve the sealed verdict instead of stacking a second box: same story,
-      // one place to read it, and it keeps the demo inside one screen.
-      var v=document.getElementById('seal-verdict');
+      // O BLOCKED é a conclusão principal do demo e fica onde está. A prova
+      // entra ABAIXO, como argumento de apoio: "bloqueou" + "e a linha estava
+      // lá o tempo todo" — a sequência inteira visível de uma vez.
+      var v=document.getElementById('proof-verdict');
       v.className='verdict proof show';
       v.innerHTML=rows.length
         ? '◆ 0 rows to Acme, <b>1 row to Globex</b> — from the same URL. The row was there all along: the policy said no, the table was never empty.'
         : '◆ Globex got 0 rows too — the demo row is missing, so ignore this run.';
       btn.textContent='✓ proven — the row exists';
+      window.__ajustarEscala();
     }catch(e){
       btn.disabled=false;
       btn.textContent='couldn\'t reach the DB — run it yourself: npx airlock-rls ↓';
@@ -247,10 +429,12 @@
   }
   document.getElementById('proof-btn').addEventListener('click',proveRowExists);
 
-  document.getElementById('play-btn').addEventListener('click',function(){
-    this.textContent='▶ Replay';
-    run('demo_leaky_notes?select=title,body&tenant=eq.Globex', document.getElementById('leak-req'), document.getElementById('leak-res-wrap'), document.getElementById('leak-res'), document.getElementById('leak-verdict'), false);
-    run('notes?select=*&id=eq.'+GLOBEX_SECRET_ID, document.getElementById('seal-req'), document.getElementById('seal-res-wrap'), document.getElementById('seal-res'), document.getElementById('seal-verdict'), true);
+  // Replay = voltar ao estado inicial. Chama autoRun() em vez de repetir as
+  // consultas aqui: era essa duplicação que deixava a prova na tela e o botão
+  // dela travado em "proven" depois do replay.
+  document.getElementById('play-btn').addEventListener('click', function(){
+    if(!token) return conectar();   // estado de retry
+    autoRun();                      // replay normal
   });
 </script>
 </body>

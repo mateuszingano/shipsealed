@@ -99,7 +99,8 @@
     'kit-auth-rls': { name: 'Kit Auth + RLS',              price: '$39.99' },
     'test-kit':     { name: 'Test Kit',                    price: '$29.99' },
     'ui-kit':       { name: 'ui-kit',                      price: '$4.99' },
-    'monitor':      { name: 'Airlock Monitor',             price: '$19.99/mo' }
+    'monitor':      { name: 'Airlock Monitor',             price: '$19.99/mo' },
+    'combo':        { name: 'all three pieces (Kit Auth + RLS, Test Kit, UI Kit)', price: '$67.47 with COMBO10' }
   };
 
   var plan = (new URLSearchParams(location.search).get('plan') || '').toLowerCase();
@@ -108,7 +109,7 @@
   // Seats live in the page the buyer came FROM, and a static href can't carry
   // them — so this page only ever sells the single-seat licence, and says so.
   // Anything bigger goes through email rather than charging the wrong tier.
-  var SEATED = (plan === 'base' || plan === 'pro');
+  var SEATED = (plan === 'base' || plan === 'pro');   // combo e kits nao tem assento
 
   if (p) {
     document.getElementById('what').innerHTML =
@@ -124,24 +125,28 @@
   document.getElementById('retry').addEventListener('click', function (e) {
     e.preventDefault();
     var P = window.PADDLE || {};
-    var entry = p && P.priceIds && P.priceIds[plan];
-    var priceId = Array.isArray(entry) ? entry[0] : entry;
+    // Mesma funcao que a landing usa: impossivel esta pagina montar um carrinho
+    // diferente do que foi anunciado la.
+    var itens = P.itensDoPlano ? P.itensDoPlano(plan, 0) : null;
+    var cupom = P.cupomDoPlano ? P.cupomDoPlano(plan) : null;
 
-    if (!priceId || typeof window.Paddle === 'undefined') {
+    if (!itens || typeof window.Paddle === 'undefined') {
       this.textContent = 'Still blocked — email me instead ↓';
       this.classList.remove('primary');
       this.classList.add('ghost');
       return;
     }
     try {
-      window.Paddle.Checkout.open({
+      var opcoes = {
         settings: {
           successUrl: plan === 'monitor'
             ? 'https://shipsealed.com/welcome/'
             : 'https://boilerplate-delivery.vercel.app/'
         },
-        items: [{ priceId: priceId, quantity: 1 }]
-      });
+        items: itens
+      };
+      if (cupom) opcoes.discountCode = cupom;
+      window.Paddle.Checkout.open(opcoes);
     } catch (err) {
       this.textContent = 'Still blocked — email me instead ↓';
       this.classList.remove('primary');
