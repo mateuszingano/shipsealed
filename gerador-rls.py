@@ -8,7 +8,7 @@ Cada página é escrita À MÃO (código real, testado) em PAGES abaixo — nada
 raso. O gerador só cuida do shell (head/meta/canonical/OG/JSON-LD/nav/footer/CTA) e
 da consistência. Saída: dev-site/rls/<slug>/index.html.
 """
-import os, io, json, html
+import os, io, json, html, re, subprocess
 
 BASE = "https://shipsealed.com"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -328,6 +328,50 @@ def build_index():
     io.open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(doc)
 
 
+RE_NOINDEX = re.compile(r'<meta\s+name="robots"[^>]*content="[^"]*noindex', re.I)
+
+
+def _versionados():
+    """Arquivos que o git rastreia = o que realmente vai pro ar no push.
+
+    Página existente no disco mas não commitada ainda NÃO está publicada, e
+    sitemap apontando pra 404 é pior do que página faltando no sitemap. Quando
+    o arquivo for commitado, ele entra no sitemap sozinho na próxima geração.
+    """
+    out = subprocess.run(["git", "-C", HERE, "ls-files", "*.html"],
+                         capture_output=True, text=True)
+    if out.returncode != 0:
+        raise SystemExit("ABORTADO: 'git ls-files' falhou — sem saber o que está publicado, "
+                         "não dá pra montar o sitemap com honestidade.\n" + out.stderr)
+    return set(p.strip().replace("/", os.sep) for p in out.stdout.splitlines() if p.strip())
+
+
+def paginas_indexaveis():
+    """Caminhos de URL de toda página que PODE e DEVE ser indexada.
+
+    Entra se: é uma `index.html` (o site serve por pasta), está versionada, e
+    não declara `noindex`. Assim o funil (checkout/subscribe/welcome) e os stubs
+    de redirect (pricing) ficam de fora sozinhos, sem lista pra manter.
+    """
+    versionados = _versionados()
+    fora = {".git", "__pycache__", "_internal", "assets", "api", "node_modules"}
+    caminhos = []
+    for dirpath, dirnames, files in os.walk(HERE):
+        dirnames[:] = [d for d in dirnames if d not in fora]
+        if "index.html" not in files:
+            continue
+        full = os.path.join(dirpath, "index.html")
+        rel = os.path.relpath(full, HERE)
+        if rel not in versionados:
+            continue
+        if RE_NOINDEX.search(io.open(full, encoding="utf-8", errors="replace").read()):
+            continue
+        url = rel.replace(os.sep, "/")[:-len("index.html")]
+        caminhos.append("/" + url)
+    # "/" primeiro (é a de maior prioridade), o resto em ordem estável
+    return sorted(caminhos, key=lambda p: (p != "/", p))
+
+
 def build_sitemap():
     slugs = sorted(d for d in os.listdir(OUT)
                    if os.path.isdir(os.path.join(OUT, d))
@@ -340,15 +384,17 @@ def build_sitemap():
     sm.append('</urlset>')
     io.open(os.path.join(HERE, "rls-sitemap.xml"), "w", encoding="utf-8").write("\n".join(sm) + "\n")
 
-    # sitemap.xml principal: páginas core do site + o hub + as guias de RLS
-    core = ["/", "/pricing/", "/cheatsheet/", "/privacy/", "/terms/", "/refunds/", "/rls/"]
+    # sitemap.xml principal: TODAS as páginas indexáveis, descobertas por scan.
+    # (Era uma lista escrita à mão e ela tinha saído da realidade: listava a
+    # /pricing/, que é um stub noindex, e não listava /demo/, /service-role-scanner/
+    # nem /compare/…, que estão no ar e querem ranquear. Lista à mão não acompanha
+    # o site — mesma lição do sitemap das calculadoras, 29/07/26.)
     main = ['<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for path in core:
+    for path in paginas_indexaveis():
         pr = ' <priority>1.0</priority>' if path == "/" else ''
-        main.append('  <url><loc>%s%s</loc><changefreq>weekly</changefreq>%s</url>' % (BASE, path, pr))
-    for s in slugs:
-        main.append('  <url><loc>%s/rls/%s/</loc><changefreq>monthly</changefreq></url>' % (BASE, s))
+        freq = 'monthly' if path.startswith("/rls/") and path != "/rls/" else 'weekly'
+        main.append('  <url><loc>%s%s</loc><changefreq>%s</changefreq>%s</url>' % (BASE, path, freq, pr))
     main.append('</urlset>')
     io.open(os.path.join(HERE, "sitemap.xml"), "w", encoding="utf-8").write("\n".join(main) + "\n")
     return len(slugs)
