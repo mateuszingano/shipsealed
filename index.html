@@ -487,6 +487,27 @@
     .btn:hover,a.tool:hover{transform:none}
     .pill .live{animation:none}
   }
+
+/* ===== escala por altura de tela (30/07/26) =====
+   Tela de referencia: 993 (a do Mateus). Abaixo disso o conteudo das secoes
+   encolhe junto, mantendo o desenho, em vez de estourar a secao.
+   O fator vem do JS no fim da pagina (--z), com piso 0.80 pra o texto nao
+   ficar pequeno demais. Sem JS ou sem suporte a zoom, o site fica como era.
+   SO acima de 760px de largura: no celular o conteudo empilha, a regra de
+   1 secao = 1 tela nao vale, e escalar la so encolhia o texto a toa. */
+@media (min-width:761px) and (max-height:990px){
+  body > .wrap > * > *{zoom:var(--z,1)}
+  /* o zoom dos filhos NAO afeta o padding da propria secao: escala na mao.
+     Os valores base tambem cairam (190 -> 120 no hero, 220 -> 120 no list):
+     respiro grande no topo e desenho de tela grande, nao precisa escalar
+     proporcional numa tela baixa. */
+  .hero{padding-top:calc(120px * var(--z,1));padding-bottom:calc(32px * var(--z,1))}
+  .who-tools{padding-top:calc(96px * var(--z,1));padding-bottom:calc(14px * var(--z,1))}
+  #paid{padding-top:calc(50px * var(--z,1));padding-bottom:calc(65px * var(--z,1))}
+  #monitor{padding-top:calc(76px * var(--z,1));padding-bottom:calc(48px * var(--z,1))}
+  #list{padding-top:calc(120px * var(--z,1))}
+  #demo{padding-top:calc(44px * var(--z,1));padding-bottom:calc(44px * var(--z,1))}
+}
 </style>
 <script>document.documentElement.classList.add('js')</script>
 </head>
@@ -1339,6 +1360,20 @@ or add an allow-rule for intentionally-public policies.</pre>
     if(document.readyState === 'complete') mount();
     else window.addEventListener('load', mount);
   }
+})();
+</script>
+
+<script>
+/* fator de escala por altura de tela. Ver o bloco "escala por altura" no CSS. */
+(function(){
+  var REF=993, PISO=0.80;
+  function aplica(){
+    var f=Math.max(PISO, Math.min(1, window.innerHeight/REF));
+    document.documentElement.style.setProperty('--z', f);
+  }
+  aplica();
+  window.addEventListener('resize', aplica, {passive:true});
+  window.addEventListener('orientationchange', aplica);
 })();
 </script>
 </body>
