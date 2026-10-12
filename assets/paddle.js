@@ -82,8 +82,14 @@ window.PADDLE = {
     var priceId = Array.isArray(entry) ? entry[seat || 0] : entry;
     return priceId ? [{ priceId: priceId, quantity: 1 }] : null;
   };
+  // LAUNCH30 = preco de lancamento (30% off Base/Pro, todos os tiers, 20 usos,
+  // restrito aos 2 produtos no Paddle). Quando esgotar ou acabar a promo, tirar
+  // daqui E o LAUNCH do index.html/checkout juntos, senao o site anuncia um
+  // preco e o checkout cobra outro.
   window.PADDLE.cupomDoPlano = function (plan) {
-    return plan === 'combo' ? 'COMBO10' : null;
+    if (plan === 'combo') return 'COMBO10';
+    if (plan === 'base' || plan === 'pro') return 'LAUNCH30';
+    return null;
   };
 
   // Which seat tier is selected right now (0..4). Mirrors the seat selector on the pricing page.

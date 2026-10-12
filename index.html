@@ -311,6 +311,7 @@
   /* os dois botoes sao iguais — nenhum tier chama mais atencao que o outro */
   .tiercard .tc-buy{font-size:14px;padding:9px 16px;border-radius:9px}
   .tc-price{font-family:var(--mono);font-size:20px;letter-spacing:-.02em;color:var(--green)}
+  s.was{color:var(--dim);font-size:.72em;font-weight:400;margin-right:4px}
   @media(max-width:760px){.tiercards{grid-template-columns:1fr}}
   .pieces3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   @media(max-width:760px){.pieces3{grid-template-columns:1fr}}
@@ -723,7 +724,7 @@
             </ul>
             <div class="tc-foot">
               <a class="btn btn-primary tc-buy" href="checkout/?plan=base" data-paddle-plan="base">Get Base →</a>
-              <b class="tc-price" id="pb">$119.99</b>
+              <b class="tc-price" id="pb"><s class="was">$119.99</s> $83.99</b>
             </div>
           </div>
           <div class="wyg pro">
@@ -737,7 +738,7 @@
             </ul>
             <div class="tc-foot">
               <a class="btn btn-primary tc-buy" href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro →</a>
-              <b class="tc-price" id="pp">$179.99</b>
+              <b class="tc-price" id="pp"><s class="was">$179.99</s> $125.99</b>
             </div>
           </div>
         </div>
@@ -745,6 +746,7 @@
           <p><span class="bl">STACK</span> Next.js 16 · React 19 · TypeScript 5 · Supabase <span class="s">·</span> last updated July 2026</p>
           <p><span class="bl">DELIVERY</span> Read access to the private GitHub repo. Enter your GitHub username on the receipt page and the invite lands in your inbox — clone and go. <span class="s">Seats = invites; the licence covers unlimited projects you own or build for clients.</span></p>
           <p><span class="bl">UPDATES</span> Repo access doesn't expire. Every future update lands in the same repository you already have. <span class="s">No renewal, no upgrade fee.</span></p>
+          <p><span class="bl">LAUNCH</span> 30% off Base and Pro, every team size, for the first 20 buyers. <span class="s">Applied automatically at checkout (code LAUNCH30).</span></p>
           <p><span class="bl">REFUND</span> 14 days, money back, no hard feelings. <a href="refunds/">Read the policy</a>.</p>
           <p class="bhelp">Checkout blocked by an adblocker or a corporate proxy? Email <a href="mailto:support@shipsealed.com?subject=Direct%20checkout%20link">support@shipsealed.com</a> and you'll get a direct link.</p>
         </div>
@@ -770,8 +772,8 @@
           </div>
           <div class="mb-right">
             <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
-            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start monitoring →</a>
-            <span class="mb-note">No account needed — subscribe, we email your login link.<br><b>Cancel anytime · 14-day refund</b></span>
+            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start 14-day free trial →</a>
+            <span class="mb-note">No account needed. Start the trial, we email your login link.<br><b>Free for 14 days · cancel before it ends, pay nothing</b></span>
           </div>
         </div>
 
@@ -880,7 +882,7 @@ or add an allow-rule for intentionally-public policies.</pre>
           <p>Auth, RLS and the tests that prove isolation, already built.</p>
           <div class="clbuy">
             <a class="btn btn-primary" href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro →</a>
-            <span class="clp"><i>from</i> <b id="ppEnd">$179.99</b></span>
+            <span class="clp"><i>from</i> <b id="ppEnd"><s class="was">$179.99</s> $125.99</b></span>
           </div>
         </div>
         <div class="cl">
@@ -888,8 +890,8 @@ or add an allow-rule for intentionally-public policies.</pre>
           <h3>Airlock Monitor</h3>
           <p>Re-audits your live database every morning and emails you the moment something opens.</p>
           <div class="clbuy">
-            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Start watching →</a>
-            <span class="clp">$19.99<small>/mo</small></span>
+            <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Try it free →</a>
+            <span class="clp">$19.99<small>/mo · 14 days free</small></span>
           </div>
         </div>
       </div>
@@ -1048,11 +1050,15 @@ or add an allow-rule for intentionally-public policies.</pre>
     // anuncia $179.99 e abre $479.99 — ja aconteceu duas vezes.
     var ppEnd=document.getElementById('ppEnd');
     function m(n){return '$'+n.toFixed(2);}
+    // Preco de lancamento: o MESMO calculo do Paddle (30% arredondado no centavo,
+    // subtraido do preco cheio), pra o rotulo bater com o total do checkout.
+    // Tirar junto com o LAUNCH30 do paddle.js.
+    function L(n){return '<s class="was">'+m(n)+'</s> '+m(n-Math.round(n*30)/100);}
     seats.addEventListener('click',function(e){
       var b=e.target.closest('.seat-btn'); if(!b) return;
       var i=parseInt(b.getAttribute('data-i'),10);
-      pb.textContent=m(BASE[i]); pp.textContent=m(PRO[i]);
-      if(ppEnd) ppEnd.textContent=m(PRO[i]);
+      pb.innerHTML=L(BASE[i]); pp.innerHTML=L(PRO[i]);
+      if(ppEnd) ppEnd.innerHTML=L(PRO[i]);
       var all=seats.querySelectorAll('.seat-btn');
       for(var k=0;k<all.length;k++) all[k].classList.toggle('active', k===i);
     });
