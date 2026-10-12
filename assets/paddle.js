@@ -37,8 +37,8 @@ window.PADDLE = {
       'pri_01kxgz2ts97sfdh5jfgrsbkwj5', // 5–8 devs — $479.99
     ],
     // à-la-carte add-ons — flat price (a string, not a seat array)
-    'kit-auth-rls': 'pri_01kxgz2vydz85g6h8syxj4by36', // $39.99
-    'test-kit':     'pri_01kxgz2wg8v0qa7x0xg5njjseb', // $29.99
+    'kit-auth-rls': 'pri_01kxgz2vydz85g6h8syxj4by36', // $19.99 (era $39.99 ate 12/10/26)
+    'test-kit':     'pri_01kxgz2wg8v0qa7x0xg5njjseb', // $14.99 (era $29.99 ate 12/10/26)
     'ui-kit':       'pri_01kxgz2vbw8rge6kvcafb2k6yy', // $4.99
     // Airlock Monitor subscription — buy here (pay-first). After payment the
     // Monitor webhook provisions the account from the buyer's email and mails a
