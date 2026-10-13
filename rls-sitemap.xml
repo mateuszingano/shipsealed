@@ -9,6 +9,7 @@
   <url><loc>https://shipsealed.com/rls/owner-id-vs-workspace-id-rls-pattern/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/rls-in-ci-fail-build-exposed-table/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/rls-vs-app-layer-authorization/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/supabase-october-30-grants-change/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-security-checklist-before-launch/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-table-public-rls-off/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>

@@ -576,3 +576,96 @@ EXTRA.append({
          "Gate it in CI so a new table without RLS, or a permissive policy, fails the build — and keep an isolation test green on every migration. Enforcement beats memory; that's what turns this checklist from a one-time ritual into a guarantee."),
     ],
 })
+
+
+# ---- 13. Supabase Oct 30 2026 grants change ------------------------------
+# Fonte: anúncio oficial github.com/orgs/supabase/discussions/45329 (lido 13/10/26).
+# Ângulo nosso: o conserto rápido do 42501 (grant em massa) reexpõe tabela sem RLS.
+EXTRA.append({
+    "slug": "supabase-october-30-grants-change",
+    "title": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
+    "h1_plain": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
+    "h1": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
+    "desc": "From Oct 30, 2026, new Supabase tables need an explicit GRANT to reach the Data API. What breaks (42501), the migration that works, and the fix that leaks.",
+    "eyebrow": "Supabase RLS · Platform change",
+    "crumb": "Oct 30 grants change",
+    "byline": "Supabase · October 2026",
+    "tldr": "From Oct 30, a <b>new</b> table in <code>public</code> isn't reachable by <code>anon</code> / <code>authenticated</code> until you <code>GRANT</code> it. Existing tables keep working. Put grant + RLS + policies in the <b>same migration</b>. Don't fix a 42501 with <code>grant ... on all tables</code>: that also grants every table that has RLS off.",
+    "body": """  <h2><span class="n">01</span> What changes on October 30</h2>
+  <p>Until now, every table created in <code>public</code> got full privileges (<code>select / insert / update / delete</code> and more) granted to <code>anon</code>, <code>authenticated</code> and <code>service_role</code> automatically, through default privileges. On <b>October 30, 2026</b> Supabase turns that off for all existing projects (new projects have had it off since a gradual rollout that started May 30). From then on:</p>
+  <div class="cause"><h3>New tables</h3><p>Created without a <code>GRANT</code>, they're invisible to the Data API (<code>supabase-js</code>, PostgREST, GraphQL), however you created them: SQL editor, migration, CLI, MCP or an AI tool.</p></div>
+  <div class="cause"><h3>Existing tables</h3><p>Not affected. They keep the grants they have today, so your running app keeps working.</p></div>
+  <div class="cause"><h3>RLS and policies</h3><p>Unchanged. Grants decide whether a role can touch the table at all; RLS decides which rows.</p></div>
+  <p>Direct Postgres connections (psql, an ORM, a server with a connection string) aren't affected. Source: Supabase's <a href="https://github.com/orgs/supabase/discussions/45329">official announcement</a>.</p>
+
+  <h2><span class="n">02</span> What "broken" looks like</h2>
+  <p>The first new table after the cutover returns this from the API instead of rows:</p>
+  <p class="filelabel">response (example from Supabase's announcement)</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"42501"</span>,
+  <span class="s">"message"</span>: <span class="s">"permission denied for table invoices"</span>,
+  <span class="s">"hint"</span>: <span class="s">"Grant the required privileges to the current role with: GRANT SELECT ON public.invoices TO anon;"</span>
+}</pre>
+  <p>Postgres rejects the query before RLS even runs. That's the new default working as intended, not a bug in your policies.</p>
+
+  <h2><span class="n">03</span> The fix that leaks</h2>
+  <p>The fastest way to make that error go away is the bulk grant from the rollback section of the announcement:</p>
+  <p class="filelabel">don't paste this as a fix</p>
+  <pre><span class="k">grant select</span>, <span class="k">insert</span>, <span class="k">update</span>, <span class="k">delete</span> <span class="k">on all tables in schema</span> public
+  <span class="k">to</span> anon, authenticated, service_role;</pre>
+  <p>It works, and it also grants <b>every</b> table in <code>public</code>, including the ones you never meant to expose. Any of those with <b>RLS off</b> becomes readable and writable by anyone holding your anon key, which ships in your frontend. The new default was your chance to stop exposing tables by accident; the bulk grant gives that back. Ask an AI coding tool to "fix the permission error" and this line is a likely answer.</p>
+  <p>Grant per table instead, and only what each role needs.</p>
+
+  <h2><span class="n">04</span> The migration pattern that works</h2>
+  <p>Treat grant, RLS and policies as one unit, in the same migration, so a table never exists half-configured:</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create table</span> public.invoices (
+  id         <span class="k">bigint generated always as identity primary key</span>,
+  user_id    uuid <span class="k">not null references</span> auth.users(id),
+  amount     numeric <span class="k">not null</span>
+);
+
+<span class="k">alter table</span> public.invoices <span class="k">enable row level security</span>;
+
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> public.invoices <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="c">-- only the role and the operations the app actually uses</span>
+<span class="k">grant select on</span> public.invoices <span class="k">to</span> authenticated;</pre>
+  <p>No grant to <code>anon</code> here, because signed-out visitors don't read invoices. If a table uses <code>serial</code> / <code>bigserial</code> instead of an identity column and the API inserts into it, the sequence needs its own grant: <code>grant usage, select on sequence public.invoices_id_seq to authenticated;</code></p>
+
+  <h2><span class="n">05</span> Check what the API roles can reach today</h2>
+  <p>Run this in the SQL editor. It lists every table and view in <code>public</code>, whether <code>anon</code> or <code>authenticated</code> can read it, and whether RLS is on:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_any_column_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>)          <span class="k">as</span> anon_can_read,
+       has_any_column_privilege(<span class="s">'authenticated'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> auth_can_read,
+       c.relrowsecurity                                              <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c
+<span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind <span class="k">in</span> (<span class="s">'r'</span>, <span class="s">'p'</span>, <span class="s">'v'</span>, <span class="s">'m'</span>)
+<span class="k">order by</span> 1;</pre>
+  <p>A table with <code>anon_can_read = true</code> and <code>rls_on = false</code> can be read by anyone with your anon key. Two details make this stricter than the usual query built on <code>information_schema.table_privileges</code>:</p>
+  <div class="cause"><h3>Column grants</h3><p><code>grant select (id, email) on profiles to anon</code> doesn't show up as a table privilege, but the API still serves those columns. <code>has_any_column_privilege</code> catches table and column grants alike.</p></div>
+  <div class="cause"><h3>Views</h3><p>Views are reachable through the API too, and by default a view reads its tables as the view's owner, which skips RLS. Create views with <code>security_invoker = on</code> so they respect the caller's RLS.</p></div>
+
+  <h2><span class="n">06</span> Keep it from coming back</h2>
+  <p>The new default only protects you while every migration stays honest. Two free checks help there:</p>
+  <div class="cause"><h3>In CI</h3><p><a href="https://www.npmjs.com/package/airlock-migrate"><code>npx airlock-migrate</code></a> reads your migration files and fails the build when one creates a table without enabling RLS, or turns RLS off. Those are the tables a bulk grant would expose. It also warns on a view without <code>security_invoker = on</code>. It doesn't flag grants themselves, and it only sees tables that go through your migration files.</p></div>
+  <div class="cause"><h3>On the live database</h3><p><code>SUPABASE_DB_URL=... npx airlock-rls</code> checks the running database for tables with RLS off and policies that let everyone through. <a href="/rls/rls-in-ci-fail-build-exposed-table/">Set it up in CI</a>.</p></div>""",
+    "related": [
+        ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
+        ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
+        ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
+    ],
+    "faq": [
+        ("Do my existing tables stop working on October 30?",
+         "No. Supabase only changes the default for tables created after the cutover. Existing tables keep their current grants. The first thing that breaks is the next new table you create without a GRANT."),
+        ("Does this change make my app more secure by itself?",
+         "Only for new tables. Every existing table keeps its old grants, so one that has RLS off today stays readable through the API after October 30. Run the check above and enable RLS on anything that shows anon_can_read true with rls_on false."),
+        ("Should I grant to anon or to authenticated?",
+         "Grant to the role that actually needs the table. Data only signed-in users see gets a grant to authenticated and no grant to anon. Public data, like a product catalog, can be granted to anon with an RLS policy that allows reading it."),
+        ("Is service_role affected?",
+         "Yes. It also loses the automatic grants on new tables, so a backend using the service_role key gets 42501 on a new table until you grant it. Once granted, it still bypasses RLS."),
+    ],
+})
