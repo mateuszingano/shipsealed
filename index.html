@@ -622,7 +622,7 @@
       <a class="tool" href="https://www.npmjs.com/package/airlock-migrate" target="_blank" rel="noopener">
         <span class="badge"><span class="live"></span>FREE · npm</span>
         <span class="name">airlock-migrate</span>
-        <p>Catches a migration that quietly turns RLS off in prod. Fails the build on a new table without RLS, a disabled policy, or a dropped one. No database needed.</p>
+        <p>Catches a migration that quietly turns RLS off in prod. Fails the build on a new table without RLS or RLS switched off; warns when a policy is dropped. No database needed.</p>
         <span class="cmd">npx airlock-migrate <span class="arw">→</span></span>
       </a>
       <a class="tool" href="https://www.npmjs.com/package/airlock-ratelimit" target="_blank" rel="noopener">
@@ -665,7 +665,7 @@
         <p class="fd">The whole app, built and proven — start on your product, not on plumbing. <strong>Pro</strong> adds billing (Paddle), an admin panel, and web push.</p>
         <a class="demolink" href="#demo"><span class="ok">✓</span> Tenant isolation, proven live — watch a cross-tenant leak get blocked <span class="arw">→</span></a>
         <details class="treebox">
-          <summary>What's in the box — file tree + <code>npm test</code> output</summary>
+          <summary>What's in the box — file tree (Pro shown) + <code>npm test</code> output</summary>
           <div class="proof2">
           <pre class="tree"><span class="dir">src/app/</span>
   <span class="dir">(app)/</span>     <span class="hl">notes · settings · billing</span>
@@ -678,7 +678,7 @@
   <span class="dir">admin/</span>     queries · suspend
   <span class="dir">push/</span>      webpush · notify
   <span class="dir">supabase/</span>  server · client · admin
-<span class="dir">supabase/migrations/</span>  8 numbered RLS SQL
+<span class="dir">supabase/migrations/</span>  numbered RLS migrations
 <span class="dir">e2e/</span>  Playwright specs</pre>
           <pre class="testsnip"><span class="c">$ npm test</span>
  <span class="ok">✓</span> lib/auth/rls.test.ts       <span class="c">isolation</span>
@@ -686,10 +686,9 @@
  <span class="ok">✓</span> lib/billing/webhook.test.ts <span class="c">signed</span>
  <span class="ok">✓</span> lib/auth/csrf.test.ts
  <span class="ok">✓</span> api/webhooks/paddle/route
- <span class="c">…7 more files</span>
+ <span class="c">… and the rest of the suite</span>
 
- <span class="k">Test Files</span>  <span class="ok">11 passed</span> (11)
-      <span class="k">Tests</span>  <span class="ok">59 passed</span>
+ <span class="k">Test Files</span>  <span class="ok">all passed</span>
  <span class="c">RLS isolation suite runs green on a local DB.</span></pre>
           </div>
         </details>
@@ -723,7 +722,6 @@
               <li>Unit + e2e tests, CI, deploy config</li>
               <li>Complete source, yours to modify</li>
               <li class="gift">ui-kit (15 React components) free</li>
-              <li class="gift">Airlock Monitor — 1 month free</li>
             </ul>
             <div class="tc-foot">
               <a class="btn btn-primary tc-buy" href="checkout/?plan=base" data-paddle-plan="base">Get Base →</a>
@@ -733,11 +731,10 @@
           <div class="wyg pro">
             <h4>PRO — everything in Base, plus</h4>
             <ul>
-              <li>Billing: Paddle checkout, signature-verified webhook, customer portal, plan gate</li>
+              <li>Billing: Paddle checkout, signature-verified webhook, customer portal, plan-check helper</li>
               <li><code>/admin</code>: workspace + user counts, active subscriptions, suspend a tenant</li>
               <li>Web push (VAPID) + an in-app notification inbox</li>
               <li class="gift">ui-kit (15 React components) free</li>
-              <li class="gift">Airlock Monitor — 3 months free</li>
             </ul>
             <div class="tc-foot">
               <a class="btn btn-primary tc-buy" href="checkout/?plan=pro" data-paddle-plan="pro">Get Pro →</a>
@@ -771,7 +768,7 @@
           <div class="mb-left">
             <span class="mb-kick">● DAILY WATCH · SUBSCRIPTION · YOUR LONG-TERM GUARD</span>
             <h3 class="mb-title">Airlock Monitor</h3>
-            <p class="mb-pitch">CI checks the migrations you write. <strong>Airlock Monitor checks everything else your live database exposes</strong> — the surfaces that leak without a migration ever touching them. It re-audits every morning and emails you the moment one opens.</p>
+            <p class="mb-pitch">CI checks the migrations you write. <strong>Airlock Monitor checks everything else your live database exposes</strong> — the surfaces that leak without a migration ever touching them. It re-audits every morning and emails you as soon as a check finds one.</p>
           </div>
           <div class="mb-right">
             <div class="mb-price"><b>$19.99</b><small>/mo</small></div>
@@ -820,8 +817,8 @@ or add an allow-rule for intentionally-public policies.</pre>
           <div class="pt"><span class="pn">Kit Auth + RLS</span></div>
           <ul class="plist">
             <li>login, signup, password reset + update</li>
-            <li>3 migrations: workspaces, notes, tightened grants</li>
-            <li>5 test files, incl. <code>rls.test.ts</code> (isolation) and <code>rls.meta.test.ts</code> (every table has a policy)</li>
+            <li>4 migrations: workspaces, notes, tightened grants, forced RLS</li>
+            <li>6 test files, incl. <code>rls.test.ts</code> (isolation) and <code>rls.meta.test.ts</code> (every table has a policy)</li>
           </ul>
           <div class="pfoot">
             <a class="pa buy" href="checkout/?plan=kit-auth-rls" data-paddle-plan="kit-auth-rls">Get it →</a>
@@ -831,7 +828,7 @@ or add an allow-rule for intentionally-public policies.</pre>
         <div class="piece">
           <div class="pt"><span class="pn">Test Kit</span></div>
           <ul class="plist">
-            <li>7 test files, wired and passing</li>
+            <li>Vitest + Playwright test files, wired and passing</li>
             <li>Playwright e2e + config; Vitest for units and components</li>
             <li>the RLS harness: <code>rls.test.ts</code> + <code>rls.meta.test.ts</code></li>
           </ul>
@@ -851,7 +848,7 @@ or add an allow-rule for intentionally-public policies.</pre>
           </div>
         </div>
       </div>
-      <div class="piece-note">Every piece is cut from the boilerplate itself: same repo, same tests. <a class="combobtn" href="checkout/?plan=combo" data-paddle-plan="combo">Get all three — <b>$35.97</b> (COMBO10 applied)</a></div>
+      <div class="piece-note">Every piece comes from the same codebase as the boilerplate, tests included. <a class="combobtn" href="checkout/?plan=combo" data-paddle-plan="combo">Get all three — <b>$35.97</b> (COMBO10 applied)</a></div>
     </div>
   </section>
 
@@ -892,7 +889,7 @@ or add an allow-rule for intentionally-public policies.</pre>
         <div class="cl">
           <span class="clk">SUBSCRIPTION · AFTER LAUNCH</span>
           <h3>Airlock Monitor</h3>
-          <p>Re-audits your live database every morning and emails you the moment something opens.</p>
+          <p>Re-audits your live database every morning and emails you as soon as a check finds something.</p>
           <div class="clbuy">
             <a class="btn btn-primary" href="checkout/?plan=monitor" data-paddle-plan="monitor">Try it free →</a>
             <span class="clp">$19.99<small>/mo · 14 days free</small></span>
