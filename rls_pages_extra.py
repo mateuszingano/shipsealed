@@ -37,6 +37,7 @@ EXTRA.append({
 <span class="c">-- relrowsecurity = t  → RLS is on</span></pre>
   <p>Table owners bypass RLS by default. If you want the owner subject to it too (defense in depth), add <code>alter table notes force row level security;</code>.</p>""",
     "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
         ("write-owner-scoped-rls-policy-supabase", "Write an owner-scoped RLS policy (all four operations)"),
         ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
         ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
@@ -323,6 +324,7 @@ curl <span class="s">"$SUPABASE_URL/rest/v1/notes?select=*"</span> \\
   <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
   <p>Then re-run the <code>curl</code> as an anonymous caller — it should now return an empty set. To make sure a new table can never ship like this again, add <a href="/rls/rls-in-ci-fail-build-exposed-table/">an RLS gate in CI</a>.</p>""",
     "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
         ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
         ("rls-in-ci-fail-build-exposed-table", "RLS in CI: fail the build when a table ships exposed"),
         ("fix-permissive-rls-policy-using-true", "USING (true) is a security hole — fix it"),
@@ -429,6 +431,7 @@ EXTRA.append({
 <span class="k">where</span> schemaname = <span class="s">'public'</span> <span class="k">and</span> (qual = <span class="s">'true'</span> <span class="k">or</span> with_check = <span class="s">'true'</span>);</pre>
   <p>Wrap it so a non-empty result exits <code>1</code>. This catches the coarse failures (RLS off, permissive) — pair it with an <a href="/rls/test-tenant-isolation-supabase/">isolation test</a> for the behavioral proof that policies actually isolate tenants.</p>""",
     "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
         ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),
         ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS off)"),
         ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
@@ -565,6 +568,7 @@ EXTRA.append({
   <h2><span class="n">03</span> Make it the default, not the checklist</h2>
   <p>A checklist you run by hand gets skipped under a deadline. The durable fix is to make the safe path the default: scaffold new projects with RLS already on and an isolation test in place (<a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>, <code>supabase-saas-kit</code>), and gate every migration in CI (<code>airlock-rls</code>). Then the checklist becomes something your pipeline enforces, not something you have to remember.</p>""",
     "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
         ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
         ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),
         ("rls-in-ci-fail-build-exposed-table", "RLS in CI: fail the build when a table ships exposed"),
