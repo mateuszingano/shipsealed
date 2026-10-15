@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/supabase-update-delete-not-working-rls/">
+<title>Supabase update or delete does nothing (no error): it&#x27;s RLS</title>
+<meta name="description" content="Your Supabase update() or delete() returns no error but changes nothing. Why RLS makes writes silently affect 0 rows, and the UPDATE and DELETE policies that fix it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/supabase-update-delete-not-working-rls/">
+<meta property="og:title" content="Supabase update or delete does nothing (no error): it&#x27;s RLS">
+<meta property="og:description" content="Your Supabase update() or delete() returns no error but changes nothing. Why RLS makes writes silently affect 0 rows, and the UPDATE and DELETE policies that fix it.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Supabase update or delete does nothing (no error): it&#x27;s RLS">
+<meta name="twitter:description" content="Your Supabase update() or delete() returns no error but changes nothing. Why RLS makes writes silently affect 0 rows, and the UPDATE and DELETE policies that fix it.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Supabase update or delete does nothing (no error)", "description": "Your Supabase update() or delete() returns no error but changes nothing. Why RLS makes writes silently affect 0 rows, and the UPDATE and DELETE policies that fix it.", "url": "https://shipsealed.com/rls/supabase-update-delete-not-working-rls/", "mainEntityOfPage": "https://shipsealed.com/rls/supabase-update-delete-not-working-rls/", "inLanguage": "en", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Supabase update or delete does nothing (no error)", "item": "https://shipsealed.com/rls/supabase-update-delete-not-working-rls/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why does the update work in the SQL editor?", "acceptedAnswer": {"@type": "Answer", "text": "The SQL editor bypasses RLS. Your app runs as authenticated or anon, where policies apply. Test writes the way the app makes them."}}, {"@type": "Question", "name": "Can I get an error instead of 0 rows?", "acceptedAnswer": {"@type": "Answer", "text": "Not from RLS itself. Chain .select() after update() or delete() and treat an empty array as a failure in your code."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Update or delete does nothing (no error)</p>
+  <p class="eyebrow">Supabase RLS · Error fix</p>
+  <h1>Supabase update or delete does nothing, and there's no error</h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>With RLS on, an <code>UPDATE</code> or <code>DELETE</code> only touches rows a policy lets you act on. No matching policy means <b>0 rows affected and no error</b>. Add an UPDATE policy (with <code>using</code> and <code>with check</code>) and a DELETE policy, and keep a SELECT policy: UPDATE needs one too.</p></div>
+  <h2><span class="n">01</span> Why it's silent</h2>
+  <p>RLS filters rows, it doesn't reject statements. An <code>update ... where id = 1</code> that no policy allows simply matches nothing, so Postgres reports <code>UPDATE 0</code> and supabase-js returns <code>error: null</code>. Inserts are different: a blocked insert raises <code>new row violates row-level security policy</code>.</p>
+  <p>Make the silence visible by asking for the affected rows back:</p>
+  <p class="filelabel">debug.ts</p>
+  <pre><span class="k">const</span> { data, error } = <span class="k">await</span> supabase
+  .from(<span class="s">'notes'</span>).update({ body }).eq(<span class="s">'id'</span>, id).select();
+console.log(data);   <span class="c">// [] → RLS let you touch 0 rows</span></pre>
+
+  <h2><span class="n">02</span> The usual causes</h2>
+  <div class="cause"><span class="tag">CAUSE 1 · most common</span><h3>Only a SELECT policy exists</h3><p>RLS is default-deny per operation. A read policy doesn't allow updates or deletes.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>An UPDATE policy but no SELECT policy</h3><p>To update a row Postgres must first find it, and that read goes through your SELECT policies. With no SELECT policy for the role, the UPDATE matches 0 rows.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>No session</h3><p>Called as <code>anon</code>, <code>auth.uid()</code> is <code>null</code>, so an owner policy matches nothing.</p></div>
+
+  <h2><span class="n">03</span> The fix</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> notes <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner updates"</span> <span class="k">on</span> notes <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()))        <span class="c">-- which rows you may change</span>
+  <span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()));  <span class="c">-- what they may become</span>
+
+<span class="k">create policy</span> <span class="s">"owner deletes"</span> <span class="k">on</span> notes <span class="k">for delete to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">grant select, update, delete on</span> notes <span class="k">to</span> authenticated;</pre>
+  <p>The <code>with check</code> on UPDATE matters: without it, a user could change <code>user_id</code> and hand their row to someone else.</p>
+
+  <h2><span class="n">04</span> Prove it</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> only a SELECT policy, A updates own row &nbsp;<span style="color:var(--dim)">→ 0 rows, no error</span></div>
+    <div class="row"><span class="ok">✓</span> with UPDATE policy, A updates own row &nbsp;<span style="color:var(--dim)">→ 1 row</span></div>
+    <div class="row"><span class="ok">✓</span> A updates B's row &nbsp;<span style="color:var(--dim)">→ 0 rows</span></div>
+    <div class="row"><span class="ok">✓</span> A sets <code>user_id</code> to B &nbsp;<span style="color:var(--dim)">→ blocked by WITH CHECK</span></div>
+    <div class="row"><span class="ok">✓</span> with DELETE policy, A deletes own row &nbsp;<span style="color:var(--dim)">→ 1 row</span></div>
+  </div>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/write-owner-scoped-rls-policy-supabase/">Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE) <span class="arw">→</span></a><a href="/rls/fix-new-row-violates-row-level-security-policy/">Fix: "new row violates row-level security policy" <span class="arw">→</span></a><a href="/rls/fix-pgrst116-cannot-coerce-result-single-json-object/">Fix PGRST116: Cannot coerce the result to a single JSON object <span class="arw">→</span></a><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Catch this before it ships</h2>
+    <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Or start from <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> : auth + a table with RLS + an isolation test, so you start from a pattern that's already sealed.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Why does the update work in the SQL editor?</summary><p>The SQL editor bypasses RLS. Your app runs as authenticated or anon, where policies apply. Test writes the way the app makes them.</p></details><details><summary>Can I get an error instead of 0 rows?</summary><p>Not from RLS itself. Chain .select() after update() or delete() and treat an empty array as a failure in your code.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>

@@ -97,6 +97,7 @@ EXTRA.append({
   </div>
   <p>See <a href="/rls/test-tenant-isolation-supabase/">how to test tenant isolation</a> to turn that into an automated check.</p>""",
     "related": [
+        ("supabase-update-delete-not-working-rls", "Supabase update or delete does nothing (no error)"),
         ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),
         ("multi-tenant-rls-workspaces-supabase", "Multi-tenant RLS with workspaces"),
         ("fix-new-row-violates-row-level-security-policy", "Fix: new row violates row-level security policy"),
@@ -658,6 +659,7 @@ EXTRA.append({
   <div class="cause"><h3>In CI</h3><p><a href="https://www.npmjs.com/package/airlock-migrate"><code>npx airlock-migrate</code></a> reads your migration files and fails the build when one creates a table without enabling RLS, or turns RLS off. Those are the tables a bulk grant would expose. It also warns on a view without <code>security_invoker = on</code>. It doesn't flag grants themselves, and it only sees tables that go through your migration files.</p></div>
   <div class="cause"><h3>On the live database</h3><p><code>SUPABASE_DB_URL=... npx airlock-rls</code> checks the running database for tables with RLS off and policies that let everyone through. <a href="/rls/rls-in-ci-fail-build-exposed-table/">Set it up in CI</a>.</p></div>""",
     "related": [
+        ("fix-permission-denied-for-table-supabase-42501", 'Fix 42501: "permission denied for table"'),
         ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
         ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
         ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
@@ -671,5 +673,307 @@ EXTRA.append({
          "Grant to the role that actually needs the table. Data only signed-in users see gets a grant to authenticated and no grant to anon. Public data, like a product catalog, can be granted to anon with an RLS policy that allows reading it."),
         ("Is service_role affected?",
          "Yes. It also loses the automatic grants on new tables, so a backend using the service_role key gets 42501 on a new table until you grant it. Once granted, it still bypasses RLS."),
+    ],
+})
+
+# ---- 14. Fix: infinite recursion detected in policy (42P17) --------------
+EXTRA.append({
+    "slug": "fix-infinite-recursion-detected-in-policy-supabase",
+    "title": 'Fix: "infinite recursion detected in policy for relation" (Supabase RLS)',
+    "h1_plain": "Fix: infinite recursion detected in policy for relation",
+    "h1": 'Fix: <span class="mono">infinite recursion detected in policy</span>',
+    "desc": "Why Supabase returns infinite recursion detected in policy for relation (42P17), the one pattern that causes it, and the fix: a security definer helper in a private schema.",
+    "eyebrow": "Supabase RLS · Error fix",
+    "crumb": "Fix: infinite recursion detected in policy",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "Your policy on a table <b>queries that same table</b>, so checking the policy triggers the policy again. Move the lookup into a <code>security definer</code> function in a <b>private</b> schema and call it from the policy. The function reads the table without RLS, so the loop is gone.",
+    "body": """  <h2><span class="n">01</span> Why you're seeing this</h2>
+  <p>Postgres raises <code>infinite recursion detected in policy for relation "team_members"</code> (SQLSTATE <code>42P17</code>, HTTP 500 from the Data API) when evaluating a policy requires reading the same table the policy protects. Reading that table applies the policy again, which reads the table again, and so on.</p>
+  <p>It almost always comes from a membership check like this one:</p>
+  <p class="filelabel">the broken policy</p>
+  <pre><span class="k">create policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (team_id <span class="k">in</span> (
+    <span class="k">select</span> team_id <span class="k">from</span> team_members   <span class="c">-- reads the table it protects</span>
+    <span class="k">where</span> user_id = (<span class="k">select</span> auth.uid())
+  ));</pre>
+  <p>The same thing happens with an "is admin?" check that looks up <code>profiles</code> from a policy on <code>profiles</code>, or with two tables whose policies query each other.</p>
+
+  <h2><span class="n">02</span> The fix: a security definer helper</h2>
+  <p>Put the lookup in a function that runs as its owner (<code>security definer</code>). The owner isn't subject to the table's RLS, so the inner read doesn't re-enter the policy.</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create schema if not exists</span> private;
+
+<span class="k">create function</span> private.my_team_ids()
+<span class="k">returns setof</span> int
+<span class="k">language</span> sql <span class="k">security definer set</span> search_path = <span class="s">''</span> <span class="k">stable as</span> $$
+  <span class="k">select</span> team_id <span class="k">from</span> public.team_members
+  <span class="k">where</span> user_id = (<span class="k">select</span> auth.uid())
+$$;
+
+<span class="k">revoke all on function</span> private.my_team_ids() <span class="k">from</span> public;
+<span class="k">grant usage on schema</span> private <span class="k">to</span> authenticated;
+<span class="k">grant execute on function</span> private.my_team_ids() <span class="k">to</span> authenticated;
+
+<span class="k">drop policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members;
+<span class="k">create policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (team_id <span class="k">in</span> (<span class="k">select</span> private.my_team_ids()));</pre>
+
+  <h2><span class="n">03</span> The details that keep it safe</h2>
+  <ul>
+    <li><b>Private schema.</b> Keep the function out of <code>public</code> (or any schema exposed by the Data API), so nobody can call it as an RPC endpoint.</li>
+    <li><b><code>set search_path = ''</code></b> and schema-qualified names (<code>public.team_members</code>). A security definer function with a loose search path can be tricked into reading a look-alike table.</li>
+    <li><b>Filter by <code>auth.uid()</code> inside the function.</b> It bypasses RLS, so it must only ever return the caller's own rows.</li>
+    <li><b>Revoke from <code>public</code>, grant to <code>authenticated</code> only.</b> <code>anon</code> then gets <code>permission denied</code> calling it.</li>
+  </ul>
+
+  <h2><span class="n">04</span> Prove it</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> broken policy, user A selects &nbsp;<span style="color:var(--dim)">→ 42P17 infinite recursion</span></div>
+    <div class="row"><span class="ok">✓</span> helper policy, user A (team 1) &nbsp;<span style="color:var(--dim)">→ only team 1's rows</span></div>
+    <div class="row"><span class="ok">✓</span> helper policy, user B (teams 1 and 2) &nbsp;<span style="color:var(--dim)">→ rows of both teams</span></div>
+    <div class="row"><span class="ok">✓</span> anon calls <code>private.my_team_ids()</code> &nbsp;<span style="color:var(--dim)">→ permission denied</span></div>
+  </div>
+  <p>Run these as real roles against a database with your migrations applied, so a policy that loops or leaks fails the build instead of production.</p>""",
+    "related": [
+        ("multi-tenant-rls-workspaces-supabase", "Multi-tenant RLS with workspaces in Supabase"),
+        ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),
+        ("owner-id-vs-workspace-id-rls-pattern", "owner_id vs workspace_id: which RLS pattern"),
+        ("fix-new-row-violates-row-level-security-policy", 'Fix: "new row violates row-level security policy"'),
+    ],
+    "faq": [
+        ("Can I just turn off RLS on the membership table?",
+         "That stops the error and makes every membership row public to anyone with your anon key, including who belongs to which team. Keep RLS on and use the helper function."),
+        ("Does a security definer function make my data less safe?",
+         "Only if it returns more than the caller should see. Filter by auth.uid() inside it, keep it in a private schema, set search_path to empty, and grant execute only to the roles that need it."),
+        ("Why does it work in the SQL editor?",
+         "The SQL editor runs as a role that bypasses RLS, so the policy never runs there. Test as authenticated, the way your app calls the API."),
+    ],
+})
+
+# ---- 15. Fix: PGRST116 Cannot coerce the result to a single JSON object ---
+EXTRA.append({
+    "slug": "fix-pgrst116-cannot-coerce-result-single-json-object",
+    "title": 'Fix PGRST116: "Cannot coerce the result to a single JSON object" (Supabase)',
+    "h1_plain": "Fix PGRST116: Cannot coerce the result to a single JSON object",
+    "h1": 'Fix <span class="mono">PGRST116</span>: Cannot coerce the result to a single JSON object',
+    "desc": "Why supabase-js .single() returns PGRST116 (The result contains 0 rows), why RLS is often the cause even when the row exists, and when to use maybeSingle() instead.",
+    "eyebrow": "Supabase RLS · Error fix",
+    "crumb": "Fix PGRST116: Cannot coerce the result",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "<code>.single()</code> demands exactly one row. You got 0 (or more than 1). If the row <b>does</b> exist, RLS is usually hiding it from the current user, because a row RLS filters out simply isn't returned. Fix the policy or the session; use <code>.maybeSingle()</code> when zero rows is a normal answer.",
+    "body": """  <h2><span class="n">01</span> What the error says</h2>
+  <p class="filelabel">response</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST116"</span>,
+  <span class="s">"message"</span>: <span class="s">"Cannot coerce the result to a single JSON object"</span>,
+  <span class="s">"details"</span>: <span class="s">"The result contains 0 rows"</span>
+}</pre>
+  <p><code>.single()</code> asks the Data API for exactly one object. When the query returns 0 rows or more than 1, it answers HTTP 406 with <code>PGRST116</code>. The <code>details</code> line tells you which: <code>0 rows</code> or <code>2 rows</code> and so on.</p>
+
+  <h2><span class="n">02</span> "But the row exists": that's RLS</h2>
+  <p>RLS doesn't raise an error for rows you can't see. It filters them out, so the query returns 0 rows and <code>.single()</code> turns that into PGRST116. You see the row in the dashboard because the dashboard bypasses RLS.</p>
+  <div class="cause"><span class="tag">CAUSE 1 · most common</span><h3>No session, or the wrong one</h3><p>The client is calling as <code>anon</code> (not signed in yet, or a server client without the user's cookies), so <code>auth.uid()</code> is <code>null</code> and an owner policy matches nothing.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>The policy doesn't cover this row</h3><p>An owner policy like <code>using (id = (select auth.uid()))</code> only returns the caller's own row. Fetching someone else's profile with <code>.single()</code> gets 0 rows.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>The filter really matches 0 or many rows</h3><p>A wrong id, or a filter on a non-unique column that matches several rows.</p></div>
+
+  <h2><span class="n">03</span> Find out which one</h2>
+  <p class="filelabel">debug.ts</p>
+  <pre><span class="k">const</span> { data: { <span class="u">user</span> } } = <span class="k">await</span> supabase.auth.getUser();
+console.log(<span class="s">'calling as'</span>, <span class="u">user</span>?.id ?? <span class="s">'anon'</span>);   <span class="c">// null → cause 1</span>
+
+<span class="c">// same query without .single(): see how many rows come back</span>
+<span class="k">const</span> { data } = <span class="k">await</span> supabase.from(<span class="s">'profiles'</span>).select(<span class="s">'*'</span>).eq(<span class="s">'id'</span>, id);
+console.log(data.length);   <span class="c">// 0 with a valid id → RLS is hiding it</span></pre>
+
+  <h2><span class="n">04</span> The fix</h2>
+  <ul>
+    <li><b>Cause 1:</b> make the request carry the user's session. On the server, create the Supabase client from the request cookies so <code>auth.uid()</code> resolves.</li>
+    <li><b>Cause 2:</b> if other users should see this row, add a policy for that case (for example, a public profile field). Don't widen it to <code>using (true)</code> on private data.</li>
+    <li><b>Zero rows is a normal answer</b> (a profile not created yet): use <code>.maybeSingle()</code>. It returns <code>data: null</code> for 0 rows and still errors on more than 1.</li>
+  </ul>
+  <p class="filelabel">profile.ts</p>
+  <pre><span class="k">const</span> { data: profile, error } = <span class="k">await</span> supabase
+  .from(<span class="s">'profiles'</span>).select(<span class="s">'*'</span>).eq(<span class="s">'id'</span>, <span class="u">user</span>.id).maybeSingle();
+<span class="k">if</span> (!profile) { <span class="c">/* first visit: create it */</span> }</pre>""",
+    "related": [
+        ("write-owner-scoped-rls-policy-supabase", "Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE)"),
+        ("nextjs-app-router-supabase-auth-rls-ssr", "Next.js App Router + Supabase auth with RLS (SSR)"),
+        ("supabase-update-delete-not-working-rls", "Supabase update or delete does nothing (no error)"),
+        ("fix-permission-denied-for-table-supabase-42501", 'Fix 42501: "permission denied for table"'),
+    ],
+    "faq": [
+        ("Should I just switch every .single() to .maybeSingle()?",
+         "Only where zero rows is a legitimate answer. If the row must exist, a PGRST116 is useful: it tells you the user can't see it, which is usually a session or policy bug you want to fix, not hide."),
+        ("Can a missing GRANT cause PGRST116?",
+         "No. A missing grant fails louder: permission denied for table (42501). PGRST116 means the query ran and returned the wrong number of rows."),
+    ],
+})
+
+# ---- 16. Fix: 42501 permission denied for table ---------------------------
+EXTRA.append({
+    "slug": "fix-permission-denied-for-table-supabase-42501",
+    "title": 'Fix 42501: "permission denied for table" in Supabase',
+    "h1_plain": "Fix 42501: permission denied for table",
+    "h1": 'Fix <span class="mono">42501</span>: permission denied for table',
+    "desc": "Why Supabase returns 42501 permission denied for table (or for schema), how it differs from an RLS error, and the per-table GRANT that fixes it without exposing other tables.",
+    "eyebrow": "Supabase RLS · Error fix",
+    "crumb": "Fix 42501: permission denied for table",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "The role (<code>anon</code>, <code>authenticated</code> or <code>service_role</code>) has <b>no privilege</b> on the table, so Postgres stops the query before RLS even runs. Grant only that table, only to the role that needs it, in the same migration that creates it. Never fix it with <code>grant ... on all tables</code>.",
+    "body": """  <h2><span class="n">01</span> Grants vs RLS: two separate locks</h2>
+  <p>Every query from the Data API passes two checks. <b>Grants</b> decide whether a role may touch the table at all. <b>RLS</b> then decides which rows. <code>42501 permission denied for table invoices</code> means the first lock failed, so your policies were never consulted. An RLS problem looks different: zero rows, or <code>new row violates row-level security policy</code>.</p>
+
+  <h2><span class="n">02</span> Where it comes from</h2>
+  <div class="cause"><span class="tag">CAUSE 1 · new tables</span><h3>A table created after Supabase's grants change</h3><p>New tables no longer get automatic grants for the API roles. The first query to a new table returns 42501 until you grant it. <a href="/rls/supabase-october-30-grants-change/">What changed on Oct 30, and why it matters</a>.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>A table in another schema</h3><p>The role also needs <code>usage</code> on the schema, otherwise the message is <code>permission denied for schema app</code>.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>The grant was revoked or never given to this role</h3><p>For example, granted to <code>authenticated</code> but called by a signed-out visitor (<code>anon</code>). The Data API answers 401 for <code>anon</code> and 403 for <code>authenticated</code>.</p></div>
+
+  <h2><span class="n">03</span> The fix: grant per table, with RLS in the same migration</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">alter table</span> public.invoices <span class="k">enable row level security</span>;
+
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> public.invoices <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="c">-- only the role and the operations the app actually uses</span>
+<span class="k">grant select on</span> public.invoices <span class="k">to</span> authenticated;</pre>
+  <p>For a table in another schema, add <code>grant usage on schema app to authenticated;</code> as well.</p>
+
+  <h2><span class="n">04</span> The fix that leaks</h2>
+  <pre><span class="c">-- don't paste this to make the error go away</span>
+<span class="k">grant select on all tables in schema</span> public <span class="k">to</span> anon, authenticated;</pre>
+  <p>It removes the 42501 and also grants every other table in <code>public</code>. Any of them with RLS off becomes readable by anyone holding your public anon key. Check what each role can reach before and after any grant:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_table_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       c.relrowsecurity <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
+<span class="k">order by</span> 1;</pre>
+  <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is public. The <a href="/rls/supabase-october-30-grants-change/">grants change guide</a> has a stricter version that also catches column grants and views.</p>""",
+    "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
+        ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
+        ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a Supabase table"),
+        ("fix-pgrst205-could-not-find-table-schema-cache", "Fix PGRST205: Could not find the table in the schema cache"),
+    ],
+    "faq": [
+        ("Is 42501 an RLS error?",
+         "No. It's a privilege error that happens before RLS. The same SQLSTATE is also used when an insert or update fails a policy's WITH CHECK, but then the message is new row violates row-level security policy, not permission denied for table."),
+        ("Do I need to grant to service_role too?",
+         "If your backend uses the service_role key on a new table, yes. service_role bypasses RLS but still needs the table privilege."),
+    ],
+})
+
+# ---- 17. Supabase update / delete does nothing (no error) -----------------
+EXTRA.append({
+    "slug": "supabase-update-delete-not-working-rls",
+    "title": "Supabase update or delete does nothing (no error): it's RLS",
+    "h1_plain": "Supabase update or delete does nothing (no error)",
+    "h1": "Supabase update or delete does nothing, and there's no error",
+    "desc": "Your Supabase update() or delete() returns no error but changes nothing. Why RLS makes writes silently affect 0 rows, and the UPDATE and DELETE policies that fix it.",
+    "eyebrow": "Supabase RLS · Error fix",
+    "crumb": "Update or delete does nothing (no error)",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "With RLS on, an <code>UPDATE</code> or <code>DELETE</code> only touches rows a policy lets you act on. No matching policy means <b>0 rows affected and no error</b>. Add an UPDATE policy (with <code>using</code> and <code>with check</code>) and a DELETE policy, and keep a SELECT policy: UPDATE needs one too.",
+    "body": """  <h2><span class="n">01</span> Why it's silent</h2>
+  <p>RLS filters rows, it doesn't reject statements. An <code>update ... where id = 1</code> that no policy allows simply matches nothing, so Postgres reports <code>UPDATE 0</code> and supabase-js returns <code>error: null</code>. Inserts are different: a blocked insert raises <code>new row violates row-level security policy</code>.</p>
+  <p>Make the silence visible by asking for the affected rows back:</p>
+  <p class="filelabel">debug.ts</p>
+  <pre><span class="k">const</span> { data, error } = <span class="k">await</span> supabase
+  .from(<span class="s">'notes'</span>).update({ body }).eq(<span class="s">'id'</span>, id).select();
+console.log(data);   <span class="c">// [] → RLS let you touch 0 rows</span></pre>
+
+  <h2><span class="n">02</span> The usual causes</h2>
+  <div class="cause"><span class="tag">CAUSE 1 · most common</span><h3>Only a SELECT policy exists</h3><p>RLS is default-deny per operation. A read policy doesn't allow updates or deletes.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>An UPDATE policy but no SELECT policy</h3><p>To update a row Postgres must first find it, and that read goes through your SELECT policies. With no SELECT policy for the role, the UPDATE matches 0 rows.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>No session</h3><p>Called as <code>anon</code>, <code>auth.uid()</code> is <code>null</code>, so an owner policy matches nothing.</p></div>
+
+  <h2><span class="n">03</span> The fix</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> notes <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner updates"</span> <span class="k">on</span> notes <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()))        <span class="c">-- which rows you may change</span>
+  <span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()));  <span class="c">-- what they may become</span>
+
+<span class="k">create policy</span> <span class="s">"owner deletes"</span> <span class="k">on</span> notes <span class="k">for delete to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">grant select, update, delete on</span> notes <span class="k">to</span> authenticated;</pre>
+  <p>The <code>with check</code> on UPDATE matters: without it, a user could change <code>user_id</code> and hand their row to someone else.</p>
+
+  <h2><span class="n">04</span> Prove it</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> only a SELECT policy, A updates own row &nbsp;<span style="color:var(--dim)">→ 0 rows, no error</span></div>
+    <div class="row"><span class="ok">✓</span> with UPDATE policy, A updates own row &nbsp;<span style="color:var(--dim)">→ 1 row</span></div>
+    <div class="row"><span class="ok">✓</span> A updates B's row &nbsp;<span style="color:var(--dim)">→ 0 rows</span></div>
+    <div class="row"><span class="ok">✓</span> A sets <code>user_id</code> to B &nbsp;<span style="color:var(--dim)">→ blocked by WITH CHECK</span></div>
+    <div class="row"><span class="ok">✓</span> with DELETE policy, A deletes own row &nbsp;<span style="color:var(--dim)">→ 1 row</span></div>
+  </div>""",
+    "related": [
+        ("write-owner-scoped-rls-policy-supabase", "Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE)"),
+        ("fix-new-row-violates-row-level-security-policy", 'Fix: "new row violates row-level security policy"'),
+        ("fix-pgrst116-cannot-coerce-result-single-json-object", "Fix PGRST116: Cannot coerce the result to a single JSON object"),
+        ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),
+    ],
+    "faq": [
+        ("Why does the update work in the SQL editor?",
+         "The SQL editor bypasses RLS. Your app runs as authenticated or anon, where policies apply. Test writes the way the app makes them."),
+        ("Can I get an error instead of 0 rows?",
+         "Not from RLS itself. Chain .select() after update() or delete() and treat an empty array as a failure in your code."),
+    ],
+})
+
+# ---- 18. Fix: PGRST205 Could not find the table in the schema cache -------
+EXTRA.append({
+    "slug": "fix-pgrst205-could-not-find-table-schema-cache",
+    "title": "Fix PGRST205: \"Could not find the table in the schema cache\" (Supabase)",
+    "h1_plain": "Fix PGRST205: Could not find the table in the schema cache",
+    "h1": 'Fix <span class="mono">PGRST205</span>: Could not find the table in the schema cache',
+    "desc": "Why Supabase returns PGRST205 Could not find the table 'public.x' in the schema cache, the three causes (name, exposed schema, stale cache), and the grants you'll need right after.",
+    "eyebrow": "Supabase · Error fix",
+    "crumb": "Fix PGRST205: Could not find the table",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "The Data API doesn't know that table. Check the name and schema first (the <code>hint</code> often suggests the right one), make sure the schema is in the API's <b>exposed schemas</b>, and reload the cache with <code>notify pgrst, 'reload schema'</code>. Then grant the table, or the next error is 42501.",
+    "body": """  <h2><span class="n">01</span> What the error says</h2>
+  <p class="filelabel">response</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST205"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find the table 'public.order' in the schema cache"</span>,
+  <span class="s">"hint"</span>: <span class="s">"Perhaps you meant the table 'public.orders'"</span>
+}</pre>
+  <p>The Data API (PostgREST) keeps a cache of the tables it can serve. HTTP 404 with <code>PGRST205</code> means the table you asked for isn't in it. This is a different problem from RLS or grants: the request never reached the table.</p>
+
+  <h2><span class="n">02</span> The three causes</h2>
+  <div class="cause"><span class="tag">CAUSE 1 · most common</span><h3>Wrong name or schema</h3><p>A typo, a singular/plural mismatch, or a table that lives in another schema. Read the <code>hint</code>: it suggests the closest match.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>The schema isn't exposed</h3><p>Only schemas listed in the Data API settings (exposed schemas) are served. A table in <code>app</code> needs that schema added there, and the client must ask for it: <code>supabase.schema('app').from('orders')</code>.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>A stale cache</h3><p>The table was just created or renamed and the cache hasn't caught up.</p></div>
+
+  <h2><span class="n">03</span> Reload the schema cache</h2>
+  <p class="filelabel">SQL editor</p>
+  <pre><span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;</pre>
+
+  <h2><span class="n">04</span> Right after: grants and RLS</h2>
+  <p>Once the API finds the table, the role still needs privileges. Without them the error changes to <code>permission denied for schema app</code> or <code>permission denied for table orders</code> (42501). Set it up in one migration, with RLS on:</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">grant usage on schema</span> app <span class="k">to</span> authenticated;
+<span class="k">alter table</span> app.orders <span class="k">enable row level security</span>;
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> app.orders <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+<span class="k">grant select on</span> app.orders <span class="k">to</span> authenticated;</pre>
+  <p>Exposing a schema makes every table in it reachable through the API, so each one needs RLS and only the grants it should have. <a href="/rls/fix-permission-denied-for-table-supabase-42501/">More on the 42501 that follows</a>.</p>""",
+    "related": [
+        ("fix-permission-denied-for-table-supabase-42501", 'Fix 42501: "permission denied for table"'),
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
+        ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a Supabase table"),
+        ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
+    ],
+    "faq": [
+        ("I reloaded the cache and still get PGRST205. Why?",
+         "Then it's the name or the schema. Check the hint in the response, and confirm the schema is in the exposed schemas list and that the client calls .schema() for non-public schemas."),
+        ("Should I expose a private schema to fix it?",
+         "Only if the API should serve its tables. Exposing a schema makes all of its tables reachable, so keep helper functions and internal tables in a schema that stays unexposed."),
     ],
 })
