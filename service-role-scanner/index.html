@@ -38,6 +38,20 @@
     border:1px solid var(--green-dim);border-radius:var(--radius);padding:26px 28px;margin:34px 0 8px}
   .cta-band h2{margin:0 0 6px} .cta-band p{margin:0 0 16px}
   .inline-links{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-top:6px}
+  .scanbox{background:var(--panel);border:1px solid var(--green-dim);border-radius:var(--radius);padding:22px 22px 18px;margin:8px 0 6px}
+  .scanbox label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:8px}
+  .scanrow{display:flex;gap:10px;flex-wrap:wrap}
+  .scanrow input{flex:1 1 260px;min-width:0;background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;color:var(--text);font:15px var(--mono);padding:12px 14px}
+  .scanrow input:focus{outline:none;border-color:var(--green)}
+  .scanrow .btn{flex:0 0 auto}
+  .scanhint{font-size:13px;color:var(--dim);margin:10px 0 0}
+  .scanout{margin-top:16px;border-top:1px solid var(--line);padding-top:16px;font-size:15px}
+  .scanout .v{font:600 15px var(--mono);margin:0 0 8px}
+  .scanout .v.ok{color:var(--green)} .scanout .v.bad{color:var(--wax)} .scanout .v.warn{color:var(--amber)}
+  .scanout p{margin:0 0 10px;color:var(--muted)}
+  .scanout ul{margin:0 0 10px;padding-left:18px;color:var(--muted);font:13px var(--mono);word-break:break-all}
+  .sharerow{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .sharerow .btn{font-size:14px;padding:9px 14px}
 </style>
 </head>
 <body>
@@ -62,10 +76,25 @@
     <p class="lede">
       The <span class="mono">service_role</span> key bypasses <strong>every</strong> Row Level
       Security policy at once. If it ends up in your frontend, anyone who views your page has
-      full read and write access to your database. Scan your live site for it in seconds — no
+      full read and write access to your database. Paste your app's URL below and scan it in seconds — no
       database, no signup.
     </p>
   </header>
+
+  <!-- ===== ONLINE SCAN ===== -->
+  <section class="scanbox" aria-label="Scan a site now">
+    <form id="scanform" autocomplete="off">
+      <label for="scanurl" class="mono">Your live app's URL</label>
+      <div class="scanrow">
+        <input id="scanurl" name="url" type="text" inputmode="url" placeholder="https://your-app.com" required maxlength="2048">
+        <button type="submit" class="btn btn-primary" id="scanbtn">Scan now →</button>
+      </div>
+      <p class="scanhint">Reads only what any browser can see: the page and its JavaScript. Nothing is stored, and a leaked key is never shown.</p>
+    </form>
+    <div id="scanout" class="scanout" aria-live="polite" hidden></div>
+  </section>
+
+  <p class="mono" style="color:var(--dim);font-size:13px;margin-top:28px">Prefer the terminal, or want it in CI? Same engine:</p>
 
   <div class="prose">
     <div class="term" aria-label="Run the scan">
@@ -145,5 +174,68 @@
   </div>
 </footer>
 
+<script>
+(function(){
+  var form=document.getElementById('scanform'),input=document.getElementById('scanurl'),
+      btn=document.getElementById('scanbtn'),out=document.getElementById('scanout');
+  function ev(name,params){try{if(window.gtag)gtag('event',name,params||{});}catch(e){}}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function show(html){out.hidden=false;out.innerHTML=html}
+  var LOCAL='Run it locally instead: npx airlock-rls --site <url>';
+  var ERR={invalid_url:'That doesn\'t look like a public URL. Try something like https://your-app.com.',
+    blocked_host:'Only public websites can be scanned (no localhost, private or internal addresses).',
+    unreachable:'Couldn\'t load that site. Check the URL and that it\'s publicly reachable, then try again.',
+    rate_limited:'You\'ve hit the limit of 10 scans per hour. Try again later. '+LOCAL,
+    not_configured:'The online scanner is temporarily unavailable. '+LOCAL,
+    rate_limit_unavailable:'The online scanner is temporarily unavailable. '+LOCAL};
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var url=input.value.trim(); if(!url) return;
+    btn.disabled=true; btn.textContent='Scanning…';
+    show('<p class="v">Reading the page and its JavaScript bundles…</p>');
+    ev('scan_submitted');
+    fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
+      .then(function(r){return r.json().then(function(d){return{status:r.status,d:d}})})
+      .then(function(x){render(x.d)})
+      .catch(function(){render({error:'unreachable'})})
+      .then(function(){btn.disabled=false;btn.textContent='Scan now →'});
+  });
+  function render(d){
+    if(!d||d.error){var k=(d&&d.error)||'unreachable';ev('scan_result',{result:'error',reason:k});return show('<p class="v warn">⚠ '+esc(ERR[k]||ERR.unreachable)+'</p>')}
+    var bundles=Math.max(0,d.scanned-1);
+    if(d.leaked){
+      ev('scan_result',{result:'leak'});
+      return show('<p class="v bad">✗ A Supabase service key is exposed on '+esc(d.host)+'</p>'+
+        '<p>Found in:</p><ul>'+d.leaks.map(function(l){return'<li>'+esc(l.where)+'</li>'}).join('')+'</ul>'+
+        '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings → API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'+
+        '<p>To catch it if it comes back, <a href="https://airlock-monitor.vercel.app/?utm_source=scanner&amp;utm_medium=referral&amp;utm_campaign=scanner-leak">Airlock Monitor</a> re-checks on a schedule and alerts you.</p>');
+    }
+    if(!d.complete){
+      ev('scan_result',{result:'incomplete'});
+      var why=d.truncated?'it loads more JavaScript bundles than the online scan reads':(d.skipped+' file(s) couldn\'t be fetched');
+      return show('<p class="v warn">⚠ No key found in what we could read, but the scan is incomplete</p>'+
+        '<p>Checked the page and '+bundles+' bundle(s) on '+esc(d.host)+', but '+esc(why)+'. Run the full scan locally to be sure:</p>'+
+        '<ul><li>npx airlock-rls --site https://'+esc(d.host)+' --max-scripts 200</li></ul>');
+    }
+    ev('scan_result',{result:'clean'});
+    var link=location.origin+'/api/scan-share?r='+encodeURIComponent(d.share);
+    var text='My app '+d.host+' passed the Supabase service_role key check: no master key shipped to the browser. Check yours:';
+    show('<p class="v ok">✓ No exposed service_role key on '+esc(d.host)+'</p>'+
+      '<p>Checked the page and '+bundles+' JavaScript bundle(s): no <span class="mono">service_role</span> JWT and no <span class="mono">sb_secret_</span> key. The public anon key is fine to ship and isn\'t flagged.</p>'+
+      '<p>This checks the frontend only. Your database is protected by RLS, which this doesn\'t audit: run <span class="mono">npx airlock-rls</span> for that.</p>'+
+      '<div class="sharerow">'+
+        '<a class="btn btn-ghost" data-net="x" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&amp;url='+encodeURIComponent(link)+'">Share on X</a>'+
+        '<a class="btn btn-ghost" data-net="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(link)+'">Share on LinkedIn</a>'+
+        '<button type="button" class="btn btn-ghost" data-net="copy" id="copylink">Copy link</button>'+
+      '</div>');
+    out.querySelectorAll('[data-net]').forEach(function(a){a.addEventListener('click',function(){ev('scan_share',{network:a.getAttribute('data-net')})})});
+    document.getElementById('copylink').addEventListener('click',function(){
+      var b=this;
+      if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){b.textContent='Copied ✓'},function(){prompt('Copy this link:',link)})}
+      else{prompt('Copy this link:',link)}
+    });
+  }
+})();
+</script>
 </body>
 </html>
