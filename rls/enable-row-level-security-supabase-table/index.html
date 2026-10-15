@@ -64,7 +64,7 @@
 <span class="k">from</span> pg_class <span class="k">where</span> relname = <span class="s">'notes'</span>;
 <span class="c">-- relrowsecurity = t  → RLS is on</span></pre>
   <p>Table owners bypass RLS by default. If you want the owner subject to it too (defense in depth), add <code>alter table notes force row level security;</code>.</p>
-<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/write-owner-scoped-rls-policy-supabase/">Write an owner-scoped RLS policy (all four operations) <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/supabase-october-30-grants-change/">Supabase's Oct 30 grants change: what breaks, and the fix that leaks <span class="arw">→</span></a><a href="/rls/write-owner-scoped-rls-policy-supabase/">Write an owner-scoped RLS policy (all four operations) <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
   <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>

@@ -227,6 +227,7 @@ PAGES.append({
   </div>
   <p>Run that against a real Postgres in CI on every migration, so a table that ships without a correct write policy turns the build red before production.</p>""",
     "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
         ("write-owner-scoped-rls-policy-supabase", "Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE)"),
         ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a Supabase table"),
         ("test-tenant-isolation-supabase", "Test tenant isolation in Supabase"),

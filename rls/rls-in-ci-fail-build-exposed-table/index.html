@@ -73,7 +73,7 @@
 <span class="k">select</span> tablename <span class="k">from</span> pg_policies
 <span class="k">where</span> schemaname = <span class="s">'public'</span> <span class="k">and</span> (qual = <span class="s">'true'</span> <span class="k">or</span> with_check = <span class="s">'true'</span>);</pre>
   <p>Wrap it so a non-empty result exits <code>1</code>. This catches the coarse failures (RLS off, permissive) — pair it with an <a href="/rls/test-tenant-isolation-supabase/">isolation test</a> for the behavioral proof that policies actually isolate tenants.</p>
-<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS off) <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/supabase-october-30-grants-change/">Supabase's Oct 30 grants change: what breaks, and the fix that leaks <span class="arw">→</span></a><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS off) <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
   <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
