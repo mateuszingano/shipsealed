@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/">
+<title>Fix: &quot;infinite recursion detected in policy for relation&quot; (Supabase RLS)</title>
+<meta name="description" content="Why Supabase returns infinite recursion detected in policy for relation (42P17), the one pattern that causes it, and the fix: a security definer helper in a private schema.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/">
+<meta property="og:title" content="Fix: &quot;infinite recursion detected in policy for relation&quot; (Supabase RLS)">
+<meta property="og:description" content="Why Supabase returns infinite recursion detected in policy for relation (42P17), the one pattern that causes it, and the fix: a security definer helper in a private schema.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fix: &quot;infinite recursion detected in policy for relation&quot; (Supabase RLS)">
+<meta name="twitter:description" content="Why Supabase returns infinite recursion detected in policy for relation (42P17), the one pattern that causes it, and the fix: a security definer helper in a private schema.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Fix: infinite recursion detected in policy for relation", "description": "Why Supabase returns infinite recursion detected in policy for relation (42P17), the one pattern that causes it, and the fix: a security definer helper in a private schema.", "url": "https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/", "mainEntityOfPage": "https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/", "inLanguage": "en", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Fix: infinite recursion detected in policy for relation", "item": "https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I just turn off RLS on the membership table?", "acceptedAnswer": {"@type": "Answer", "text": "That stops the error and makes every membership row public to anyone with your anon key, including who belongs to which team. Keep RLS on and use the helper function."}}, {"@type": "Question", "name": "Does a security definer function make my data less safe?", "acceptedAnswer": {"@type": "Answer", "text": "Only if it returns more than the caller should see. Filter by auth.uid() inside it, keep it in a private schema, set search_path to empty, and grant execute only to the roles that need it."}}, {"@type": "Question", "name": "Why does it work in the SQL editor?", "acceptedAnswer": {"@type": "Answer", "text": "The SQL editor runs as a role that bypasses RLS, so the policy never runs there. Test as authenticated, the way your app calls the API."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Fix: infinite recursion detected in policy</p>
+  <p class="eyebrow">Supabase RLS · Error fix</p>
+  <h1>Fix: <span class="mono">infinite recursion detected in policy</span></h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>Your policy on a table <b>queries that same table</b>, so checking the policy triggers the policy again. Move the lookup into a <code>security definer</code> function in a <b>private</b> schema and call it from the policy. The function reads the table without RLS, so the loop is gone.</p></div>
+  <h2><span class="n">01</span> Why you're seeing this</h2>
+  <p>Postgres raises <code>infinite recursion detected in policy for relation "team_members"</code> (SQLSTATE <code>42P17</code>, HTTP 500 from the Data API) when evaluating a policy requires reading the same table the policy protects. Reading that table applies the policy again, which reads the table again, and so on.</p>
+  <p>It almost always comes from a membership check like this one:</p>
+  <p class="filelabel">the broken policy</p>
+  <pre><span class="k">create policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (team_id <span class="k">in</span> (
+    <span class="k">select</span> team_id <span class="k">from</span> team_members   <span class="c">-- reads the table it protects</span>
+    <span class="k">where</span> user_id = (<span class="k">select</span> auth.uid())
+  ));</pre>
+  <p>The same thing happens with an "is admin?" check that looks up <code>profiles</code> from a policy on <code>profiles</code>, or with two tables whose policies query each other.</p>
+
+  <h2><span class="n">02</span> The fix: a security definer helper</h2>
+  <p>Put the lookup in a function that runs as its owner (<code>security definer</code>). The owner isn't subject to the table's RLS, so the inner read doesn't re-enter the policy.</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create schema if not exists</span> private;
+
+<span class="k">create function</span> private.my_team_ids()
+<span class="k">returns setof</span> int
+<span class="k">language</span> sql <span class="k">security definer set</span> search_path = <span class="s">''</span> <span class="k">stable as</span> $$
+  <span class="k">select</span> team_id <span class="k">from</span> public.team_members
+  <span class="k">where</span> user_id = (<span class="k">select</span> auth.uid())
+$$;
+
+<span class="k">revoke all on function</span> private.my_team_ids() <span class="k">from</span> public;
+<span class="k">grant usage on schema</span> private <span class="k">to</span> authenticated;
+<span class="k">grant execute on function</span> private.my_team_ids() <span class="k">to</span> authenticated;
+
+<span class="k">drop policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members;
+<span class="k">create policy</span> <span class="s">"members see their team"</span> <span class="k">on</span> team_members <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (team_id <span class="k">in</span> (<span class="k">select</span> private.my_team_ids()));</pre>
+
+  <h2><span class="n">03</span> The details that keep it safe</h2>
+  <ul>
+    <li><b>Private schema.</b> Keep the function out of <code>public</code> (or any schema exposed by the Data API), so nobody can call it as an RPC endpoint.</li>
+    <li><b><code>set search_path = ''</code></b> and schema-qualified names (<code>public.team_members</code>). A security definer function with a loose search path can be tricked into reading a look-alike table.</li>
+    <li><b>Filter by <code>auth.uid()</code> inside the function.</b> It bypasses RLS, so it must only ever return the caller's own rows.</li>
+    <li><b>Revoke from <code>public</code>, grant to <code>authenticated</code> only.</b> <code>anon</code> then gets <code>permission denied</code> calling it.</li>
+  </ul>
+
+  <h2><span class="n">04</span> Prove it</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> broken policy, user A selects &nbsp;<span style="color:var(--dim)">→ 42P17 infinite recursion</span></div>
+    <div class="row"><span class="ok">✓</span> helper policy, user A (team 1) &nbsp;<span style="color:var(--dim)">→ only team 1's rows</span></div>
+    <div class="row"><span class="ok">✓</span> helper policy, user B (teams 1 and 2) &nbsp;<span style="color:var(--dim)">→ rows of both teams</span></div>
+    <div class="row"><span class="ok">✓</span> anon calls <code>private.my_team_ids()</code> &nbsp;<span style="color:var(--dim)">→ permission denied</span></div>
+  </div>
+  <p>Run these as real roles against a database with your migrations applied, so a policy that loops or leaks fails the build instead of production.</p>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/multi-tenant-rls-workspaces-supabase/">Multi-tenant RLS with workspaces in Supabase <span class="arw">→</span></a><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/owner-id-vs-workspace-id-rls-pattern/">owner_id vs workspace_id: which RLS pattern <span class="arw">→</span></a><a href="/rls/fix-new-row-violates-row-level-security-policy/">Fix: "new row violates row-level security policy" <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Catch this before it ships</h2>
+    <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Or start from <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> : auth + a table with RLS + an isolation test, so you start from a pattern that's already sealed.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Can I just turn off RLS on the membership table?</summary><p>That stops the error and makes every membership row public to anyone with your anon key, including who belongs to which team. Keep RLS on and use the helper function.</p></details><details><summary>Does a security definer function make my data less safe?</summary><p>Only if it returns more than the caller should see. Filter by auth.uid() inside it, keep it in a private schema, set search_path to empty, and grant execute only to the roles that need it.</p></details><details><summary>Why does it work in the SQL editor?</summary><p>The SQL editor runs as a role that bypasses RLS, so the policy never runs there. Test as authenticated, the way your app calls the API.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>
