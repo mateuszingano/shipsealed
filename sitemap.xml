@@ -7,6 +7,7 @@
   <url><loc>https://shipsealed.com/privacy/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/refunds/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/bolt-new-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/enable-row-level-security-supabase-table/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-new-row-violates-row-level-security-policy/</loc><changefreq>monthly</changefreq></url>
@@ -14,6 +15,7 @@
   <url><loc>https://shipsealed.com/rls/fix-permissive-rls-policy-using-true/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst116-cannot-coerce-result-single-json-object/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst205-could-not-find-table-schema-cache/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/lovable-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/multi-tenant-rls-workspaces-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/nextjs-app-router-supabase-auth-rls-ssr/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/owner-id-vs-workspace-id-rls-pattern/</loc><changefreq>monthly</changefreq></url>
@@ -24,6 +26,7 @@
   <url><loc>https://shipsealed.com/rls/supabase-table-public-rls-off/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-update-delete-not-working-rls/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/v0-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/service-role-scanner/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/supabase-rls-policy-generator/</loc><changefreq>weekly</changefreq></url>

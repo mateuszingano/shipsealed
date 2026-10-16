@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/lovable-supabase-security-checklist/">
+<title>Lovable + Supabase security checklist: is your app leaking data?</title>
+<meta name="description" content="Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/lovable-supabase-security-checklist/">
+<meta property="og:title" content="Lovable + Supabase security checklist: is your app leaking data?">
+<meta property="og:description" content="Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lovable + Supabase security checklist: is your app leaking data?">
+<meta name="twitter:description" content="Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Lovable + Supabase security checklist", "description": "Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.", "url": "https://shipsealed.com/rls/lovable-supabase-security-checklist/", "mainEntityOfPage": "https://shipsealed.com/rls/lovable-supabase-security-checklist/", "inLanguage": "en", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Lovable + Supabase security checklist", "item": "https://shipsealed.com/rls/lovable-supabase-security-checklist/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Lovable's security scan passed. Am I safe?", "acceptedAnswer": {"@type": "Answer", "text": "A passing scan is a good start, not proof. A policy can exist and still let everyone in (USING (true)). Run the always-true policy query and the signed-out curl test above; they show what an attacker would actually get."}}, {"@type": "Question", "name": "Should I hide the anon key?", "acceptedAnswer": {"@type": "Answer", "text": "You can't: it ships in the app by design. It's safe when RLS is on and every policy restricts rows to the right user. The key to keep secret is service_role / sb_secret_."}}, {"@type": "Question", "name": "Can I ask Lovable to fix the policies?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, and then verify with the queries above. Generated fixes for permission errors sometimes open more than they should, like a policy that's always true or a broad grant."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Lovable + Supabase security checklist</p>
+  <p class="eyebrow">Supabase security · Lovable</p>
+  <h1>Lovable + Supabase security checklist</h1>
+  <div class="byline"><span>Postgres 15 · Supabase · Lovable</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>Lovable writes the app; your Supabase policies decide who reads the data. Before you share the link: scan the live app for a <code>service_role</code> key, list tables the anon key can read, find always-true policies and anon-callable functions, then test signed out. Each check below is one query or one click.</p></div>
+  <h2><span class="n">01</span> Why Lovable apps need this</h2>
+  <p>A Lovable app talks to Supabase straight from the browser with your anon key. That's normal, and it means Row Level Security is the only thing protecting your data. When the generated policies are missing or too open, anyone can read or write your tables.</p>
+  <p>That's what <a href="https://www.cve.org/CVERecord?id=CVE-2025-48757">CVE-2025-48757</a> describes: insufficient RLS policies in Lovable-generated sites (through 2025-04-15) let unauthenticated attackers read or write database tables. Lovable disputes the CVE, saying each customer is responsible for their app's data. Either way, the fix is the same and it's in your database: the checks below.</p>
+  <p>Lovable apps are built with Vite, so any variable starting with <code>VITE_</code> ends up in the JavaScript every visitor downloads.</p>
+
+  <h2><span class="n">02</span> Is the master key in your frontend?</h2>
+  <p>The <code>service_role</code> key (or a new <code>sb_secret_</code> key) bypasses every RLS policy. If it ships to the browser, anyone who opens your site can copy it and read or change your whole database. Builders put it there when it lands in a <code>VITE_</code> variable or gets pasted into client code.</p>
+  <p><a href="/service-role-scanner/">Scan your live app for it</a> (free, paste the URL). Found one? Rotate it in the Supabase dashboard (Settings → API), move it to a server-only variable, redeploy and scan again.</p>
+  <p class="filelabel">.env</p>
+  <pre><span class="c"># fine in the browser: the URL and the anon / publishable key</span>
+VITE_SUPABASE_URL=https://xyz.supabase.co
+VITE_SUPABASE_ANON_KEY=...  <span class="c"># or a sb_publishable_ key</span>
+<span class="c"># never with the VITE_ prefix: it would ship to every visitor</span>
+SUPABASE_SERVICE_ROLE_KEY=...</pre>
+
+  <h2><span class="n">03</span> Which tables can anyone read?</h2>
+  <p>Your anon key is public by design; RLS is the only thing between it and your data. Run this in the Supabase SQL editor:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_table_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       c.relrowsecurity <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
+<span class="k">order by</span> 1;</pre>
+  <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is public: <a href="/rls/supabase-table-public-rls-off/">close it</a>.</p>
+
+  <h2><span class="n">04</span> RLS is on, but is it doing anything?</h2>
+  <p>"RLS enabled" isn't the same as "data protected". A policy that is always true lets everyone in, and generated code often contains one. List them:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> tablename, policyname, cmd, roles, qual, with_check
+<span class="k">from</span> pg_policies
+<span class="k">where</span> schemaname = <span class="s">'public'</span>
+  <span class="k">and</span> (qual = <span class="s">'true'</span> <span class="k">or</span> with_check = <span class="s">'true'</span>)
+<span class="k">order by</span> 1, 2;</pre>
+  <p>Keep a row only if that table is public on purpose (a catalog, a status page). Otherwise replace it with a policy scoped to the user. The <a href="/supabase-rls-policy-generator/">RLS policy generator</a> writes one per operation, tested.</p>
+
+  <h2><span class="n">05</span> Functions anyone can call</h2>
+  <p>A <code>security definer</code> function runs as its owner and skips RLS. In the <code>public</code> schema it's also an API endpoint (<code>/rest/v1/rpc/…</code>). List the ones a signed-out visitor can execute:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> p.proname
+<span class="k">from</span> pg_proc p <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = p.pronamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span>
+  <span class="k">and</span> p.prosecdef
+  <span class="k">and</span> has_function_privilege(<span class="s">'anon'</span>, p.oid, <span class="s">'execute'</span>)
+<span class="k">order by</span> 1;</pre>
+  <p>For each one: is it meant to be public? If not, <code>revoke execute on function public.name(...) from public, anon;</code> or move it to a schema the API doesn't expose.</p>
+
+  <h2><span class="n">06</span> Prove it as a stranger</h2>
+  <p>The dashboard and the SQL editor bypass RLS, so they always look fine. Test the way an attacker would: open your app in a private window, signed out, copy the anon key from the network tab, and request a private table:</p>
+  <p class="filelabel">terminal</p>
+  <pre>curl <span class="s">"$SUPABASE_URL/rest/v1/orders?select=*"</span> -H <span class="s">"apikey: $ANON_KEY"</span>
+<span class="c"># rows from other users → the policy is broken; [] → good</span></pre>
+  <p>Then keep it fixed: <a href="/rls/rls-in-ci-fail-build-exposed-table/"><code>npx airlock-rls</code> in CI</a> fails the build when a table ships without RLS or with an always-true policy, whoever (or whatever) wrote the migration.</p>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/bolt-new-supabase-security-checklist/">Bolt.new + Supabase security checklist <span class="arw">→</span></a><a href="/rls/v0-supabase-security-checklist/">v0 + Supabase security checklist <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/fix-permissive-rls-policy-using-true/">USING (true) is a security hole — fix it <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Catch this before it ships</h2>
+    <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Or start from <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> : auth + a table with RLS + an isolation test, so you start from a pattern that's already sealed.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Lovable's security scan passed. Am I safe?</summary><p>A passing scan is a good start, not proof. A policy can exist and still let everyone in (USING (true)). Run the always-true policy query and the signed-out curl test above; they show what an attacker would actually get.</p></details><details><summary>Should I hide the anon key?</summary><p>You can't: it ships in the app by design. It's safe when RLS is on and every policy restricts rows to the right user. The key to keep secret is service_role / sb_secret_.</p></details><details><summary>Can I ask Lovable to fix the policies?</summary><p>Yes, and then verify with the queries above. Generated fixes for permission errors sometimes open more than they should, like a policy that's always true or a broad grant.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>

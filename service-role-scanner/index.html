@@ -116,7 +116,7 @@
     <ul>
       <li>Your app ships two Supabase keys. The <strong>anon</strong> key is public by design — that one is fine in the browser.</li>
       <li>The <strong>service_role</strong> key is the master key. It runs <em>past</em> RLS entirely, so it reads and writes every row of every table.</li>
-      <li>Vibe-coded and rushed apps leak it constantly — pasted into a client component, an env var prefixed for the browser, or bundled into the JS.</li>
+      <li>Vibe-coded and rushed apps leak it constantly — pasted into a client component, an env var prefixed for the browser, or bundled into the JS. Built with an AI app builder? Run the full checklist for <a href="/rls/lovable-supabase-security-checklist/">Lovable</a>, <a href="/rls/bolt-new-supabase-security-checklist/">Bolt.new</a> or <a href="/rls/v0-supabase-security-checklist/">v0</a>.</li>
     </ul>
 
     <h2>What the scan does</h2>

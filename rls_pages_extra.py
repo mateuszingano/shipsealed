@@ -977,3 +977,146 @@ EXTRA.append({
          "Only if the API should serve its tables. Exposing a schema makes all of its tables reachable, so keep helper functions and internal tables in a schema that stays unexposed."),
     ],
 })
+
+# ---- 19-21. Security checklists for apps built with AI app builders --------
+# One shared, tested checklist + a platform-specific opening for each builder.
+# Facts per platform kept to what's verifiable (CVE record, Vite/Next env rules,
+# Supabase key docs); every SQL query here was run against Postgres.
+
+def _builder_checklist(env_prefix, env_example):
+    return """
+  <h2><span class="n">02</span> Is the master key in your frontend?</h2>
+  <p>The <code>service_role</code> key (or a new <code>sb_secret_</code> key) bypasses every RLS policy. If it ships to the browser, anyone who opens your site can copy it and read or change your whole database. Builders put it there when it lands in a <code>""" + env_prefix + """</code> variable or gets pasted into client code.</p>
+  <p><a href="/service-role-scanner/">Scan your live app for it</a> (free, paste the URL). Found one? Rotate it in the Supabase dashboard (Settings → API), move it to a server-only variable, redeploy and scan again.</p>
+  <p class="filelabel">.env</p>
+  <pre><span class="c"># fine in the browser: the URL and the anon / publishable key</span>
+""" + env_example + """
+<span class="c"># never with the """ + env_prefix + """ prefix: it would ship to every visitor</span>
+SUPABASE_SERVICE_ROLE_KEY=...</pre>
+
+  <h2><span class="n">03</span> Which tables can anyone read?</h2>
+  <p>Your anon key is public by design; RLS is the only thing between it and your data. Run this in the Supabase SQL editor:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_table_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       c.relrowsecurity <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
+<span class="k">order by</span> 1;</pre>
+  <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is public: <a href="/rls/supabase-table-public-rls-off/">close it</a>.</p>
+
+  <h2><span class="n">04</span> RLS is on, but is it doing anything?</h2>
+  <p>"RLS enabled" isn't the same as "data protected". A policy that is always true lets everyone in, and generated code often contains one. List them:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> tablename, policyname, cmd, roles, qual, with_check
+<span class="k">from</span> pg_policies
+<span class="k">where</span> schemaname = <span class="s">'public'</span>
+  <span class="k">and</span> (qual = <span class="s">'true'</span> <span class="k">or</span> with_check = <span class="s">'true'</span>)
+<span class="k">order by</span> 1, 2;</pre>
+  <p>Keep a row only if that table is public on purpose (a catalog, a status page). Otherwise replace it with a policy scoped to the user. The <a href="/supabase-rls-policy-generator/">RLS policy generator</a> writes one per operation, tested.</p>
+
+  <h2><span class="n">05</span> Functions anyone can call</h2>
+  <p>A <code>security definer</code> function runs as its owner and skips RLS. In the <code>public</code> schema it's also an API endpoint (<code>/rest/v1/rpc/…</code>). List the ones a signed-out visitor can execute:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> p.proname
+<span class="k">from</span> pg_proc p <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = p.pronamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span>
+  <span class="k">and</span> p.prosecdef
+  <span class="k">and</span> has_function_privilege(<span class="s">'anon'</span>, p.oid, <span class="s">'execute'</span>)
+<span class="k">order by</span> 1;</pre>
+  <p>For each one: is it meant to be public? If not, <code>revoke execute on function public.name(...) from public, anon;</code> or move it to a schema the API doesn't expose.</p>
+
+  <h2><span class="n">06</span> Prove it as a stranger</h2>
+  <p>The dashboard and the SQL editor bypass RLS, so they always look fine. Test the way an attacker would: open your app in a private window, signed out, copy the anon key from the network tab, and request a private table:</p>
+  <p class="filelabel">terminal</p>
+  <pre>curl <span class="s">"$SUPABASE_URL/rest/v1/orders?select=*"</span> -H <span class="s">"apikey: $ANON_KEY"</span>
+<span class="c"># rows from other users → the policy is broken; [] → good</span></pre>
+  <p>Then keep it fixed: <a href="/rls/rls-in-ci-fail-build-exposed-table/"><code>npx airlock-rls</code> in CI</a> fails the build when a table ships without RLS or with an always-true policy, whoever (or whatever) wrote the migration.</p>"""
+
+
+EXTRA.append({
+    "slug": "lovable-supabase-security-checklist",
+    "title": "Lovable + Supabase security checklist: is your app leaking data?",
+    "h1_plain": "Lovable + Supabase security checklist",
+    "h1": "Lovable + Supabase security checklist",
+    "desc": "Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.",
+    "eyebrow": "Supabase security · Lovable",
+    "crumb": "Lovable + Supabase security checklist",
+    "byline": "Postgres 15 · Supabase · Lovable",
+    "tldr": "Lovable writes the app; your Supabase policies decide who reads the data. Before you share the link: scan the live app for a <code>service_role</code> key, list tables the anon key can read, find always-true policies and anon-callable functions, then test signed out. Each check below is one query or one click.",
+    "body": """  <h2><span class="n">01</span> Why Lovable apps need this</h2>
+  <p>A Lovable app talks to Supabase straight from the browser with your anon key. That's normal, and it means Row Level Security is the only thing protecting your data. When the generated policies are missing or too open, anyone can read or write your tables.</p>
+  <p>That's what <a href="https://www.cve.org/CVERecord?id=CVE-2025-48757">CVE-2025-48757</a> describes: insufficient RLS policies in Lovable-generated sites (through 2025-04-15) let unauthenticated attackers read or write database tables. Lovable disputes the CVE, saying each customer is responsible for their app's data. Either way, the fix is the same and it's in your database: the checks below.</p>
+  <p>Lovable apps are built with Vite, so any variable starting with <code>VITE_</code> ends up in the JavaScript every visitor downloads.</p>
+""" + _builder_checklist("VITE_", "VITE_SUPABASE_URL=https://xyz.supabase.co\nVITE_SUPABASE_ANON_KEY=...  <span class=\"c\"># or a sb_publishable_ key</span>"),
+    "related": [
+        ("bolt-new-supabase-security-checklist", "Bolt.new + Supabase security checklist"),
+        ("v0-supabase-security-checklist", "v0 + Supabase security checklist"),
+        ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
+        ("fix-permissive-rls-policy-using-true", "USING (true) is a security hole — fix it"),
+    ],
+    "faq": [
+        ("Lovable's security scan passed. Am I safe?",
+         "A passing scan is a good start, not proof. A policy can exist and still let everyone in (USING (true)). Run the always-true policy query and the signed-out curl test above; they show what an attacker would actually get."),
+        ("Should I hide the anon key?",
+         "You can't: it ships in the app by design. It's safe when RLS is on and every policy restricts rows to the right user. The key to keep secret is service_role / sb_secret_."),
+        ("Can I ask Lovable to fix the policies?",
+         "Yes, and then verify with the queries above. Generated fixes for permission errors sometimes open more than they should, like a policy that's always true or a broad grant."),
+    ],
+})
+
+EXTRA.append({
+    "slug": "bolt-new-supabase-security-checklist",
+    "title": "Bolt.new + Supabase security checklist: is your app leaking data?",
+    "h1_plain": "Bolt.new + Supabase security checklist",
+    "h1": "Bolt.new + Supabase security checklist",
+    "desc": "Built your app with Bolt.new on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.",
+    "eyebrow": "Supabase security · Bolt.new",
+    "crumb": "Bolt.new + Supabase security checklist",
+    "byline": "Postgres 15 · Supabase · Bolt.new",
+    "tldr": "Bolt generates a frontend that queries Supabase directly with your anon key, so RLS is the whole security model. Before you share the link: scan for a <code>service_role</code> key, list tables the anon key can read, find always-true policies and anon-callable functions, then test signed out.",
+    "body": """  <h2><span class="n">01</span> Why Bolt apps need this</h2>
+  <p>A Bolt.new app is usually a Vite frontend that calls Supabase from the browser. There's no backend in between checking who's asking, so every rule about who sees which rows has to live in your Row Level Security policies. If a table has RLS off, or a policy that's always true, the public anon key in your app opens it to anyone.</p>
+  <p>Two things to know about Vite: variables starting with <code>VITE_</code> are bundled into the JavaScript every visitor downloads, and environment variables you set for a deploy (on Netlify, Vercel or elsewhere) follow the same rule. A <code>VITE_</code> prefix on the wrong key is a leak.</p>
+""" + _builder_checklist("VITE_", "VITE_SUPABASE_URL=https://xyz.supabase.co\nVITE_SUPABASE_ANON_KEY=...  <span class=\"c\"># or a sb_publishable_ key</span>"),
+    "related": [
+        ("lovable-supabase-security-checklist", "Lovable + Supabase security checklist"),
+        ("v0-supabase-security-checklist", "v0 + Supabase security checklist"),
+        ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
+        ("fix-permissive-rls-policy-using-true", "USING (true) is a security hole — fix it"),
+    ],
+    "faq": [
+        ("Do I need a backend to be safe?",
+         "No. A frontend talking to Supabase directly is a supported, safe design, as long as RLS is on everywhere and each policy scopes rows to the right user. Anything that needs a secret key goes in a server function."),
+        ("Bolt fixed a permission error by changing a policy. Should I check it?",
+         "Yes. The quickest fix for a permission error is often a policy that's always true or a broad grant, which removes the error by opening the table. Run the always-true policy query above after any fix."),
+    ],
+})
+
+EXTRA.append({
+    "slug": "v0-supabase-security-checklist",
+    "title": "v0 + Supabase security checklist: is your Next.js app leaking data?",
+    "h1_plain": "v0 + Supabase security checklist",
+    "h1": "v0 + Supabase security checklist",
+    "desc": "Built a Next.js app with v0 on Supabase? Six checks with tested SQL: a service_role key in a NEXT_PUBLIC_ variable, public tables, always-true RLS policies, callable functions, and a signed-out test.",
+    "eyebrow": "Supabase security · v0",
+    "crumb": "v0 + Supabase security checklist",
+    "byline": "Postgres 15 · Supabase · Next.js",
+    "tldr": "v0 apps are Next.js: anything in a <code>NEXT_PUBLIC_</code> variable ships to the browser, and client components query Supabase with your anon key, so RLS still guards the data. Check for a leaked <code>service_role</code> key, public tables, always-true policies and anon-callable functions, then test signed out.",
+    "body": """  <h2><span class="n">01</span> Why v0 apps need this</h2>
+  <p>v0 generates Next.js. Server components and route handlers run on the server, but client components, and any code that uses a <code>NEXT_PUBLIC_</code> variable, run in the visitor's browser. Supabase calls from the browser use your anon key, so Row Level Security decides what they can read and write.</p>
+  <p>Connecting Supabase through the Vercel integration adds environment variables to your project, including a server-side secret. The names vary between setups, so check them in your project settings: the URL and the anon / publishable key can be public, the <code>service_role</code> / <code>sb_secret_</code> key must never get a <code>NEXT_PUBLIC_</code> prefix. Supabase is retiring the legacy <code>anon</code> and <code>service_role</code> keys by the end of 2026 in favour of publishable and secret keys; the rule doesn't change.</p>
+""" + _builder_checklist("NEXT_PUBLIC_", "NEXT_PUBLIC_SUPABASE_URL=https://xyz.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=...  <span class=\"c\"># or a sb_publishable_ key</span>"),
+    "related": [
+        ("nextjs-app-router-supabase-auth-rls-ssr", "Next.js App Router + Supabase auth with RLS (SSR)"),
+        ("lovable-supabase-security-checklist", "Lovable + Supabase security checklist"),
+        ("bolt-new-supabase-security-checklist", "Bolt.new + Supabase security checklist"),
+        ("fix-permission-denied-for-table-supabase-42501", 'Fix 42501: "permission denied for table"'),
+    ],
+    "faq": [
+        ("If I only query Supabase from server components, do I still need RLS?",
+         "Yes. Your anon key is still public (it's in the client bundle for auth), so anyone can call the API directly, bypassing your server code. RLS protects the data no matter which path the request takes."),
+        ("Where should the service_role key be used?",
+         "Only in server code (route handlers, server actions, server components) and never imported into a client component. Prefer the user's session for normal queries so RLS applies; reserve the secret key for admin tasks."),
+    ],
+})
