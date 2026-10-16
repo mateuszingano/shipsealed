@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supabase RLS policy generator — tested SQL for your table</title>
+<meta name="description" content="Free Supabase RLS policy generator. Pick a pattern (private per user, public read, team/workspace, read-only) and get the migration: RLS, policies, grants and indexes, tested against Postgres.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/supabase-rls-policy-generator/">
+<link rel="stylesheet" href="../assets/page.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/supabase-rls-policy-generator/">
+<meta property="og:title" content="Supabase RLS policy generator — tested SQL for your table">
+<meta property="og:description" content="Pick a pattern, get the migration: RLS, one policy per operation, grants and indexes. Every pattern is tested against Postgres as real users.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Supabase RLS policy generator — tested SQL for your table">
+<meta name="twitter:description" content="Pick a pattern, get the migration: RLS, policies, grants, indexes. Tested against Postgres.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Supabase RLS policy generator","applicationCategory":"DeveloperApplication","operatingSystem":"Web","description":"Generates a Supabase migration with Row Level Security, one policy per operation, explicit grants and indexes for common access patterns.","url":"https://shipsealed.com/supabase-rls-policy-generator/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"ShipSealed"}}
+</script>
+<style>
+  .lede{font-size:16px;color:var(--muted);max-width:660px}
+  .gen{display:grid;grid-template-columns:1fr;gap:18px;margin:10px 0 8px}
+  #genform{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0 16px}
+  #genform h3,#genform .wide{grid-column:1/-1}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .panel h3{margin:0 0 12px;font-size:15px}
+  .fld{margin:0 0 14px}
+  .fld label,.fld .lbl{display:block;font:12.5px var(--mono);color:var(--dim);margin-bottom:6px}
+  .fld input[type=text],.fld select{width:100%;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;color:var(--text);font:14px var(--mono);padding:10px 12px}
+  .fld input[type=text]:focus,.fld select:focus{outline:none;border-color:var(--green)}
+  .ops{display:flex;flex-wrap:wrap;gap:8px 14px;font:13px var(--mono);color:var(--muted)}
+  .ops label{display:flex;gap:6px;align-items:center;color:var(--muted);margin:0}
+  .opts label{display:flex;gap:8px;align-items:center;font:13px var(--mono);color:var(--muted);margin:0 0 6px}
+  .team-only,.owner-only{display:none}
+  .is-owner .owner-only{display:block}
+  .is-team .team-only{display:contents}
+  .out{position:relative}
+  .out pre{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:16px;margin:0;overflow:auto;max-height:620px;font:12.8px/1.6 var(--mono);color:var(--text);white-space:pre}
+  .out .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .out .bar .btn{font-size:13px;padding:8px 12px;width:auto}
+  .errs{color:var(--wax);font:13px var(--mono);margin:0 0 10px}
+  .note{font-size:13.5px;color:var(--dim);margin:10px 0 0}
+  .cta-band{background:linear-gradient(180deg,rgba(31,227,184,.06),rgba(31,227,184,.01));border:1px solid var(--green-dim);border-radius:var(--radius);padding:26px 28px;margin:34px 0 8px}
+  .cta-band h2{margin:0 0 6px} .cta-band p{margin:0 0 16px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../rls/">Guides</a>
+      <a href="../cheatsheet/">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Free · runs in your browser</span>
+    <h1>Supabase RLS policy <span class="hl-mint">generator</span></h1>
+    <p class="lede">Pick how the table is accessed and get the migration: RLS on, one policy per operation, only the grants the API roles need, and the indexes the policies use. Every pattern is tested against Postgres as signed-out and signed-in users.</p>
+  </header>
+
+  <div class="gen" id="gen">
+    <form class="panel" id="genform" autocomplete="off" onsubmit="return false">
+      <h3>Your table</h3>
+      <div class="fld wide">
+        <label for="pattern">Who can access the rows?</label>
+        <select id="pattern">
+          <option value="owner">Private: each user sees only their own rows</option>
+          <option value="owner_public_read">Public read, only the owner writes</option>
+          <option value="team">Team / workspace members</option>
+          <option value="public_read_only">Public read-only (no writes from the API)</option>
+        </select>
+      </div>
+      <div class="fld"><label for="table">Table name</label><input type="text" id="table" value="notes" spellcheck="false"></div>
+      <div class="fld"><label for="schema">Schema</label><input type="text" id="schema" value="public" spellcheck="false"></div>
+      <div class="fld owner-only"><label for="ownerCol">Owner column (holds the user id)</label><input type="text" id="ownerCol" value="user_id" spellcheck="false"></div>
+      <div class="team-only">
+        <div class="fld"><label for="teamCol">Team column on this table</label><input type="text" id="teamCol" value="team_id" spellcheck="false"></div>
+        <div class="fld"><label for="teamColType">Team id type</label>
+          <select id="teamColType"><option value="uuid">uuid</option><option value="bigint">bigint</option><option value="int">int</option></select></div>
+        <div class="fld"><label for="membersTable">Membership table</label><input type="text" id="membersTable" value="team_members" spellcheck="false"></div>
+        <div class="fld"><label for="membersUserCol">…its user column</label><input type="text" id="membersUserCol" value="user_id" spellcheck="false"></div>
+        <div class="fld"><label for="membersTeamCol">…its team column</label><input type="text" id="membersTeamCol" value="team_id" spellcheck="false"></div>
+      </div>
+      <div class="fld wide" id="opsfld">
+        <span class="lbl">Operations the app does</span>
+        <div class="ops">
+          <label><input type="checkbox" value="select" checked> select</label>
+          <label><input type="checkbox" value="insert" checked> insert</label>
+          <label><input type="checkbox" value="update" checked> update</label>
+          <label><input type="checkbox" value="delete" checked> delete</label>
+        </div>
+      </div>
+      <div class="fld opts wide">
+        <label class="owner-only"><input type="checkbox" id="ownerDefault" checked> default owner to auth.uid()</label>
+        <label><input type="checkbox" id="index" checked> add indexes for the policies</label>
+      </div>
+    </form>
+
+    <div class="panel out">
+      <div class="bar">
+        <h3 style="margin:0">migration.sql</h3>
+        <button type="button" class="btn btn-ghost" id="copy">Copy SQL</button>
+      </div>
+      <div class="errs" id="errs" hidden></div>
+      <pre id="sql"></pre>
+      <p class="note">Then check it: <code>npx airlock-rls</code> fails your CI build if any table ships without RLS or with an always-true policy.</p>
+      <div class="bar" style="margin-top:18px">
+        <h3 style="margin:0">check.sql</h3>
+        <button type="button" class="btn btn-ghost" id="copytest">Copy</button>
+      </div>
+      <pre id="test"></pre>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2>What the generated SQL does, and why</h2>
+    <ul>
+      <li><strong>RLS in the same migration as the table.</strong> A table in an exposed schema is reachable with your public anon key the moment it exists. <a href="../rls/supabase-table-public-rls-off/">Why a table with RLS off is public</a>.</li>
+      <li><strong>One policy per operation, named to a role.</strong> INSERT gets <code>with check</code>, UPDATE gets <code>using</code> and <code>with check</code> so nobody can hand a row to someone else, and UPDATE always has a SELECT policy, without which it <a href="../rls/supabase-update-delete-not-working-rls/">silently changes nothing</a>.</li>
+      <li><strong><code>(select auth.uid())</code></strong> so Postgres evaluates it once per query, not once per row.</li>
+      <li><strong>Explicit grants, only what's needed.</strong> New tables no longer get grants for the API roles; without one you get <a href="../rls/fix-permission-denied-for-table-supabase-42501/">42501 permission denied</a>. Never <code>grant ... on all tables</code>: it also opens every table with RLS off.</li>
+      <li><strong>Teams through a helper function.</strong> A policy that queries the membership table through RLS loops into <a href="../rls/fix-infinite-recursion-detected-in-policy-supabase/">42P17 infinite recursion</a>. The helper is <code>security definer</code>, lives in a schema the API doesn't expose, and only returns the caller's teams.</li>
+    </ul>
+    <p>Tested: each pattern is applied to Postgres and checked as a signed-out visitor and as two users (own rows only, no cross-user reads or writes, no reassigning rows, no recursion on the membership table).</p>
+  </div>
+
+  <div class="cta-band">
+    <h2>Policies written. Now keep them that way.</h2>
+    <p class="mono" style="color:var(--muted);font-size:14px">A policy edited by hand or a table added in a hurry can reopen a leak. <code>airlock-rls</code> blocks it in CI for free; Airlock Monitor re-checks production on a schedule.</p>
+    <a class="btn btn-primary" style="width:auto" href="https://www.npmjs.com/package/airlock-rls">npx airlock-rls →</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../rls/">RLS guides</a>
+      <a href="../service-role-scanner/">service_role scanner</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. Not affiliated with Supabase. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/rls-gen.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var gen=$('gen'), sqlEl=$('sql'), testEl=$('test'), errs=$('errs');
+  var fields=['pattern','table','schema','ownerCol','teamCol','teamColType','membersTable','membersUserCol','membersTeamCol'];
+  var used=false;
+  function ev(name,params){try{if(window.gtag)gtag('event',name,params||{});}catch(e){}}
+  function read(){
+    var o={};
+    fields.forEach(function(f){o[f]=$(f).value.trim()});
+    o.ops=[].slice.call(document.querySelectorAll('#opsfld input:checked')).map(function(c){return c.value});
+    o.ownerDefault=$('ownerDefault').checked; o.index=$('index').checked;
+    return o;
+  }
+  function render(){
+    var o=read();
+    gen.className='gen'+(o.pattern==='team'?' is-team':'')+(o.pattern.indexOf('owner')===0?' is-owner':'');
+    $('opsfld').style.display=(o.pattern==='public_read_only'||o.pattern==='owner_public_read')?'none':'';
+    var r=RLSGen.generate(o);
+    errs.hidden=!r.errors.length; errs.textContent=r.errors.join(' · ');
+    sqlEl.textContent=r.sql||'-- fix the fields above'; testEl.textContent=r.test;
+  }
+  function copy(el,btn,label){
+    var txt=el.textContent;
+    var done=function(){btn.textContent='Copied ✓';setTimeout(function(){btn.textContent=label},1500)};
+    if(navigator.clipboard){navigator.clipboard.writeText(txt).then(done,function(){prompt('Copy:',txt)})}else{prompt('Copy:',txt)}
+  }
+  $('genform').addEventListener('input',function(){ if(!used){used=true;ev('generator_used')} render() });
+  $('genform').addEventListener('change',render);
+  $('copy').addEventListener('click',function(){copy(sqlEl,this,'Copy SQL');ev('generator_copy',{pattern:$('pattern').value})});
+  $('copytest').addEventListener('click',function(){copy(testEl,this,'Copy')});
+  render();
+})();
+</script>
+</body>
+</html>

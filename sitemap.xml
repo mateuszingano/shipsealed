@@ -26,5 +26,6 @@
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/service-role-scanner/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/supabase-rls-policy-generator/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/terms/</loc><changefreq>weekly</changefreq></url>
 </urlset>
