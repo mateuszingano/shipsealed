@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/supabase-october-30-grants-change/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/supabase-october-30-grants-change/">
+<title>Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza</title>
+<meta name="description" content="A partir de 30/10/2026, tabelas novas no Supabase precisam de GRANT explícito pra aparecer na Data API. O que quebra (42501), a migration certa e a correção que vaza dados.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/">
+<meta property="og:title" content="Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza">
+<meta property="og:description" content="A partir de 30/10/2026, tabelas novas no Supabase precisam de GRANT explícito pra aparecer na Data API. O que quebra (42501), a migration certa e a correção que vaza dados.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza">
+<meta name="twitter:description" content="A partir de 30/10/2026, tabelas novas no Supabase precisam de GRANT explícito pra aparecer na Data API. O que quebra (42501), a migration certa e a correção que vaza dados.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza", "description": "A partir de 30/10/2026, tabelas novas no Supabase precisam de GRANT explícito pra aparecer na Data API. O que quebra (42501), a migration certa e a correção que vaza dados.", "url": "https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza", "item": "https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Minhas tabelas atuais param de funcionar em 30 de outubro?", "acceptedAnswer": {"@type": "Answer", "text": "Não. O Supabase só muda o padrão das tabelas criadas depois da virada. As tabelas que já existem mantêm os grants atuais. O primeiro a quebrar é a próxima tabela nova criada sem GRANT."}}, {"@type": "Question", "name": "Essa mudança deixa meu app mais seguro sozinha?", "acceptedAnswer": {"@type": "Answer", "text": "Só pras tabelas novas. Toda tabela existente mantém os grants antigos, então uma que está com RLS desligado hoje continua legível pela API depois de 30/10. Rode o check acima e ligue o RLS em tudo que aparecer com anon_can_read true e rls_on false."}}, {"@type": "Question", "name": "Dou grant pra anon ou pra authenticated?", "acceptedAnswer": {"@type": "Answer", "text": "Pro role que realmente precisa da tabela. Dado que só usuário logado vê recebe grant pra authenticated e nenhum pra anon. Dado público, como um catálogo de produtos, pode ter grant pra anon com uma policy de RLS que permita a leitura."}}, {"@type": "Question", "name": "O service_role também é afetado?", "acceptedAnswer": {"@type": "Answer", "text": "Sim. Ele também perde os grants automáticos em tabelas novas, então um backend usando a chave service_role recebe 42501 numa tabela nova até você dar o grant. Depois do grant, ele continua ignorando o RLS."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Mudança de grants de 30/10 · <a href="https://shipsealed.com/rls/supabase-october-30-grants-change/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase RLS · Mudança na plataforma</p>
+  <h1>Mudança de grants do Supabase em 30/10: o que quebra e a correção que vaza</h1>
+  <div class="byline"><span>Supabase · outubro de 2026</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>A partir de 30/10, uma tabela <b>nova</b> em <code>public</code> fica inacessível pra <code>anon</code> / <code>authenticated</code> até você dar <code>GRANT</code>. Tabelas que já existem continuam funcionando. Coloque grant + RLS + policies na <b>mesma migration</b>. Não resolva o 42501 com <code>grant ... on all tables</code>: isso libera também toda tabela que está com RLS desligado.</p></div>
+  <h2><span class="n">01</span> O que muda em 30 de outubro</h2>
+  <p>Até agora, toda tabela criada em <code>public</code> recebia automaticamente privilégios completos (<code>select / insert / update / delete</code> e outros) pra <code>anon</code>, <code>authenticated</code> e <code>service_role</code>, via default privileges. Em <b>30 de outubro de 2026</b> o Supabase desliga isso em todos os projetos existentes (projetos novos já vêm assim desde um rollout gradual que começou em 30 de maio). A partir daí:</p>
+  <div class="cause"><h3>Tabelas novas</h3><p>Criadas sem <code>GRANT</code>, ficam invisíveis pra Data API (<code>supabase-js</code>, PostgREST, GraphQL), não importa como foram criadas: SQL editor, migration, CLI, MCP ou ferramenta de IA.</p></div>
+  <div class="cause"><h3>Tabelas existentes</h3><p>Não mudam. Continuam com os grants que têm hoje, então o app que está no ar segue funcionando.</p></div>
+  <div class="cause"><h3>RLS e policies</h3><p>Iguais. O grant decide se um role pode tocar na tabela; o RLS decide quais linhas.</p></div>
+  <p>Conexões diretas ao Postgres (psql, ORM, servidor com connection string) não são afetadas. Fonte: <a href="https://github.com/orgs/supabase/discussions/45329">anúncio oficial do Supabase</a> (em inglês).</p>
+
+  <h2><span class="n">02</span> Como é o "quebrou"</h2>
+  <p>A primeira tabela nova depois da virada devolve isso pela API, em vez das linhas:</p>
+  <p class="filelabel">resposta (exemplo do anúncio do Supabase)</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"42501"</span>,
+  <span class="s">"message"</span>: <span class="s">"permission denied for table invoices"</span>,
+  <span class="s">"hint"</span>: <span class="s">"Grant the required privileges to the current role with: GRANT SELECT ON public.invoices TO anon;"</span>
+}</pre>
+  <p>O Postgres recusa a query antes mesmo de o RLS rodar. É o novo padrão funcionando como deveria, não um bug nas suas policies.</p>
+
+  <h2><span class="n">03</span> A correção que vaza</h2>
+  <p>O jeito mais rápido de sumir com o erro é o grant em massa da seção de rollback do anúncio:</p>
+  <p class="filelabel">não cole isso como correção</p>
+  <pre><span class="k">grant select</span>, <span class="k">insert</span>, <span class="k">update</span>, <span class="k">delete</span> <span class="k">on all tables in schema</span> public
+  <span class="k">to</span> anon, authenticated, service_role;</pre>
+  <p>Funciona, e também libera <b>todas</b> as tabelas de <code>public</code>, inclusive as que você nunca quis expor. Qualquer uma delas com <b>RLS desligado</b> passa a poder ser lida e escrita por quem tiver sua anon key, que vai junto no seu frontend. O novo padrão era a chance de parar de expor tabela sem querer; o grant em massa devolve o problema. Peça pra uma ferramenta de IA "corrigir o erro de permissão" e essa linha é uma resposta bem provável.</p>
+  <p>Dê grant por tabela, e só o que cada role precisa.</p>
+
+  <h2><span class="n">04</span> O padrão de migration que funciona</h2>
+  <p>Trate grant, RLS e policies como uma coisa só, na mesma migration, pra tabela nunca existir pela metade:</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create table</span> public.invoices (
+  id         <span class="k">bigint generated always as identity primary key</span>,
+  user_id    uuid <span class="k">not null references</span> auth.users(id),
+  amount     numeric <span class="k">not null</span>
+);
+
+<span class="k">alter table</span> public.invoices <span class="k">enable row level security</span>;
+
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> public.invoices <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
+
+<span class="c">-- só o role e as operações que o app realmente usa</span>
+<span class="k">grant select on</span> public.invoices <span class="k">to</span> authenticated;</pre>
+  <p>Sem grant pra <code>anon</code> aqui, porque visitante deslogado não lê fatura. Se a tabela usa <code>serial</code> / <code>bigserial</code> em vez de identity e a API insere nela, a sequence precisa do próprio grant: <code>grant usage, select on sequence public.invoices_id_seq to authenticated;</code></p>
+
+  <h2><span class="n">05</span> Veja o que os roles da API alcançam hoje</h2>
+  <p>Rode isso no SQL editor. Lista toda tabela e view de <code>public</code>, se <code>anon</code> ou <code>authenticated</code> conseguem ler, e se o RLS está ligado:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_any_column_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>)          <span class="k">as</span> anon_can_read,
+       has_any_column_privilege(<span class="s">'authenticated'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> auth_can_read,
+       c.relrowsecurity                                              <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c
+<span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind <span class="k">in</span> (<span class="s">'r'</span>, <span class="s">'p'</span>, <span class="s">'v'</span>, <span class="s">'m'</span>)
+<span class="k">order by</span> 1;</pre>
+  <p>Tabela com <code>anon_can_read = true</code> e <code>rls_on = false</code> pode ser lida por qualquer um com a sua anon key. Dois detalhes deixam essa consulta mais rigorosa que a versão comum baseada em <code>information_schema.table_privileges</code>:</p>
+  <div class="cause"><h3>Grants de coluna</h3><p><code>grant select (id, email) on profiles to anon</code> não aparece como privilégio de tabela, mas a API continua servindo essas colunas. <code>has_any_column_privilege</code> pega grant de tabela e de coluna.</p></div>
+  <div class="cause"><h3>Views</h3><p>Views também aparecem na API e, por padrão, leem as tabelas como o dono da view, pulando o RLS. Crie views com <code>security_invoker = on</code> pra elas respeitarem o RLS de quem chama.</p></div>
+
+  <h2><span class="n">06</span> Pra não voltar a acontecer</h2>
+  <p>O novo padrão só te protege enquanto toda migration estiver certa. Dois checks grátis ajudam:</p>
+  <div class="cause"><h3>No CI</h3><p><a href="https://www.npmjs.com/package/airlock-migrate"><code>npx airlock-migrate</code></a> lê seus arquivos de migration e quebra o build quando um deles cria tabela sem ligar o RLS, ou desliga o RLS. São justamente as tabelas que um grant em massa exporia. Também avisa sobre view sem <code>security_invoker = on</code>. Ele não aponta os grants em si, e só enxerga tabelas que passam pelos seus arquivos de migration.</p></div>
+  <div class="cause"><h3>No banco em produção</h3><p><code>SUPABASE_DB_URL=... npx airlock-rls</code> confere o banco rodando atrás de tabelas com RLS desligado e policies que deixam todo mundo passar. <a href="/rls/rls-in-ci-fail-build-exposed-table/">Configure no CI</a> (em inglês).</p></div>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-42501-permission-denied-for-table-supabase/">Erro 42501: "permission denied for table" <span class="arw">→</span></a><a href="/pt/rls/checklist-seguranca-lovable-supabase/">Checklist de segurança: Lovable + Supabase <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (em inglês) <span class="arw">→</span></a><a href="/supabase-rls-policy-generator/">Gerador de policies RLS (em inglês) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Minhas tabelas atuais param de funcionar em 30 de outubro?</summary><p>Não. O Supabase só muda o padrão das tabelas criadas depois da virada. As tabelas que já existem mantêm os grants atuais. O primeiro a quebrar é a próxima tabela nova criada sem GRANT.</p></details><details><summary>Essa mudança deixa meu app mais seguro sozinha?</summary><p>Só pras tabelas novas. Toda tabela existente mantém os grants antigos, então uma que está com RLS desligado hoje continua legível pela API depois de 30/10. Rode o check acima e ligue o RLS em tudo que aparecer com anon_can_read true e rls_on false.</p></details><details><summary>Dou grant pra anon ou pra authenticated?</summary><p>Pro role que realmente precisa da tabela. Dado que só usuário logado vê recebe grant pra authenticated e nenhum pra anon. Dado público, como um catálogo de produtos, pode ter grant pra anon com uma policy de RLS que permita a leitura.</p></details><details><summary>O service_role também é afetado?</summary><p>Sim. Ele também perde os grants automáticos em tabelas novas, então um backend usando a chave service_role recebe 42501 numa tabela nova até você dar o grant. Depois do grant, ele continua ignorando o RLS.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>
