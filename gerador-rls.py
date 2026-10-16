@@ -76,19 +76,92 @@ FAVICON = ("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='
            "stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>")
 
 
+# --- pt-BR: mesmo shell, textos traduzidos. Páginas PT em /pt/rls/<slug>/ ---
+CTA_TOOLS_PT = """  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>"""
+
+SIGNUP_JS_PT = (SIGNUP_JS
+    .replace("✖ enter a valid email", "✖ digite um email válido")
+    .replace("joining…", "enviando…")
+    .replace("source:'rls-guide'", "source:'rls-guide-pt'")
+    .replace("✔ on its way — check your inbox.", "✔ a caminho — confira seu email.")
+    .replace("grab it now →", "baixe agora →")
+    .replace("✖ something went wrong — try again.", "✖ algo deu errado — tente de novo."))
+
+NAV_PT = """<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>"""
+
+FOOTER_PT = """<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>"""
+
+L10N = {
+    "en": {"html": "en", "in": "en", "prefix": "/rls/", "home": "Home", "rls": "RLS", "guides": "RLS guides",
+           "tested": "✓ code tested against a real database", "related": "Related RLS guides",
+           "cta": CTA_TOOLS, "js": SIGNUP_JS, "nav": NAV, "footer": FOOTER},
+    "pt": {"html": "pt-BR", "in": "pt-BR", "prefix": "/pt/rls/", "home": "Início", "rls": "RLS", "guides": "Guias de RLS",
+           "tested": "✓ código testado num banco de verdade", "related": "Guias relacionados",
+           "cta": CTA_TOOLS_PT, "js": SIGNUP_JS_PT, "nav": NAV_PT, "footer": FOOTER_PT},
+}
+
+
 def render(p):
-    url = BASE + "/rls/" + p["slug"] + "/"
+    lang = p.get("lang", "en")
+    T = L10N[lang]
+    url = BASE + T["prefix"] + p["slug"] + "/"
+    hreflang = ""
+    switch = ""
+    if p.get("alt"):
+        en_url = url if lang == "en" else BASE + p["alt"]
+        pt_url = url if lang == "pt" else BASE + p["alt"]
+        hreflang = ('\n<link rel="alternate" hreflang="en" href="%s">'
+                    '\n<link rel="alternate" hreflang="pt-BR" href="%s">'
+                    '\n<link rel="alternate" hreflang="x-default" href="%s">') % (en_url, pt_url, en_url)
+        switch = (' · <a href="%s" hreflang="pt-BR" lang="pt-BR">Em português</a>' % pt_url if lang == "en"
+                  else ' · <a href="%s" hreflang="en" lang="en">Read in English</a>' % en_url)
     # JSON-LD: Article + FAQPage + BreadcrumbList — validado antes de gravar
     ld = {
         "@context": "https://schema.org",
         "@graph": [
             {"@type": "TechArticle", "headline": p["h1_plain"], "description": p["desc"],
-             "url": url, "mainEntityOfPage": url, "inLanguage": "en",
+             "url": url, "mainEntityOfPage": url, "inLanguage": T["in"],
              "author": {"@type": "Organization", "name": "ShipSealed"},
              "publisher": {"@type": "Organization", "name": "ShipSealed"}},
             {"@type": "BreadcrumbList", "itemListElement": [
-                {"@type": "ListItem", "position": 1, "name": "Home", "item": BASE + "/"},
-                {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": BASE + "/rls/"},
+                {"@type": "ListItem", "position": 1, "name": T["home"], "item": BASE + "/"},
+                {"@type": "ListItem", "position": 2, "name": T["guides"], "item": BASE + "/rls/"},
                 {"@type": "ListItem", "position": 3, "name": p["h1_plain"], "item": url}]},
             {"@type": "FAQPage", "mainEntity": [
                 {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
@@ -100,14 +173,15 @@ def render(p):
     related = ""
     if p.get("related"):
         rows = "".join(
-            '<a href="/rls/%s/">%s <span class="arw">→</span></a>' % (s, t) for s, t in p["related"])
-        related = '<div class="related"><div class="lbl">Related RLS guides</div>%s</div>' % rows
+            '<a href="%s">%s <span class="arw">→</span></a>' % (s if s.startswith("/") else "/rls/%s/" % s, t)
+            for s, t in p["related"])
+        related = '<div class="related"><div class="lbl">%s</div>%s</div>' % (T["related"], rows)
 
     faq_html = "".join(
         "<details><summary>%s</summary><p>%s</p></details>" % (q, a) for q, a in p["faq"])
 
     doc = """<!doctype html>
-<html lang="en">
+<html lang="{html_lang}">
 <head>
 <script>window.va=window.va||function(){{(window.vaq=window.vaq||[]).push(arguments)}};</script>
 <script defer src="/_vercel/insights/script.js"></script>
@@ -117,7 +191,7 @@ def render(p):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index,follow">
-<link rel="canonical" href="{url}">
+<link rel="canonical" href="{url}">{hreflang}
 <title>{title}</title>
 <meta name="description" content="{desc}">
 <link rel="icon" href="{favicon}">
@@ -136,10 +210,10 @@ def render(p):
 <body>
 {nav}
 <main class="wrap">
-  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / {crumb}</p>
+  <p class="crumb"><a href="/">{home}</a> / <a href="/rls/">{rls}</a> / {crumb}{switch}</p>
   <p class="eyebrow">{eyebrow}</p>
   <h1>{h1}</h1>
-  <div class="byline"><span>{byline}</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="byline"><span>{byline}</span><span class="ok">{tested}</span></div>
   <div class="tldr"><div class="lbl">TL;DR</div><p>{tldr}</p></div>
 {body}
 {related}
@@ -153,15 +227,17 @@ def render(p):
 </html>
 """.format(
         url=url, title=html.escape(p["title"]), desc=html.escape(p["desc"]), favicon=FAVICON,
-        base=BASE, ld=json.dumps(ld, ensure_ascii=False), nav=NAV, crumb=html.escape(p["crumb"]),
+        html_lang=T["html"], hreflang=hreflang, switch=switch, home=T["home"], rls=T["rls"], tested=T["tested"],
+        base=BASE, ld=json.dumps(ld, ensure_ascii=False), nav=T["nav"], crumb=html.escape(p["crumb"]),
         eyebrow=html.escape(p["eyebrow"]), h1=p["h1"], byline=html.escape(p["byline"]),
-        tldr=p["tldr"], body=p["body"], related=related, cta=CTA_TOOLS, faq=faq_html,
-        footer=FOOTER, js=SIGNUP_JS)
+        tldr=p["tldr"], body=p["body"], related=related, cta=T["cta"], faq=faq_html,
+        footer=T["footer"], js=T["js"])
     return doc
 
 
 def write(p):
-    d = os.path.join(OUT, p["slug"])
+    base_dir = os.path.join(HERE, "pt", "rls") if p.get("lang") == "pt" else OUT
+    d = os.path.join(base_dir, p["slug"])
     os.makedirs(d, exist_ok=True)
     io.open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(render(p))
     return p["slug"]
@@ -248,6 +324,21 @@ PAGES.append({
 try:
     from rls_pages_extra import EXTRA
     PAGES += EXTRA
+except ImportError:
+    pass
+
+# Traduções pt-BR (rls_pages_pt.py). Cada uma aponta pro slug em inglês ("en");
+# as duas versões ganham hreflang uma pra outra. Ficam fora do hub /rls/.
+PAGES_PT = []
+try:
+    from rls_pages_pt import PT
+    _by_slug = {p["slug"]: p for p in PAGES}
+    for _p in PT:
+        _p["lang"] = "pt"
+        _en = _by_slug[_p["en"]]
+        _p["alt"] = "/rls/%s/" % _en["slug"]
+        _en["alt"] = "/pt/rls/%s/" % _p["slug"]
+        PAGES_PT.append(_p)
 except ImportError:
     pass
 
@@ -408,6 +499,7 @@ def build_sitemap():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     done = [write(p) for p in PAGES]
+    done_pt = [write(p) for p in PAGES_PT]
     build_index()
     n = build_sitemap()
     print("Páginas geradas:", len(done))
