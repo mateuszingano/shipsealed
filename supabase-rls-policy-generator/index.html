@@ -29,8 +29,9 @@
 </script>
 <style>
   .lede{font-size:16px;color:var(--muted);max-width:660px}
-  .gen{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:22px;margin:10px 0 8px}
-  @media (max-width:860px){.gen{grid-template-columns:1fr}}
+  .gen{display:grid;grid-template-columns:1fr;gap:18px;margin:10px 0 8px}
+  #genform{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0 16px}
+  #genform h3,#genform .wide{grid-column:1/-1}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
   .panel h3{margin:0 0 12px;font-size:15px}
   .fld{margin:0 0 14px}
@@ -41,7 +42,8 @@
   .ops label{display:flex;gap:6px;align-items:center;color:var(--muted);margin:0}
   .opts label{display:flex;gap:8px;align-items:center;font:13px var(--mono);color:var(--muted);margin:0 0 6px}
   .team-only,.owner-only{display:none}
-  .is-team .team-only,.is-owner .owner-only{display:block}
+  .is-owner .owner-only{display:block}
+  .is-team .team-only{display:contents}
   .out{position:relative}
   .out pre{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:16px;margin:0;overflow:auto;max-height:620px;font:12.8px/1.6 var(--mono);color:var(--text);white-space:pre}
   .out .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
@@ -75,7 +77,7 @@
   <div class="gen" id="gen">
     <form class="panel" id="genform" autocomplete="off" onsubmit="return false">
       <h3>Your table</h3>
-      <div class="fld">
+      <div class="fld wide">
         <label for="pattern">Who can access the rows?</label>
         <select id="pattern">
           <option value="owner">Private: each user sees only their own rows</option>
@@ -95,7 +97,7 @@
         <div class="fld"><label for="membersUserCol">…its user column</label><input type="text" id="membersUserCol" value="user_id" spellcheck="false"></div>
         <div class="fld"><label for="membersTeamCol">…its team column</label><input type="text" id="membersTeamCol" value="team_id" spellcheck="false"></div>
       </div>
-      <div class="fld" id="opsfld">
+      <div class="fld wide" id="opsfld">
         <span class="lbl">Operations the app does</span>
         <div class="ops">
           <label><input type="checkbox" value="select" checked> select</label>
@@ -104,7 +106,7 @@
           <label><input type="checkbox" value="delete" checked> delete</label>
         </div>
       </div>
-      <div class="fld opts">
+      <div class="fld opts wide">
         <label class="owner-only"><input type="checkbox" id="ownerDefault" checked> default owner to auth.uid()</label>
         <label><input type="checkbox" id="index" checked> add indexes for the policies</label>
       </div>
