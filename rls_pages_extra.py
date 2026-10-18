@@ -637,7 +637,7 @@ EXTRA.append({
 
 <span class="c">-- only the role and the operations the app actually uses</span>
 <span class="k">grant select on</span> public.invoices <span class="k">to</span> authenticated;</pre>
-  <p>No grant to <code>anon</code> here, because signed-out visitors don't read invoices. If a table uses <code>serial</code> / <code>bigserial</code> instead of an identity column and the API inserts into it, the sequence needs its own grant: <code>grant usage, select on sequence public.invoices_id_seq to authenticated;</code></p>
+  <p>No grant to <code>anon</code> here, because signed-out visitors don't read invoices. If a table uses <code>serial</code> / <code>bigserial</code> instead of an identity column and the API inserts into it, the sequence needs its own grant: <code>grant usage on sequence public.invoices_id_seq to authenticated;</code> (<a href="/rls/fix-permission-denied-for-sequence-supabase/">why</a>).</p>
 
   <h2><span class="n">05</span> Check what the API roles can reach today</h2>
   <p>Run this in the SQL editor. It lists every table and view in <code>public</code>, whether <code>anon</code> or <code>authenticated</code> can read it, and whether RLS is on:</p>
@@ -660,6 +660,7 @@ EXTRA.append({
   <div class="cause"><h3>On the live database</h3><p><code>SUPABASE_DB_URL=... npx airlock-rls</code> checks the running database for tables with RLS off and policies that let everyone through. <a href="/rls/rls-in-ci-fail-build-exposed-table/">Set it up in CI</a>.</p></div>""",
     "related": [
         ("fix-permission-denied-for-table-supabase-42501", 'Fix 42501: "permission denied for table"'),
+        ("fix-permission-denied-for-sequence-supabase", 'Fix "permission denied for sequence" (serial columns)'),
         ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
         ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
         ("supabase-security-checklist-before-launch", "Supabase security checklist before launch"),
@@ -1118,5 +1119,89 @@ EXTRA.append({
          "Yes. Your anon key is still public (it's in the client bundle for auth), so anyone can call the API directly, bypassing your server code. RLS protects the data no matter which path the request takes."),
         ("Where should the service_role key be used?",
          "Only in server code (route handlers, server actions, server components) and never imported into a client component. Prefer the user's session for normal queries so RLS applies; reserve the secret key for admin tasks."),
+    ],
+})
+
+
+# ---- Sequence 42501 + service_role on new tables (Oct 30 follow-up) --------
+# Cada afirmação provada em Postgres 17/10/26: serial sem usage quebra, identity
+# não precisa de grant, service_role (bypassrls) leva 42501 sem grant de tabela.
+EXTRA.append({
+    "slug": "fix-permission-denied-for-sequence-supabase",
+    "title": "Fix \"permission denied for sequence\" in Supabase (42501)",
+    "h1_plain": "Fix \"permission denied for sequence\" in Supabase (and service_role 42501 on new tables)",
+    "h1": "Fix \"permission denied for sequence\" in Supabase",
+    "desc": "Inserts fail with permission denied for sequence after the table grant? A serial column needs its own grant. Plus why service_role gets 42501 on new tables.",
+    "eyebrow": "Supabase RLS · Error fix",
+    "crumb": "permission denied for sequence",
+    "byline": "Tested on Postgres 18 · Supabase",
+    "tldr": "A <code>serial</code> / <code>bigserial</code> column takes its value from a separate sequence, and the inserting role needs <code>USAGE</code> on it. Use an identity column (<code>generated always as identity</code> for new tables) and the problem goes away, or grant the sequence. From Supabase's Oct 30 change, <code>service_role</code> also needs an explicit table grant on new tables: bypassing RLS doesn't bypass grants.",
+    "body": """  <h2><span class="n">01</span> What the error means</h2>
+  <p class="filelabel">response</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"42501"</span>,
+  <span class="s">"message"</span>: <span class="s">"permission denied for sequence invoices_id_seq"</span>
+}</pre>
+  <p>You granted <code>insert</code> on the table and the insert still fails. A <code>serial</code> or <code>bigserial</code> column is a default of <code>nextval('invoices_id_seq')</code>, and calling <code>nextval</code> needs <code>USAGE</code> on that sequence. The table grant doesn't cover it.</p>
+  <p>Until recently Supabase granted every new table <b>and sequence</b> to the API roles by default, so most projects never hit it. New projects have had that off since a gradual rollout that started May 30, 2026, and existing projects follow on October 30, 2026 (<a href="/rls/supabase-october-30-grants-change/">what changes on Oct 30</a>). From then on, the first insert into a new table with a <code>serial</code> id hits this error.</p>
+
+  <h2><span class="n">02</span> Best fix: use an identity column</h2>
+  <p>An identity column also uses a sequence internally, but Postgres treats it as part of the column: the <code>insert</code> grant on the table is enough.</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create table</span> public.invoices (
+  id      <span class="k">bigint generated always as identity primary key</span>,
+  user_id uuid <span class="k">not null references</span> auth.users(id),
+  amount  numeric <span class="k">not null</span>
+);
+
+<span class="k">alter table</span> public.invoices <span class="k">enable row level security</span>;
+<span class="k">create policy</span> <span class="s">"owner inserts"</span> <span class="k">on</span> public.invoices <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()));
+<span class="k">grant insert on</span> public.invoices <span class="k">to</span> authenticated;</pre>
+  <p>No sequence grant anywhere, and inserts work. The Postgres wiki's "Don't Do This" page recommends identity over <code>serial</code> too.</p>
+
+  <h2><span class="n">03</span> Keeping serial: grant the sequence</h2>
+  <p>If the table already exists with a <code>serial</code> column, grant <code>USAGE</code> on its sequence to the role that inserts, in the same migration as the table grant:</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">grant insert on</span> public.invoices <span class="k">to</span> authenticated;
+<span class="k">grant usage on sequence</span> public.invoices_id_seq <span class="k">to</span> authenticated;</pre>
+  <p>The sequence is named <code>&lt;table&gt;_&lt;column&gt;_seq</code> by default. <code>pg_get_serial_sequence('public.invoices', 'id')</code> returns the exact name if you're not sure. Grant it per sequence, to the role that needs it, rather than <code>on all sequences in schema public</code>.</p>
+
+  <h2><span class="n">04</span> service_role gets 42501 too</h2>
+  <p>A backend using the <code>service_role</code> key bypasses RLS, so it's easy to assume it can touch any table. It can't: RLS and grants are separate checks, and after the change new tables aren't granted to <code>service_role</code> either. The first new table your backend reads fails with <code>permission denied for table</code>.</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="c">-- only what the backend actually does with this table</span>
+<span class="k">grant select</span>, <span class="k">insert</span>, <span class="k">update on</span> public.invoices <span class="k">to</span> service_role;</pre>
+  <p>If that table uses <code>serial</code>, the backend's inserts also need <code>grant usage on sequence public.invoices_id_seq to service_role;</code>. Once granted, <code>service_role</code> still bypasses RLS, as before.</p>
+
+  <h2><span class="n">05</span> Find the sequences that will break</h2>
+  <p>Run this in the SQL editor. It lists the sequences behind <code>serial</code> columns in <code>public</code>, the table each one feeds, and whether <code>authenticated</code> can use it. Identity sequences are left out, since they don't need a grant. Swap the role name to check <code>anon</code> or <code>service_role</code>:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> t.relname <span class="k">as</span> table_name,
+       c.relname <span class="k">as</span> sequence_name,
+       has_sequence_privilege(<span class="s">'authenticated'</span>, c.oid, <span class="s">'usage'</span>) <span class="k">as</span> auth_can_use
+<span class="k">from</span> pg_class c
+<span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">left join</span> pg_depend d <span class="k">on</span> d.objid = c.oid <span class="k">and</span> d.deptype = <span class="s">'a'</span>
+<span class="k">left join</span> pg_class t <span class="k">on</span> t.oid = d.refobjid
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'S'</span>
+  <span class="k">and not exists</span> (<span class="k">select</span> 1 <span class="k">from</span> pg_depend i
+                  <span class="k">where</span> i.objid = c.oid <span class="k">and</span> i.deptype = <span class="s">'i'</span>)
+<span class="k">order by</span> 1, 2;</pre>
+  <p>A row with <code>auth_can_use = false</code> on a table your app inserts into will fail on its next insert.</p>""",
+    "related": [
+        ("supabase-october-30-grants-change", "Supabase's Oct 30 grants change: what breaks, and the fix that leaks"),
+        ("fix-permission-denied-for-table-supabase-42501", "Fix 42501: permission denied for table"),
+        ("fix-new-row-violates-row-level-security-policy", "Fix: new row violates row-level security policy"),
+    ],
+    "faq": [
+        ("Do I need SELECT on the sequence too?",
+         "Not for inserts. USAGE allows nextval and currval, which is what a serial default calls. SELECT on a sequence only lets a role read its last value, which an API role rarely needs."),
+        ("How do I switch an existing serial column to identity?",
+         "In one migration, four statements. First: alter table public.invoices alter column id drop default. Second: drop sequence public.invoices_id_seq. Third: alter table public.invoices alter column id add generated by default as identity. Fourth: select setval(pg_get_serial_sequence('public.invoices', 'id'), (select max(id) from public.invoices)), so new ids continue after the existing ones (on an empty table it does nothing, which is fine). by default keeps inserts that pass an explicit id working; use always if none do. Run it on a branch first."),
+        ("My insert works but .insert().select() fails with permission denied for table. Why?",
+         "Returning the new row is a read. supabase-js .insert().select() sends INSERT ... RETURNING, which needs the SELECT grant on the table (and a SELECT policy that lets the caller see the row), not only INSERT."),
+        ("Why doesn't an identity column need the grant?",
+         "Postgres treats the identity sequence as part of the column, so the INSERT privilege on the table covers generating the value. A serial column is just a default that calls nextval on an independent sequence, which has its own privileges."),
     ],
 })

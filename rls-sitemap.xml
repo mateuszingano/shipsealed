@@ -5,6 +5,7 @@
   <url><loc>https://shipsealed.com/rls/enable-row-level-security-supabase-table/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-infinite-recursion-detected-in-policy-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-new-row-violates-row-level-security-policy/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/fix-permission-denied-for-sequence-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-permission-denied-for-table-supabase-42501/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-permissive-rls-policy-using-true/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst116-cannot-coerce-result-single-json-object/</loc><changefreq>monthly</changefreq></url>

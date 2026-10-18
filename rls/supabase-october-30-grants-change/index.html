@@ -87,7 +87,7 @@
 
 <span class="c">-- only the role and the operations the app actually uses</span>
 <span class="k">grant select on</span> public.invoices <span class="k">to</span> authenticated;</pre>
-  <p>No grant to <code>anon</code> here, because signed-out visitors don't read invoices. If a table uses <code>serial</code> / <code>bigserial</code> instead of an identity column and the API inserts into it, the sequence needs its own grant: <code>grant usage, select on sequence public.invoices_id_seq to authenticated;</code></p>
+  <p>No grant to <code>anon</code> here, because signed-out visitors don't read invoices. If a table uses <code>serial</code> / <code>bigserial</code> instead of an identity column and the API inserts into it, the sequence needs its own grant: <code>grant usage on sequence public.invoices_id_seq to authenticated;</code> (<a href="/rls/fix-permission-denied-for-sequence-supabase/">why</a>).</p>
 
   <h2><span class="n">05</span> Check what the API roles can reach today</h2>
   <p>Run this in the SQL editor. It lists every table and view in <code>public</code>, whether <code>anon</code> or <code>authenticated</code> can read it, and whether RLS is on:</p>
@@ -108,7 +108,7 @@
   <p>The new default only protects you while every migration stays honest. Two free checks help there:</p>
   <div class="cause"><h3>In CI</h3><p><a href="https://www.npmjs.com/package/airlock-migrate"><code>npx airlock-migrate</code></a> reads your migration files and fails the build when one creates a table without enabling RLS, or turns RLS off. Those are the tables a bulk grant would expose. It also warns on a view without <code>security_invoker = on</code>. It doesn't flag grants themselves, and it only sees tables that go through your migration files.</p></div>
   <div class="cause"><h3>On the live database</h3><p><code>SUPABASE_DB_URL=... npx airlock-rls</code> checks the running database for tables with RLS off and policies that let everyone through. <a href="/rls/rls-in-ci-fail-build-exposed-table/">Set it up in CI</a>.</p></div>
-<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/fix-permission-denied-for-table-supabase-42501/">Fix 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/enable-row-level-security-supabase-table/">Enable Row-Level Security on a table <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/fix-permission-denied-for-table-supabase-42501/">Fix 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/fix-permission-denied-for-sequence-supabase/">Fix "permission denied for sequence" (serial columns) <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/enable-row-level-security-supabase-table/">Enable Row-Level Security on a table <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
   <div class="cta">
     <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
     <h2>Is your app leaking right now?</h2>
