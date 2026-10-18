@@ -147,7 +147,76 @@
     return { sql: L.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n', test: test, errors: [] }
   }
 
-  var api = { generate: generate, PATTERNS: PATTERNS, OPS: OPS }
+  // Owner / team columns we recognise, in priority order. First match wins.
+  var OWNER_COLS = ['user_id', 'owner_id', 'owner', 'created_by', 'author_id', 'profile_id', 'account_id']
+  var TEAM_COLS = ['team_id', 'workspace_id', 'org_id', 'organization_id', 'tenant_id', 'company_id', 'group_id']
+
+  // Split a parenthesised column list on TOP-LEVEL commas (ignore commas inside
+  // nested parens like numeric(10,2) or references ... (a, b)).
+  function splitTopLevel(body) {
+    var parts = [], depth = 0, cur = ''
+    for (var i = 0; i < body.length; i++) {
+      var c = body[i]
+      if (c === '(') depth++
+      else if (c === ')') depth--
+      if (c === ',' && depth === 0) { parts.push(cur); cur = ''; continue }
+      cur += c
+    }
+    if (cur.trim()) parts.push(cur)
+    return parts
+  }
+
+  var CONSTRAINT_KW = /^(constraint|primary|foreign|unique|check|exclude|like|partition)\b/i
+
+  /**
+   * Parse a CREATE TABLE statement into { table, schema, columns, ownerCol,
+   * teamCol, teamColType, suggestedPattern } or { error }. Best-effort and
+   * regex-based (the authoritative parser is airlock's); it only needs to read
+   * column names and types, so a dev can paste their real table and skip typing.
+   */
+  function parseCreateTable(sql) {
+    var s = String(sql || '').replace(/--[^\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ')
+    var m = s.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?("?[\w]+"?)(?:\s*\.\s*("?[\w]+"?))?\s*\(/i)
+    if (!m) return { error: 'No CREATE TABLE found. Paste a statement like: create table public.notes ( id uuid primary key, user_id uuid, body text );' }
+    var schema = m[2] ? m[1].replace(/"/g, '') : 'public'
+    var table = (m[2] || m[1]).replace(/"/g, '')
+    // The body is between the first '(' after the name and its matching ')'.
+    var open = s.indexOf('(', m.index + m[0].length - 1)
+    var depth = 0, end = -1
+    for (var i = open; i < s.length; i++) {
+      if (s[i] === '(') depth++
+      else if (s[i] === ')') { depth--; if (depth === 0) { end = i; break } }
+    }
+    if (end < 0) return { error: 'Could not find the end of the column list — check the parentheses.' }
+    var cols = []
+    splitTopLevel(s.slice(open + 1, end)).forEach(function (raw) {
+      var line = raw.trim()
+      if (!line || CONSTRAINT_KW.test(line)) return
+      var cm = line.match(/^"?([a-zA-Z_][\w]*)"?\s+(.+)$/)
+      if (!cm) return
+      var name = cm[1].toLowerCase()
+      var type = cm[2].trim().split(/\s+/).slice(0, 2).join(' ').replace(/[,()].*$/, '').toLowerCase()
+      cols.push({ name: name, type: type })
+    })
+    if (!cols.length) return { error: 'No columns found in the table.' }
+    var names = cols.map(function (c) { return c.name })
+    var ownerCol = OWNER_COLS.filter(function (c) { return names.indexOf(c) >= 0 })[0] || ''
+    var teamCol = TEAM_COLS.filter(function (c) { return names.indexOf(c) >= 0 })[0] || ''
+    var teamColType = 'uuid'
+    if (teamCol) {
+      var t = (cols.filter(function (c) { return c.name === teamCol })[0] || {}).type || ''
+      teamColType = /int|serial|bigint/.test(t) ? (/\bbig/.test(t) ? 'bigint' : 'integer') : 'uuid'
+    }
+    var suggestedPattern = teamCol ? 'team' : (ownerCol ? 'owner' : 'public_read_only')
+    return {
+      table: table, schema: schema, columns: cols,
+      ownerCol: ownerCol || 'user_id', teamCol: teamCol || 'team_id',
+      teamColType: teamColType, suggestedPattern: suggestedPattern,
+      detectedOwner: !!ownerCol, detectedTeam: !!teamCol,
+    }
+  }
+
+  var api = { generate: generate, parseCreateTable: parseCreateTable, PATTERNS: PATTERNS, OPS: OPS }
   if (typeof module === 'object' && module.exports) module.exports = api
   else root.RLSGen = api
 })(this)
