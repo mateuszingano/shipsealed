@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explain a Supabase RLS policy — does it leak?</title>
+<meta name="description" content="Paste a Supabase RLS policy and get it in plain English: which rows and roles it allows, and whether it leaks (USING (true), no WITH CHECK, unscoped anon).">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/supabase-rls-policy-explainer/">
+<link rel="stylesheet" href="../assets/page.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/supabase-rls-policy-explainer/">
+<meta property="og:title" content="Explain a Supabase RLS policy — does it leak?">
+<meta property="og:description" content="Paste a Supabase RLS policy and get it in plain English, plus a leak check: USING (true), no WITH CHECK, unscoped anon. Free, in your browser.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ShipSealed — explain a Supabase RLS policy and check if it leaks">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Explain a Supabase RLS policy — does it leak?">
+<meta name="twitter:description" content="Paste an RLS policy, get plain English + a leak check. Free, in your browser.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Supabase RLS policy explainer","applicationCategory":"DeveloperApplication","operatingSystem":"Web","description":"Explains a Supabase Row Level Security policy in plain English and flags whether it leaks (always-true predicate, missing WITH CHECK, unscoped anon access).","url":"https://shipsealed.com/supabase-rls-policy-explainer/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"ShipSealed"}}
+</script>
+<style>
+  .lede{font-size:16px;color:var(--muted);max-width:660px}
+  .exp{display:grid;grid-template-columns:1fr;gap:18px;margin:10px 0 8px}
+  @media(min-width:860px){.exp{grid-template-columns:1fr 1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .panel h3{margin:0 0 12px;font-size:15px}
+  textarea#pol{width:100%;min-height:180px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;color:var(--text);font:13px var(--mono);padding:12px 14px;resize:vertical;line-height:1.6}
+  textarea#pol:focus{outline:none;border-color:var(--green)}
+  .verdict{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--mono);letter-spacing:.04em;padding:7px 12px;border-radius:999px;margin:0 0 14px}
+  .verdict.ok{color:var(--green);background:rgba(31,227,184,.1);border:1px solid var(--green-dim)}
+  .verdict.review{color:var(--amber);background:rgba(245,196,81,.08);border:1px solid var(--amber)}
+  .verdict.leak{color:var(--wax);background:rgba(233,96,62,.08);border:1px solid var(--wax)}
+  .plain{list-style:none;padding:0;margin:0 0 16px}.plain li{color:var(--muted);font-size:14.5px;margin:0 0 7px;padding-left:16px;position:relative}
+  .plain li:before{content:"\203A";position:absolute;left:0;color:var(--dim)}
+  .find{border-left:2px solid var(--line-2);padding:8px 0 8px 12px;margin:0 0 10px;font-size:14px}
+  .find.leak{border-color:var(--wax)}.find.review{border-color:var(--amber)}
+  .find .tag{font:700 11px var(--mono);letter-spacing:.05em;margin-right:8px}
+  .find.leak .tag{color:var(--wax)}.find.review .tag{color:var(--amber)}
+  .errs{color:var(--amber);font:13px var(--mono);margin:0 0 10px}
+  .note{font-size:13px;color:var(--dim);margin:14px 0 0}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../rls/">Guides</a>
+      <a href="../cheatsheet/">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Free · runs in your browser</span>
+    <h1>Explain a Supabase RLS <span class="hl-mint">policy</span></h1>
+    <p class="lede">Paste a <code>create policy</code> statement and get it in plain English: which rows and roles it allows, and whether it leaks — <code>USING (true)</code>, a missing <code>WITH CHECK</code>, or anon access with no per-user scope. Nothing leaves your browser.</p>
+  </header>
+
+  <div class="exp">
+    <form class="panel" id="expform" autocomplete="off" onsubmit="return false">
+      <h3>Your policy</h3>
+      <textarea id="pol" spellcheck="false" placeholder="create policy &quot;owner reads own&quot; on notes&#10;  for select to authenticated&#10;  using (user_id = (select auth.uid()));"></textarea>
+      <p class="note">One <code>create policy</code> statement. Best-effort: the authoritative check is <code>npx airlock-rls</code>, which proves it against your live database.</p>
+    </form>
+
+    <div class="panel out">
+      <h3 style="margin:0 0 12px">Verdict</h3>
+      <div class="errs" id="errs" hidden></div>
+      <div id="result"><p style="color:var(--dim)">Paste a policy to see what it allows.</p></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2>What "leak" means here</h2>
+    <ul>
+      <li><strong>USING (true)</strong> — or a tautology like <code>1=1</code> — means every row matches. On a table a client role can reach, that reads (or changes) every row. <a href="/rls/fix-permissive-rls-policy-using-true/">Fix a permissive policy</a>.</li>
+      <li><strong>No WITH CHECK on INSERT/UPDATE</strong> — the new row isn't constrained, so a client can write a row as another user. <a href="/rls/write-owner-scoped-rls-policy-supabase/">The correct owner-scoped set</a>.</li>
+      <li><strong>anon with no <code>auth.uid()</code> scope</strong> — signed-out visitors read whatever the predicate allows. Fine for a public catalog; a leak for anything private.</li>
+      <li><strong>UPDATE with an open USING</strong> — even if <code>WITH CHECK</code> is scoped, an open <code>USING</code> lets any row be <em>targeted</em>. Both matter.</li>
+    </ul>
+    <p>Want the correct policy instead of debugging one? The <a href="/supabase-rls-policy-generator/">RLS policy generator</a> writes the whole set from your table.</p>
+    <div class="box">
+      <p style="margin:0"><strong>Prove it on your real database.</strong> This reads the SQL text only. <code>npx airlock-rls</code> connects with the anon key and actually reads your tables, so an always-true policy is caught as a real, returned row — not an inference.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. Not affiliated with Supabase. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/rls-gen.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var pol=$('pol'), res=$('result'), errs=$('errs'); var used=false;
+  function ev(name,params){try{if(window.gtag)gtag('event',name,params||{});}catch(e){}}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  var LABEL={ok:'✓ Looks scoped',review:'⚠ Worth a review',leak:'✗ This leaks'};
+  function render(){
+    var txt=pol.value.trim();
+    if(!txt){ errs.hidden=true; res.innerHTML='<p style="color:var(--dim)">Paste a policy to see what it allows.</p>'; return }
+    var r=RLSGen.explainPolicy(txt);
+    if(r.error){ errs.hidden=false; errs.textContent='⚠ '+r.error; res.innerHTML=''; return }
+    errs.hidden=true;
+    var html='<div class="verdict '+r.verdict+'">'+LABEL[r.verdict]+'</div>';
+    html+='<ul class="plain">'+r.lines.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>';
+    if(r.findings.length){
+      html+=r.findings.map(function(f){return '<div class="find '+f.sev+'"><span class="tag">'+(f.sev==='leak'?'LEAK':'REVIEW')+'</span>'+esc(f.msg)+'</div>'}).join('');
+    } else {
+      html+='<p style="color:var(--muted);font-size:14px">No leak pattern found for '+esc(r.roles.join(', '))+' on <code>'+esc(r.cmd.toUpperCase())+'</code>. Prove it with <code>npx airlock-rls</code>.</p>';
+    }
+    res.innerHTML=html;
+    ev('explain_result',{verdict:r.verdict,cmd:r.cmd});
+  }
+  pol.addEventListener('input',function(){ if(!used){used=true;ev('explainer_used')} render() });
+  render();
+})();
+</script>
+</body>
+</html>

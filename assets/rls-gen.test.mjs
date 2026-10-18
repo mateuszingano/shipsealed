@@ -73,3 +73,54 @@ test('a parsed table feeds generate() and yields a valid migration', () => {
   assert.match(g.sql, /enable row level security/)
   assert.match(g.sql, /user_id = \(select auth\.uid\(\)\)/)
 })
+
+// ── explainPolicy ──────────────────────────────────────────────────────────
+test('explain: owner-scoped select is clean', () => {
+  const r = RLSGen.explainPolicy(`create policy "own" on notes for select to authenticated using (user_id = (select auth.uid()))`)
+  assert.equal(r.verdict, 'ok')
+  assert.equal(r.cmd, 'select')
+  assert.deepEqual(r.roles, ['authenticated'])
+  assert.equal(r.findings.length, 0)
+})
+
+test('explain: USING(true) for anon is a leak', () => {
+  const r = RLSGen.explainPolicy(`create policy p on notes for select to anon using (true)`)
+  assert.equal(r.verdict, 'leak')
+  assert.match(r.findings[0].msg, /every row is readable/)
+})
+
+test('explain: a tautology OR is a leak', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for select to authenticated using (1=1)`)
+  assert.equal(r.verdict, 'leak')
+})
+
+test('explain: insert without WITH CHECK is a leak', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for insert to authenticated`)
+  assert.equal(r.verdict, 'leak')
+  assert.match(r.findings[0].msg, /without WITH CHECK/)
+})
+
+test('explain: insert with scoped WITH CHECK is clean', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for insert to authenticated with check (user_id = auth.uid())`)
+  assert.equal(r.verdict, 'ok')
+})
+
+test('explain: update with open USING is worth a review', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for update to authenticated using (status = 'active') with check (user_id = auth.uid())`)
+  assert.equal(r.verdict, 'review')
+  assert.ok(r.findings.some(f => /any row this role can see can be targeted/.test(f.msg)))
+})
+
+test('explain: anon public read without scope is a review, not a hard leak', () => {
+  const r = RLSGen.explainPolicy(`create policy p on posts for select to anon using (published = true)`)
+  assert.equal(r.verdict, 'review')
+})
+
+test('explain: garbage input returns a helpful error', () => {
+  assert.ok(RLSGen.explainPolicy('select * from t').error)
+})
+
+test('explain: roles are captured at end of statement and in a list', () => {
+  assert.deepEqual(RLSGen.explainPolicy('create policy p on t for insert to authenticated').roles, ['authenticated'])
+  assert.deepEqual(RLSGen.explainPolicy('create policy p on t for select to anon, authenticated using (true)').roles, ['anon', 'authenticated'])
+})

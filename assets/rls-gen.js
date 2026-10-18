@@ -216,7 +216,98 @@
     }
   }
 
-  var api = { generate: generate, parseCreateTable: parseCreateTable, PATTERNS: PATTERNS, OPS: OPS }
+  // Explain a policy in plain English + flag if it leaks. Client-side, best-effort.
+  // Reads one `create policy ...` statement; the authoritative engine is airlock's.
+  function isAlwaysTrue(expr) {
+    var e = String(expr || '').trim().replace(/\s+/g, ' ')
+    if (!e) return false
+    if (/^\(?\s*true\s*\)?$/i.test(e)) return true
+    if (/\b(\w+)\s*=\s*\1\b/i.test(e)) return true
+    if (/\b(\d+)\s*=\s*\1\b/.test(e)) return true
+    if (/'([^']*)'\s*=\s*'\1'/.test(e)) return true
+    return false
+  }
+  function hasUid(expr) { return /auth\.uid\(\)/i.test(String(expr || '')) }
+
+  function grabParen(s, kwIndex) {
+    var open = s.indexOf('(', kwIndex)
+    if (open < 0) return null
+    var depth = 0
+    for (var i = open; i < s.length; i++) {
+      if (s[i] === '(') depth++
+      else if (s[i] === ')') { depth--; if (depth === 0) return s.slice(open + 1, i).trim() }
+    }
+    return null
+  }
+
+  function explainPolicy(sql) {
+    var s = String(sql || '').replace(/--[^\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\s+/g, ' ').trim()
+    var m = s.match(/create\s+policy\s+("([^"]+)"|[a-z_][\w]*)\s+on\s+(?:([a-z_][\w]*)\s*\.\s*)?([a-z_][\w]*)/i)
+    if (!m) return { error: 'No CREATE POLICY found. Paste a statement like: create policy "owner reads" on notes for select to authenticated using (user_id = auth.uid());' }
+    var name = (m[2] || m[1]).replace(/"/g, '')
+    var table = m[4]
+    var restrictive = /\bas\s+restrictive\b/i.test(s)
+    var cmdM = s.match(/\bfor\s+(all|select|insert|update|delete)\b/i)
+    var cmd = cmdM ? cmdM[1].toLowerCase() : 'all'
+    var toM = s.match(/\bto\s+([a-z_][\w, ]*?)\s*(?:\busing\b|\bwith\s+check\b|;|$)/i)
+    var roles = toM ? toM[1].split(',').map(function (r) { return r.trim().toLowerCase() }).filter(Boolean) : ['(every role)']
+    var uIdx = s.search(/\busing\s*\(/i)
+    var cIdx = s.search(/\bwith\s+check\s*\(/i)
+    var using = uIdx >= 0 ? grabParen(s, uIdx) : null
+    var withCheck = cIdx >= 0 ? grabParen(s, cIdx) : null
+
+    var clientRoles = roles.some(function (r) { return r === 'anon' || r === 'authenticated' || r === 'public' || r === '(every role)' })
+    var anon = roles.some(function (r) { return r === 'anon' || r === 'public' || r === '(every role)' })
+    var who = roles.join(', ')
+    var findings = [], lines = []
+    var reads = cmd === 'select' || cmd === 'all'
+    var writesNew = cmd === 'insert' || cmd === 'update' || cmd === 'all'
+
+    lines.push('Applies to ' + (restrictive ? 'RESTRICTIVE ' : '') + cmd.toUpperCase() + ' for: ' + who + '.')
+
+    if (uIdx >= 0 || cmd === 'insert') {
+      if (cmd === 'insert') {
+        lines.push('INSERT has no USING clause — only WITH CHECK applies.')
+      } else if (using === null) {
+        lines.push('USING is empty or unreadable.')
+      } else if (isAlwaysTrue(using)) {
+        lines.push('USING is always true: every row matches.')
+        if (clientRoles) findings.push({ sev: 'leak', msg: 'Always-true USING for a client role (' + who + '): every row is ' + (reads ? 'readable' : 'reachable') + '. This is the classic RLS leak.' })
+      } else if (hasUid(using)) {
+        lines.push('USING scopes rows to the signed-in user (uses auth.uid()).')
+      } else {
+        lines.push('USING = ' + using + ' — it filters rows, but not by auth.uid(); confirm it restricts the caller.')
+        if (anon && reads) findings.push({ sev: 'review', msg: 'anon can read whatever this USING allows, with no per-user scope. If the rows are not meant to be public, scope to auth.uid().' })
+      }
+    }
+    if (writesNew) {
+      if (withCheck === null) {
+        if (cmd === 'insert' || cmd === 'all') {
+          lines.push('No WITH CHECK: the new row is not constrained.')
+          if (clientRoles) findings.push({ sev: 'leak', msg: 'INSERT/ALL without WITH CHECK for ' + who + ': a client can write a row with any values (e.g. assign it to another user).' })
+        } else {
+          lines.push('No WITH CHECK on UPDATE: the row may be changed to any values (it can be reassigned to someone else).')
+          if (clientRoles) findings.push({ sev: 'review', msg: 'UPDATE without WITH CHECK: nothing stops the new row from being reassigned to another user.' })
+        }
+      } else if (isAlwaysTrue(withCheck)) {
+        lines.push('WITH CHECK is always true: any new row is accepted.')
+        if (clientRoles) findings.push({ sev: 'leak', msg: 'Always-true WITH CHECK for ' + who + ': a client can write rows as anyone.' })
+      } else if (hasUid(withCheck)) {
+        lines.push('WITH CHECK ties the new row to the signed-in user (uses auth.uid()).')
+      } else {
+        lines.push('WITH CHECK = ' + withCheck + ' — constrains the new row, but not by auth.uid().')
+      }
+    }
+    if (cmd === 'update' && using !== null && !isAlwaysTrue(using) && !hasUid(using) && clientRoles) {
+      findings.push({ sev: 'review', msg: 'UPDATE USING is not scoped to auth.uid(): any row this role can see can be targeted for update.' })
+    }
+
+    var verdict = findings.some(function (f) { return f.sev === 'leak' }) ? 'leak'
+      : findings.some(function (f) { return f.sev === 'review' }) ? 'review' : 'ok'
+    return { name: name, table: table, cmd: cmd, roles: roles, restrictive: restrictive, using: using, withCheck: withCheck, lines: lines, findings: findings, verdict: verdict }
+  }
+
+  var api = { generate: generate, parseCreateTable: parseCreateTable, explainPolicy: explainPolicy, PATTERNS: PATTERNS, OPS: OPS }
   if (typeof module === 'object' && module.exports) module.exports = api
   else root.RLSGen = api
 })(this)
