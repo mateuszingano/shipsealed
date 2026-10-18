@@ -14,7 +14,7 @@
 import { extractScriptUrls, isFetchableUrl } from './_service-role.mjs'
 import { extractSupabaseConfig, extractTableNames, probeOpenTables } from './_anon-read.mjs'
 import {
-  secret, hmac, makeSafeFetch, clientIp, allowScan, normaliseUrl,
+  secret, hmac, signShare, makeSafeFetch, clientIp, allowScan, normaliseUrl,
 } from './_scan-lib.mjs'
 
 const MAX_SCRIPTS = 25
@@ -90,12 +90,19 @@ export default async function handler(req, res) {
     return res.status(200).json({ host, usesSupabase: true, checked: 0, open: [], error: 'probe_failed' })
   }
 
-  return res.status(200).json({
+  const out = {
     host,
     usesSupabase: true,
     checked,
     exposed: open.length > 0,
     // table name + how many rows anon can read. Never a cell value.
     open: open.map((o) => ({ table: o.table, rows: o.rows })),
-  })
+  }
+  // A signed "tables clean" token, only when anon read nothing from the tables we
+  // checked. The share page needs this AND the key token to show Grade A, so a
+  // leaking site can never mint one.
+  if (!out.exposed && checked > 0) {
+    out.share = signShare(key, { h: host, t: Math.floor(Date.now() / 1000), n: checked, kind: 'tbl' })
+  }
+  return res.status(200).json(out)
 }

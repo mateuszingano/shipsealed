@@ -251,8 +251,9 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
       html+='<p>A leak you fix today can reopen on the next deploy. <a href="'+MON+'-leak">Airlock Monitor</a> re-checks your app on a schedule and emails you the moment something reopens.</p>';
     }
     if(clean&&k.share){
-      var link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share);
-      var text='My app '+keyRes.d.host+' passed the Supabase leak check: no master key in the browser, no tables readable without login. Check yours:';
+      var tbltok=(tblRes.d&&tblRes.d.share)?'&t='+encodeURIComponent(tblRes.d.share):'';
+      var link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share)+tbltok;
+      var text='My app '+keyRes.d.host+' scored an A on the Supabase security check: no master key in the browser, no tables readable without login. Check yours:';
       html+='<div class="sharerow">'+
         '<a class="btn btn-ghost" data-net="x" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&amp;url='+encodeURIComponent(link)+'">Share on X</a>'+
         '<a class="btn btn-ghost" data-net="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(link)+'">Share on LinkedIn</a>'+
@@ -263,7 +264,7 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
     out.querySelectorAll('[data-net]').forEach(function(a){a.addEventListener('click',function(){ev('scan_share',{network:a.getAttribute('data-net')})})});
     var cp=document.getElementById('copylink');
     if(cp)cp.addEventListener('click',function(){
-      var b=this, link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share);
+      var b=this, tbltok=(tblRes.d&&tblRes.d.share)?'&t='+encodeURIComponent(tblRes.d.share):'', link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share)+tbltok;
       if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){b.textContent='Copied \u2713'},function(){prompt('Copy this link:',link)})}
       else{prompt('Copy this link:',link)}
     });
