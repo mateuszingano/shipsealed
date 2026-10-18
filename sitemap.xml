@@ -19,6 +19,7 @@
   <url><loc>https://shipsealed.com/rls/fix-permissive-rls-policy-using-true/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst116-cannot-coerce-result-single-json-object/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst205-could-not-find-table-schema-cache/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/is-the-supabase-anon-key-safe-to-expose/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/lovable-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/multi-tenant-rls-workspaces-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/nextjs-app-router-supabase-auth-rls-ssr/</loc><changefreq>monthly</changefreq></url>
