@@ -16,6 +16,15 @@ OUT  = os.path.join(HERE, "rls")
 
 # --- CTA blocks compartilhados (o funil: nossos grátis + cheat sheet) ---
 CTA_TOOLS = """  <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
@@ -78,6 +87,15 @@ FAVICON = ("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='
 
 # --- pt-BR: mesmo shell, textos traduzidos. Páginas PT em /pt/rls/<slug>/ ---
 CTA_TOOLS_PT = """  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
     <h2>Pegue isso antes de ir pro ar</h2>
     <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>

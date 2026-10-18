@@ -66,6 +66,15 @@
   <p>The strongest setup runs both: RLS guarantees isolation no matter what, and app-layer checks give fast, friendly feedback. If your app-layer filter and your RLS ever disagree, RLS wins — and that's the point. Prove the floor holds with an <a href="/rls/test-tenant-isolation-supabase/">isolation test</a>.</p>
 <div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/nextjs-app-router-supabase-auth-rls-ssr/">Next.js App Router + Supabase RLS (SSR) <span class="arw">→</span></a><a href="/rls/supabase-security-checklist-before-launch/">Supabase security checklist before launch <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>

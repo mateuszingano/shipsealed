@@ -71,6 +71,15 @@ curl <span class="s">"$SUPABASE_URL/rest/v1/notes?select=*"</span> \
   <p>Then re-run the <code>curl</code> as an anonymous caller — it should now return an empty set. To make sure a new table can never ship like this again, add <a href="/rls/rls-in-ci-fail-build-exposed-table/">an RLS gate in CI</a>.</p>
 <div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/supabase-october-30-grants-change/">Supabase's Oct 30 grants change: what breaks, and the fix that leaks <span class="arw">→</span></a><a href="/rls/enable-row-level-security-supabase-table/">Enable Row-Level Security on a table <span class="arw">→</span></a><a href="/rls/rls-in-ci-fail-build-exposed-table/">RLS in CI: fail the build when a table ships exposed <span class="arw">→</span></a><a href="/rls/fix-permissive-rls-policy-using-true/">USING (true) is a security hole — fix it <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>

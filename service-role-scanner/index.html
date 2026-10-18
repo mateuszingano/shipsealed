@@ -200,6 +200,13 @@
       .catch(function(){render({error:'unreachable'})})
       .then(function(){btn.disabled=false;btn.textContent='Scan now →'});
   });
+  // Arriving from a guide's "Scan my app" box (?url=...): fill it in and scan.
+  var pre=new URLSearchParams(location.search).get('url');
+  if(pre){
+    input.value=pre.trim().slice(0,2048);
+    ev('scan_from_link');
+    if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{cancelable:true}));
+  }
   function render(d){
     if(!d||d.error){var k=(d&&d.error)||'unreachable';ev('scan_result',{result:'error',reason:k});return show('<p class="v warn">⚠ '+esc(ERR[k]||ERR.unreachable)+'</p>')}
     var bundles=Math.max(0,d.scanned-1);

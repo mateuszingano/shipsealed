@@ -101,6 +101,15 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
   <p>Depois, mantenha corrigido: <code>npx airlock-rls</code> no CI quebra o build quando uma tabela vai pro ar sem RLS ou com policy sempre verdadeira, não importa quem (ou o quê) escreveu a migration.</p>
 <div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/supabase-mudanca-grants-30-outubro/">Mudança de grants do Supabase em 30/10 <span class="arw">→</span></a><a href="/pt/rls/erro-42501-permission-denied-for-table-supabase/">Erro 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/bolt-new-supabase-security-checklist/">Bolt.new + Supabase security checklist (em inglês) <span class="arw">→</span></a><a href="/rls/v0-supabase-security-checklist/">v0 + Supabase security checklist (em inglês) <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
     <h2>Pegue isso antes de ir pro ar</h2>
     <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>

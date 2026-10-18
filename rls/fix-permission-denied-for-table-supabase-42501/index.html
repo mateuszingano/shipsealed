@@ -79,6 +79,15 @@
   <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is public. The <a href="/rls/supabase-october-30-grants-change/">grants change guide</a> has a stricter version that also catches column grants and views.</p>
 <div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/supabase-october-30-grants-change/">Supabase's Oct 30 grants change: what breaks, and the fix that leaks <span class="arw">→</span></a><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/enable-row-level-security-supabase-table/">Enable Row-Level Security on a Supabase table <span class="arw">→</span></a><a href="/rls/fix-pgrst205-could-not-find-table-schema-cache/">Fix PGRST205: Could not find the table in the schema cache <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>

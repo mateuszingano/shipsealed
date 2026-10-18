@@ -85,9 +85,9 @@ pre .u{color:#79b8ff} pre .bad{color:var(--wax-2)} pre .ok{color:var(--green)}
      border:1px solid var(--line);padding:11px 13px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .cmd .arw{color:var(--green)}
 form{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-input[type=email]{flex:1;min-width:220px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);
+input[type=email],input.scanurl{flex:1;min-width:220px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);
       padding:12px 14px;border-radius:9px;font-size:15px;font-family:var(--sans)}
-input[type=email]:focus{outline:none;border-color:var(--green-dim);box-shadow:0 0 0 3px rgba(31,227,184,.12)}
+input[type=email]:focus,input.scanurl:focus{outline:none;border-color:var(--green-dim);box-shadow:0 0 0 3px rgba(31,227,184,.12)}
 .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:12px 20px;border-radius:9px;
      cursor:pointer;border:1px solid transparent;background:var(--green);color:#04120b;font-family:var(--sans)}
 

@@ -79,6 +79,15 @@ console.log(data.length);   <span class="c">// 0 with a valid id → RLS is hidi
 <span class="k">if</span> (!profile) { <span class="c">/* first visit: create it */</span> }</pre>
 <div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/write-owner-scoped-rls-policy-supabase/">Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE) <span class="arw">→</span></a><a href="/rls/nextjs-app-router-supabase-auth-rls-ssr/">Next.js App Router + Supabase auth with RLS (SSR) <span class="arw">→</span></a><a href="/rls/supabase-update-delete-not-working-rls/">Supabase update or delete does nothing (no error) <span class="arw">→</span></a><a href="/rls/fix-permission-denied-for-table-supabase-42501/">Fix 42501: "permission denied for table" <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>

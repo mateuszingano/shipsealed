@@ -92,6 +92,15 @@ $$;
   <p>Run these as real roles against a database with your migrations applied, so a policy that loops or leaks fails the build instead of production.</p>
 <div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/multi-tenant-rls-workspaces-supabase/">Multi-tenant RLS with workspaces in Supabase <span class="arw">→</span></a><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/owner-id-vs-workspace-id-rls-pattern/">owner_id vs workspace_id: which RLS pattern <span class="arw">→</span></a><a href="/rls/fix-new-row-violates-row-level-security-policy/">Fix: "new row violates row-level security policy" <span class="arw">→</span></a></div>
   <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
     <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
     <h2>Catch this before it ships</h2>
     <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
