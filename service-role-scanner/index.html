@@ -8,22 +8,22 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Is your Supabase service_role key exposed? — free scanner</title>
-<meta name="description" content="A leaked service_role key bypasses all Row Level Security — full DB access. Scan your live site's HTML and JS for it with one command. Free, no signup.">
+<title>Is your Supabase app leaking? Free security scanner</title>
+<meta name="description" content="Scan your live Supabase app: a service_role key leaked to the browser, and tables anyone can read without logging in. No signup, your rows never shown.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="canonical" href="https://shipsealed.com/service-role-scanner/">
 <link rel="stylesheet" href="../assets/page.css">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://shipsealed.com/service-role-scanner/">
-<meta property="og:title" content="Is your Supabase service_role key exposed? — free scanner">
-<meta property="og:description" content="A leaked service_role key bypasses all RLS — full access to your database. Scan your live site for it with one command. Free, no signup.">
+<meta property="og:title" content="Is your Supabase app leaking? Free security scanner">
+<meta property="og:description" content="Scan your live Supabase app: a service_role key in the browser, and tables anyone can read without logging in. Free, no signup.">
 <meta property="og:image" content="https://shipsealed.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Free scanner for an exposed Supabase service_role key">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Is your Supabase service_role key exposed? — free scanner">
-<meta name="twitter:description" content="A leaked service_role key bypasses all RLS. Scan your live site with one command. Free.">
+<meta name="twitter:title" content="Is your Supabase app leaking? Free security scanner">
+<meta name="twitter:description" content="Scan your Supabase app: leaked service key + tables readable without login. Free, no signup.">
 <meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Airlock — service_role key scanner","applicationCategory":"DeveloperApplication","operatingSystem":"Web, Node.js","description":"Scan your deployed site's HTML and JavaScript for an exposed Supabase service_role key, which bypasses all Row Level Security. Free CLI and GitHub Action.","url":"https://shipsealed.com/service-role-scanner/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Organization","name":"ShipSealed","url":"https://shipsealed.com/"}}
@@ -72,12 +72,12 @@
 <div class="wrap">
   <header class="page-head">
     <span class="kicker">Free · npm + GitHub Action</span>
-    <h1>Is your Supabase service key <span class="hl-wax">exposed?</span></h1>
+    <h1>Is your Supabase app <span class="hl-wax">leaking?</span></h1>
     <p class="lede">
-      The <span class="mono">service_role</span> key bypasses <strong>every</strong> Row Level
-      Security policy at once. If it ends up in your frontend, anyone who views your page has
-      full read and write access to your database. Paste your app's URL below and scan it in seconds — no
-      database, no signup.
+Two things leak most in Supabase apps: the <span class="mono">service_role</span> master key
+      shipped to the browser, and tables anyone can read without logging in. Paste your app's URL —
+      this checks <strong>both</strong> in seconds, reads only what any visitor's browser can see, and
+      never shows your data. No signup.
     </p>
   </header>
 
@@ -89,7 +89,7 @@
         <input id="scanurl" name="url" type="text" inputmode="url" placeholder="https://your-app.com" required maxlength="2048">
         <button type="submit" class="btn btn-primary" id="scanbtn">Scan now →</button>
       </div>
-      <p class="scanhint">Reads only what any browser can see: the page and its JavaScript. Nothing is stored, and a leaked key is never shown.</p>
+      <p class="scanhint">Reads only what any visitor could: your JavaScript (for a leaked key) and the tables your anon key can reach (row counts only). Nothing is stored; your row data is never read or shown.</p>
     </form>
     <div id="scanout" class="scanout" aria-live="polite" hidden></div>
   </section>
@@ -188,16 +188,19 @@
     rate_limited:'You\'ve hit the limit of 10 scans per hour. Try again later. '+LOCAL,
     not_configured:'The online scanner is temporarily unavailable. '+LOCAL,
     rate_limit_unavailable:'The online scanner is temporarily unavailable. '+LOCAL};
+  function scan(endpoint,url){
+    return fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
+      .then(function(r){return r.json().then(function(d){return{status:r.status,d:d}},function(){return{status:r.status,d:{}}})})
+      .catch(function(){return{status:0,d:{error:'unreachable'}}});
+  }
   form.addEventListener('submit',function(e){
     e.preventDefault();
     var url=input.value.trim(); if(!url) return;
     btn.disabled=true; btn.textContent='Scanning…';
-    show('<p class="v">Reading the page and its JavaScript bundles…</p>');
+    show('<p class="v">Reading the page, its JavaScript, and your tables…</p>');
     ev('scan_submitted');
-    fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
-      .then(function(r){return r.json().then(function(d){return{status:r.status,d:d}})})
-      .then(function(x){render(x.d)})
-      .catch(function(){render({error:'unreachable'})})
+    Promise.all([scan('/api/scan',url),scan('/api/scan-tables',url)])
+      .then(function(rs){renderCombined(rs[0],rs[1])})
       .then(function(){btn.disabled=false;btn.textContent='Scan now →'});
   });
   // Arriving from a guide's "Scan my app" box (?url=...): fill it in and scan.
@@ -207,38 +210,61 @@
     ev('scan_from_link');
     if(form.requestSubmit)form.requestSubmit();else form.dispatchEvent(new Event('submit',{cancelable:true}));
   }
-  function render(d){
-    if(!d||d.error){var k=(d&&d.error)||'unreachable';ev('scan_result',{result:'error',reason:k});return show('<p class="v warn">⚠ '+esc(ERR[k]||ERR.unreachable)+'</p>')}
+  var MON='https://monitor.shipsealed.com/?utm_source=scanner&amp;utm_medium=referral&amp;utm_campaign=scanner';
+  // Check 1: the service_role key. Returns {html, state:'ok'|'bad'|'other', share}.
+  function renderKey(d){
+    if(!d||d.error){var k=(d&&d.error)||'unreachable';return{html:'<p class="v warn">\u26a0 Service key check: '+esc(ERR[k]||ERR.unreachable)+'</p>',state:'other'}}
     var bundles=Math.max(0,d.scanned-1);
     if(d.leaked){
-      ev('scan_result',{result:'leak'});
-      return show('<p class="v bad">✗ A Supabase service key is exposed on '+esc(d.host)+'</p>'+
+      return{state:'bad',html:'<p class="v bad">\u2717 Your service_role key is exposed on '+esc(d.host)+'</p>'+
         '<p>Found in:</p><ul>'+d.leaks.map(function(l){return'<li>'+esc(l.where)+'</li>'}).join('')+'</ul>'+
-        '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings → API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'+
-        '<p>To catch it if it comes back, <a href="https://monitor.shipsealed.com/?utm_source=scanner&amp;utm_medium=referral&amp;utm_campaign=scanner-leak">Airlock Monitor</a> re-checks on a schedule and alerts you.</p>');
+        '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings \u2192 API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'};
     }
     if(!d.complete){
-      ev('scan_result',{result:'incomplete'});
       var why=d.truncated?'it loads more JavaScript bundles than the online scan reads':(d.skipped+' file(s) couldn\'t be fetched');
-      return show('<p class="v warn">⚠ No key found in what we could read, but the scan is incomplete</p>'+
-        '<p>Checked the page and '+bundles+' bundle(s) on '+esc(d.host)+', but '+esc(why)+'. Run the full scan locally to be sure:</p>'+
-        '<ul><li>npx airlock-rls --site https://'+esc(d.host)+' --max-scripts 200</li></ul>');
+      return{state:'other',html:'<p class="v warn">\u26a0 Service key: no key found in what we could read, but the scan is incomplete</p>'+
+        '<p>Checked the page and '+bundles+' bundle(s) on '+esc(d.host)+', but '+esc(why)+'. Run the full scan locally to be sure: <span class="mono">npx airlock-rls --site https://'+esc(d.host)+' --max-scripts 200</span></p>'};
     }
-    ev('scan_result',{result:'clean'});
-    var link=location.origin+'/api/scan-share?r='+encodeURIComponent(d.share);
-    var text='My app '+d.host+' passed the Supabase service_role key check: no master key shipped to the browser. Check yours:';
-    show('<p class="v ok">✓ No exposed service_role key on '+esc(d.host)+'</p>'+
-      '<p>Checked the page and '+bundles+' JavaScript bundle(s): no <span class="mono">service_role</span> JWT and no <span class="mono">sb_secret_</span> key. The public anon key is fine to ship and isn\'t flagged.</p>'+
-      '<p>This checks the frontend only. Your database is protected by RLS, which this doesn\'t audit: run <span class="mono">npx airlock-rls</span> for that.</p>'+
-      '<div class="sharerow">'+
+    return{state:'ok',share:d.share,html:'<p class="v ok">\u2713 No exposed service_role key on '+esc(d.host)+'</p>'+
+      '<p>Checked the page and '+bundles+' JavaScript bundle(s): no <span class="mono">service_role</span> JWT and no <span class="mono">sb_secret_</span> key. The public anon key is fine to ship.</p>'};
+  }
+  // Check 2: tables readable without logging in. Returns {html, state}.
+  function renderTables(status,d){
+    if(status===429)return{state:'other',html:'<p class="v warn">\u26a0 Data check: '+esc(ERR.rate_limited)+'</p>'};
+    if(!d||status!==200||d.error)return{state:'other',html:'<p class="v warn">\u26a0 Couldn\'t check your tables this time. Run <span class="mono">npx airlock-rls</span> for the full database audit.</p>'};
+    if(d.usesSupabase===false)return{state:'other',html:'<p class="v">\u2022 No Supabase Data API calls found in the browser bundle</p><p>Either this app reads its database server-side, or it doesn\'t use Supabase\'s Data API \u2014 so there are no anon-readable tables to check from here.</p>'};
+    if(d.exposed){
+      var rows=d.open.map(function(o){return'<li>'+esc(o.table)+' <span class="dim">\u2014 '+o.rows+' row'+(o.rows===1?'':'s')+' readable</span></li>'}).join('');
+      return{state:'bad',html:'<p class="v bad">\u2717 '+d.open.length+' table'+(d.open.length===1?'':'s')+' anyone can read without logging in on '+esc(d.host)+'</p>'+
+        '<p>Using only the public anon key your app already ships, these returned rows \u2014 no login:</p><ul>'+rows+'</ul>'+
+        '<p>(We read only the row count, never your data.) <strong>If this is your app:</strong> turn on Row Level Security for each table and add a policy that scopes rows to the signed-in user. Step by step: <a href="/rls/enable-row-level-security-supabase-table/">enable RLS</a> and <a href="/rls/write-owner-scoped-rls-policy-supabase/">write an owner-scoped policy</a>.</p>'};
+    }
+    return{state:'ok',html:'<p class="v ok">\u2713 None of your app\'s tables returned rows without login on '+esc(d.host)+'</p>'+
+      '<p>Checked the '+d.checked+' table'+(d.checked===1?'':'s')+' your app queries: none returned rows to the anon key. (An empty table also looks clean, so this isn\'t proof RLS is on \u2014 run <span class="mono">npx airlock-rls</span> for the full audit.)</p>'};
+  }
+  function renderCombined(keyRes,tblRes){
+    var k=renderKey(keyRes.d), t=renderTables(tblRes.status,tblRes.d);
+    ev('scan_result',{key:k.state,tables:t.state});
+    var clean=(k.state==='ok'&&t.state==='ok');
+    var html=k.html+'<hr style="border:0;border-top:1px solid var(--line);margin:14px 0">'+t.html;
+    if(k.state==='bad'||t.state==='bad'){
+      html+='<p>A leak you fix today can reopen on the next deploy. <a href="'+MON+'-leak">Airlock Monitor</a> re-checks your app on a schedule and emails you the moment something reopens.</p>';
+    }
+    if(clean&&k.share){
+      var link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share);
+      var text='My app '+keyRes.d.host+' passed the Supabase leak check: no master key in the browser, no tables readable without login. Check yours:';
+      html+='<div class="sharerow">'+
         '<a class="btn btn-ghost" data-net="x" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&amp;url='+encodeURIComponent(link)+'">Share on X</a>'+
         '<a class="btn btn-ghost" data-net="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(link)+'">Share on LinkedIn</a>'+
         '<button type="button" class="btn btn-ghost" data-net="copy" id="copylink">Copy link</button>'+
-      '</div>');
+      '</div>';
+    }
+    show(html);
     out.querySelectorAll('[data-net]').forEach(function(a){a.addEventListener('click',function(){ev('scan_share',{network:a.getAttribute('data-net')})})});
-    document.getElementById('copylink').addEventListener('click',function(){
-      var b=this;
-      if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){b.textContent='Copied ✓'},function(){prompt('Copy this link:',link)})}
+    var cp=document.getElementById('copylink');
+    if(cp)cp.addEventListener('click',function(){
+      var b=this, link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share);
+      if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){b.textContent='Copied \u2713'},function(){prompt('Copy this link:',link)})}
       else{prompt('Copy this link:',link)}
     });
   }
