@@ -215,7 +215,7 @@
       return show('<p class="v bad">✗ A Supabase service key is exposed on '+esc(d.host)+'</p>'+
         '<p>Found in:</p><ul>'+d.leaks.map(function(l){return'<li>'+esc(l.where)+'</li>'}).join('')+'</ul>'+
         '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings → API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'+
-        '<p>To catch it if it comes back, <a href="https://airlock-monitor.vercel.app/?utm_source=scanner&amp;utm_medium=referral&amp;utm_campaign=scanner-leak">Airlock Monitor</a> re-checks on a schedule and alerts you.</p>');
+        '<p>To catch it if it comes back, <a href="https://monitor.shipsealed.com/?utm_source=scanner&amp;utm_medium=referral&amp;utm_campaign=scanner-leak">Airlock Monitor</a> re-checks on a schedule and alerts you.</p>');
     }
     if(!d.complete){
       ev('scan_result',{result:'incomplete'});
