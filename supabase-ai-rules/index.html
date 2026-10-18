@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supabase security rules for Cursor, Claude Code & Windsurf</title>
+<meta name="description" content="AI-agent rules so Cursor, Claude Code and Windsurf write secure Supabase code: RLS, scoped policies, explicit grants, service_role server-side. Free, MIT.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/supabase-ai-rules/">
+<link rel="stylesheet" href="../assets/page.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/supabase-ai-rules/">
+<meta property="og:title" content="Supabase security rules for Cursor, Claude Code & Windsurf">
+<meta property="og:description" content="Drop-in AI-agent rules so your AI writes secure Supabase code: RLS, scoped policies, explicit grants, service_role out of the browser. Free, MIT.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ShipSealed — Supabase security rules for AI coding agents">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Supabase security rules for Cursor, Claude Code & Windsurf">
+<meta name="twitter:description" content="Drop-in AI-agent rules so your AI writes secure Supabase code. Free, MIT.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Supabase security rules for Cursor, Claude Code & Windsurf","description":"Drop-in AI-agent rules that make AI coding tools write secure Supabase code: RLS, scoped policies, explicit grants, and keeping service_role out of the browser.","url":"https://shipsealed.com/supabase-ai-rules/","inLanguage":"en","author":{"@type":"Organization","name":"ShipSealed"},"publisher":{"@type":"Organization","name":"ShipSealed"}}
+</script>
+<style>
+  .lede{font-size:16px;color:var(--muted);max-width:680px}
+  .rules{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin:18px 0}
+  .rules h3{margin:0 0 6px;font-size:14px;color:var(--green);font-family:var(--mono);letter-spacing:.03em}
+  .rules ol{margin:0 0 14px;padding-left:20px}.rules li{margin:0 0 8px;color:var(--text);font-size:15px}
+  .rules ul{margin:0 0 14px;padding-left:18px}.rules ul li{color:var(--muted)}
+  .rules code{font-family:var(--mono);font-size:13px;color:var(--text);background:var(--panel-2);padding:1px 5px;border-radius:5px}
+  .rules .never{color:var(--wax);font-weight:600}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+  table.inst{width:100%;border-collapse:collapse;margin:8px 0 0;font-size:14px}
+  table.inst td{border-top:1px solid var(--line);padding:9px 6px;vertical-align:top}
+  table.inst td:first-child{color:var(--text);white-space:nowrap;font-weight:600}
+  table.inst code{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .cmd{font-family:var(--mono);font-size:13.5px;color:var(--text);background:var(--panel-2);border:1px solid var(--line);padding:11px 13px;border-radius:8px;margin:10px 0;overflow-x:auto}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../rls/">Guides</a>
+      <a href="../cheatsheet/">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Free · MIT · Cursor · Claude Code · Windsurf</span>
+    <h1>Supabase security rules <span class="hl-mint">for your AI</span></h1>
+    <p class="lede">AI coding tools scaffold Supabase fast — and ship tables with no RLS, <code>using (true)</code> policies, or the <code>service_role</code> key in the frontend. Drop these rules into your agent and it defaults to the secure pattern — rules are advisory, so still verify (below). Especially now: on <strong>Oct 30, 2026</strong> new Supabase tables stop being exposed to the Data API without an explicit grant.</p>
+  </header>
+
+  <div class="rules">
+    <div class="bar">
+      <h3>THE RULES</h3>
+      <button type="button" class="btn btn-ghost" id="copyrules">Copy all →</button>
+    </div>
+    <p style="margin:0 0 12px;color:var(--muted)">When the agent creates or changes a table in a Supabase <code>public</code> schema, it must do all of this in the <strong>same migration</strong>:</p>
+    <ol>
+      <li><strong>Enable RLS:</strong> <code>alter table public.&lt;table&gt; enable row level security;</code></li>
+      <li><strong>A policy per operation, scoped to the user</strong> (not just a role): <code>SELECT/DELETE</code> use <code>using (user_id = (select auth.uid()))</code>; <code>INSERT</code> uses <code>with check (...)</code>; <code>UPDATE</code> needs <strong>both</strong>. For team data, scope by membership.</li>
+      <li><strong>Grant explicitly</strong> (new tables aren't auto-exposed after Oct 30): <code>grant select, insert, update, delete on public.&lt;table&gt; to authenticated;</code> — grant <code>anon</code> only for genuinely public data. For a <code>serial</code> id the API inserts into, also grant the sequence.</li>
+    </ol>
+    <p class="never">Never:</p>
+    <ul>
+      <li>Ship the <code>service_role</code> key (or <code>sb_secret_…</code>) to the browser or a <code>NEXT_PUBLIC_</code> variable — it bypasses RLS. Server-side only.</li>
+      <li>Use <code>using (true)</code> / <code>with check (true)</code> on a client-reachable table.</li>
+      <li>"Fix" a <code>42501 permission denied</code> with <code>grant … on all tables in schema public</code> — it re-exposes every RLS-off table. Grant the one table.</li>
+    </ul>
+    <p style="margin:0;color:var(--muted);font-size:14px">The <code>anon</code> key is safe in the browser only because RLS limits it — it's not a secret. Full text and every format: <a href="https://github.com/mateuszingano/supabase-security-rules">the repo</a>.</p>
+  </div>
+
+  <div class="prose">
+    <h2>Install</h2>
+    <p>Pick the file your tool reads — or just drop <code>AGENTS.md</code>, which Cursor, Windsurf and Claude Code all read. Commit it so your whole team's agents share the rules.</p>
+    <div class="cmd">curl -o AGENTS.md https://raw.githubusercontent.com/mateuszingano/supabase-security-rules/main/AGENTS.md</div>
+    <table class="inst">
+      <tr><td>Any (recommended)</td><td><code>AGENTS.md</code> at the repo root</td></tr>
+      <tr><td>Cursor</td><td><code>.cursor/rules/supabase-security.mdc</code></td></tr>
+      <tr><td>Claude Code</td><td><code>CLAUDE.md</code> (or append to yours)</td></tr>
+      <tr><td>Windsurf</td><td><code>.windsurf/rules/supabase-security.md</code></td></tr>
+      <tr><td>Older Cursor / Windsurf</td><td><code>.cursorrules</code> / <code>.windsurfrules</code></td></tr>
+    </table>
+
+    <h2>Rules can't enforce themselves</h2>
+    <p>An agent can ignore a rule — they're advisory. Prove your schema is actually safe:</p>
+    <ul>
+      <li><strong>CI:</strong> <code>npx airlock-migrate</code> fails the build when a migration creates a table without RLS.</li>
+      <li><strong>Live database:</strong> <code>SUPABASE_DB_URL=… npx airlock-rls</code> reads your tables with the anon key and proves what's exposed.</li>
+      <li><strong>Deployed app:</strong> the <a href="/service-role-scanner/">free scanner</a> checks your live site for a leaked key or tables anyone can read — no signup.</li>
+    </ul>
+    <p>More: the <a href="/rls/">Supabase RLS guides</a>, the <a href="/supabase-rls-policy-generator/">policy generator</a>, and the <a href="/supabase-rls-policy-explainer/">policy explainer</a>.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. Not affiliated with Supabase. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var RULES=[
+    "Supabase security rules — when you create or change a table in a public schema, do ALL of this in the SAME migration:",
+    "",
+    "1. Enable RLS: alter table public.<table> enable row level security;",
+    "2. A policy per operation, scoped to the user (not just a role):",
+    "   - SELECT/DELETE: using (user_id = (select auth.uid()))",
+    "   - INSERT: with check (user_id = (select auth.uid()))",
+    "   - UPDATE: both using (...) and with check (...)",
+    "   For team/workspace data, scope by membership, not role.",
+    "3. Grant explicitly (new tables aren't auto-exposed after Oct 30 2026):",
+    "   grant select, insert, update, delete on public.<table> to authenticated;",
+    "   Grant anon only for genuinely public data. For a serial id the API inserts into:",
+    "   grant usage on sequence public.<table>_id_seq to authenticated;",
+    "",
+    "Never:",
+    "- Ship the service_role key (or sb_secret_...) to the browser or a NEXT_PUBLIC_ var. It bypasses RLS. Server-side only.",
+    "- Use using (true) / with check (true) on a client-reachable table.",
+    "- Fix a 42501 permission denied with grant ... on all tables in schema public. It re-exposes every RLS-off table. Grant the one table.",
+    "",
+    "The anon key is safe in the browser only because RLS limits it; it is not a secret.",
+    "Verify: npx airlock-migrate (CI) and SUPABASE_DB_URL=... npx airlock-rls (live)."
+  ].join("\n");
+  var b=document.getElementById('copyrules');
+  b.addEventListener('click',function(){
+    try{if(window.gtag)gtag('event','ai_rules_copy');}catch(e){}
+    if(navigator.clipboard){navigator.clipboard.writeText(RULES).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy all →'},1600)},function(){prompt('Copy:',RULES)})}
+    else{prompt('Copy:',RULES)}
+  });
+})();
+</script>
+</body>
+</html>

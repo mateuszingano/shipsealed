@@ -34,6 +34,7 @@
   <url><loc>https://shipsealed.com/rls/v0-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/service-role-scanner/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/supabase-ai-rules/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/supabase-rls-policy-explainer/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/supabase-rls-policy-generator/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/terms/</loc><changefreq>weekly</changefreq></url>
