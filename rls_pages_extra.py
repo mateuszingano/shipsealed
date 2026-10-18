@@ -1205,3 +1205,73 @@ EXTRA.append({
          "Postgres treats the identity sequence as part of the column, so the INSERT privilege on the table covers generating the value. A serial column is just a default that calls nextval on an independent sequence, which has its own privileges."),
     ],
 })
+
+
+# ---- Is the Supabase anon key safe to expose? (vibe-coder panic #1) --------
+# Fatos provados em Postgres 18 (17/10/26): RLS off + grant anon => anon lê tudo;
+# RLS on sem policy => anon lê 0; policy só p/ authenticated => anon segue em 0.
+EXTRA.append({
+    "slug": "is-the-supabase-anon-key-safe-to-expose",
+    "title": "Is the Supabase anon key safe to expose?",
+    "h1_plain": "Is the Supabase anon key safe to expose?",
+    "h1": "Is the Supabase anon key safe to expose?",
+    "desc": "Yes, the Supabase anon key is built to ship in your frontend. It's safe only when RLS is on, with a policy, on every table it can reach - not always.",
+    "eyebrow": "Supabase RLS - Fundamentals",
+    "crumb": "Is the anon key safe to expose?",
+    "byline": "Tested on Postgres 18 - Supabase",
+    "tldr": "Yes. The <code>anon</code> key is designed to live in the browser, and seeing it in your JS is not a leak. It's safe <b>only while RLS is on, with a policy, on every table it can reach</b>. The key never grants access on its own; a table with RLS <b>off</b> does. The key you must never ship is <code>service_role</code>.",
+    "body": """  <h2><span class="n">01</span> Short answer</h2>
+  <p>Yes. The <code>anon</code> key (and the newer <code>sb_publishable_...</code> key) is <b>public by design</b> - Supabase expects it in your frontend bundle, and anyone can read it from your site's JavaScript. That by itself is not a vulnerability.</p>
+  <p>The catch: the anon key is only safe <b>because Row Level Security is supposed to stand between it and your data</b>. If RLS is off on a table the key can reach, that public key reads every row in it (and writes too, if the table also grants insert/update/delete to <code>anon</code>). So the honest answer is "yes, if RLS is on everywhere it can reach" - not "yes, always."</p>
+
+  <h2><span class="n">02</span> Why it's safe when RLS is on</h2>
+  <p>The anon key only tells Supabase <i>which role</i> the request runs as (<code>anon</code>, the signed-out visitor). What that role can actually see is decided by RLS. Proven on Postgres:</p>
+  <p class="filelabel">what anon sees, by configuration</p>
+  <pre><span class="c">-- RLS OFF, anon has a grant:        anon reads EVERY row  (leak)</span>
+<span class="c">-- RLS ON, no policy:                anon reads 0 rows    (deny by default)</span>
+<span class="c">-- RLS ON, policy for authenticated: anon reads 0 rows    (policy doesn't match anon)</span>
+<span class="c">-- RLS ON, policy scoped to the user: each user reads only their own rows</span></pre>
+  <p>So with RLS on and a correct policy, the public key is exactly as powerful as you decide - usually "read the public catalog, nothing private." That's why Supabase ships it to the browser without worry.</p>
+
+  <h2><span class="n">03</span> Where the real danger is</h2>
+  <div class="cause"><h3>A table with RLS off</h3><p>This is the actual leak behind almost every "Supabase app exposed N users" story. RLS off + a grant to <code>anon</code> = the whole table is public to anyone with your key, which is everyone. <a href="/rls/supabase-table-public-rls-off/">Why a table is public</a>.</p></div>
+  <div class="cause"><h3>The <code>service_role</code> key in the browser</h3><p>Different key, different story. <code>service_role</code> <b>bypasses RLS entirely</b> - it reads and writes every table no matter what. It must live only on a server, never in frontend code or a <code>NEXT_PUBLIC_</code> variable. If it's in your bundle, rotate it now. <a href="/service-role-scanner/">Scan your site for it</a>.</p></div>
+  <div class="cause"><h3>RLS on, but a permissive policy</h3><p>A policy of <code>USING (true)</code> has RLS "on" and still lets everyone read every row. <a href="/rls/fix-permissive-rls-policy-using-true/">Fix a permissive policy</a>.</p></div>
+  <p>Note the Oct 30, 2026 platform change doesn't fix this: new tables stop being auto-exposed, but a table that already has RLS off stays open. <a href="/rls/supabase-october-30-grants-change/">What changes on Oct 30</a>.</p>
+
+  <h2><span class="n">04</span> Check your own app in two ways</h2>
+  <p>In the SQL editor, list every table and view and whether <code>anon</code> can read it with RLS off:</p>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> c.relname,
+       has_any_column_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       c.relrowsecurity                                 <span class="k">as</span> rls_on
+<span class="k">from</span> pg_class c
+<span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
+<span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind <span class="k">in</span> (<span class="s">'r'</span>, <span class="s">'p'</span>, <span class="s">'v'</span>, <span class="s">'m'</span>)
+<span class="k">order by</span> 1;</pre>
+  <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is open to the public key. From outside, the <a href="/service-role-scanner/">free scanner</a> checks this from outside against your live app - a leaked <code>service_role</code> key, and tables anyone can read without logging in - using only the public key your app already ships, and reading only row counts, never your data.</p>
+
+  <h2><span class="n">05</span> Turn an open table safe</h2>
+  <p>Enable RLS and add a policy that scopes rows to the signed-in user, in the same migration:</p>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">alter table</span> public.notes <span class="k">enable row level security</span>;
+
+<span class="k">create policy</span> <span class="s">"owner reads own"</span> <span class="k">on</span> public.notes <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
+  <p>Signed-out visitors (<code>anon</code>) now read nothing from <code>notes</code>; signed-in users read only their own rows. The anon key is still in your bundle - and now it's genuinely safe. Full set: <a href="/rls/write-owner-scoped-rls-policy-supabase/">owner-scoped policy for all four operations</a>.</p>""",
+    "related": [
+        ("supabase-table-public-rls-off", "Why is my Supabase table public? (RLS is off)"),
+        ("enable-row-level-security-supabase-table", "Enable Row-Level Security on a table"),
+        ("fix-permissive-rls-policy-using-true", "Fix a permissive RLS policy (USING (true))"),
+    ],
+    "faq": [
+        ("Someone found my anon key in the browser. Is that a hack?",
+         "No. The anon key is meant to be in your frontend; every visitor's browser downloads it. Finding it is expected. What matters is whether RLS is on for every table it can reach. Run the check above. If no table shows anon_can_read true with rls_on false, nothing is exposed by RLS being off - then also confirm you have no permissive USING (true) policies (section 03), which stay readable even with RLS on."),
+        ("What's the difference between the anon key and the service_role key?",
+         "The anon key runs requests as the signed-out 'anon' role, fully subject to RLS - so it's safe in the browser when RLS is correct. The service_role key bypasses RLS entirely and can read and write everything; it must stay server-side and never ship to the browser."),
+        ("Do I still need RLS if I only use the anon key?",
+         "Yes - RLS is exactly what makes the anon key safe. Without RLS (or with a permissive policy), the public key reads every row. The key and RLS aren't alternatives; the key is safe because RLS limits it."),
+        ("Is the new sb_publishable_ key any different?",
+         "No, for this question. It's the modern name for the public client key and is also safe to ship to the browser under the same condition: RLS on, with a policy, on every table it can reach. The secret counterpart, sb_secret_, is the one to keep server-side."),
+    ],
+})
