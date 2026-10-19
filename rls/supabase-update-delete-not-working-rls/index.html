@@ -69,7 +69,7 @@ console.log(data);   <span class="c">// [] → RLS let you touch 0 rows</span></
   <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
 
 <span class="k">grant select, update, delete on</span> notes <span class="k">to</span> authenticated;</pre>
-  <p>The <code>with check</code> on UPDATE matters: without it, a user could change <code>user_id</code> and hand their row to someone else.</p>
+  <p>The <code>with check</code> on UPDATE is spelled out on purpose. Leave it off and Postgres checks the new row against <code>using</code> too, which is just as strict here; it starts to matter when <code>using</code> is wider than what a row may become, like a policy that also lets users edit shared rows.</p>
 
   <h2><span class="n">04</span> Prove it</h2>
   <div class="prove">

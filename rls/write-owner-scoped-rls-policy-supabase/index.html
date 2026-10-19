@@ -68,8 +68,9 @@
 <span class="k">create policy</span> <span class="s">"delete own"</span> <span class="k">on</span> notes <span class="k">for delete</span>
   <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
 
-  <h2><span class="n">02b</span> Why UPDATE needs both</h2>
-  <p><code>USING</code> decides which rows you may update; <code>WITH CHECK</code> validates the row <em>after</em> your change. Without <code>WITH CHECK</code>, a user could update their own row and set <code>user_id</code> to someone else's — handing it away. Both clauses close that.</p>
+  <h2><span class="n">02b</span> USING and WITH CHECK on UPDATE</h2>
+  <p><code>USING</code> decides which rows you may update; <code>WITH CHECK</code> validates the row <em>after</em> your change. Leave <code>WITH CHECK</code> out and Postgres reuses <code>USING</code> for the new row, so with <code>user_id = (select auth.uid())</code> a user still can't hand their row away. Writing both keeps the intent visible, and the two only need to differ when the rows you may change are wider than what a row may become, like shared or team rows.</p>
+  <p>Neither clause protects a column it doesn't mention: this policy won't stop a user from flipping <code>is_admin</code> on their own row. For columns like that, grant <code>update</code> only on the columns users may change, e.g. <code>grant update (body) on notes to authenticated;</code></p>
 
   <h2><span class="n">03</span> Prove it</h2>
   <div class="prove">

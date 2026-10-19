@@ -94,10 +94,21 @@ test('explain: a tautology OR is a leak', () => {
   assert.equal(r.verdict, 'leak')
 })
 
-test('explain: insert without WITH CHECK is a leak', () => {
+test('explain: insert without WITH CHECK lets nothing in (review, not a leak)', () => {
   const r = RLSGen.explainPolicy(`create policy p on t for insert to authenticated`)
-  assert.equal(r.verdict, 'leak')
-  assert.match(r.findings[0].msg, /without WITH CHECK/)
+  assert.equal(r.verdict, 'review')
+  assert.match(r.findings[0].msg, /lets no rows in/)
+})
+
+test('explain: owner update without WITH CHECK is fine (Postgres reuses USING)', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for update to authenticated using (user_id = (select auth.uid()))`)
+  assert.equal(r.verdict, 'ok')
+})
+
+test('explain: update with an OR in USING and no WITH CHECK is worth a review', () => {
+  const r = RLSGen.explainPolicy(`create policy p on t for update to authenticated using (user_id = (select auth.uid()) or is_shared)`)
+  assert.equal(r.verdict, 'review')
+  assert.ok(r.findings.some((f) => /USING has an OR/.test(f.msg)))
 })
 
 test('explain: insert with scoped WITH CHECK is clean', () => {

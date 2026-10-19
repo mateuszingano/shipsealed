@@ -310,7 +310,7 @@ PAGES.append({
     <li><b><code>USING</code></b> filters rows the user can <b>see or affect</b> — <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code>.</li>
     <li><b><code>WITH CHECK</code></b> validates rows the user is <b>writing</b> — <code>INSERT</code> and <code>UPDATE</code>.</li>
   </ul>
-  <p>An <code>INSERT</code> policy with only <code>USING</code> and no <code>WITH CHECK</code> doesn't permit the write — that throws this exact violation. For <code>UPDATE</code> you usually need <b>both</b>: <code>USING</code> to pick the row, <code>WITH CHECK</code> so the user can't edit it into someone else's.</p>
+  <p>An <code>INSERT</code> policy can only have <code>WITH CHECK</code> (Postgres rejects <code>USING</code> on it), and one without a <code>WITH CHECK</code> lets nothing in. For <code>UPDATE</code>, if you leave <code>WITH CHECK</code> out, Postgres checks the new row against <code>USING</code> as well. That's enough when <code>USING</code> is as strict as what the row may become. Write <code>WITH CHECK</code> yourself when <code>USING</code> is wider, for example <code>user_id = (select auth.uid()) or is_shared</code>: without it, a user can edit a shared row and hand it to someone else.</p>
 
   <h2><span class="n">04</span> Prove it — don't hope</h2>
   <p>A policy you didn't test is a policy you don't have. Sign in as tenant A, confirm you can write your own row, and confirm you <b>can't</b> write one for tenant B.</p>
