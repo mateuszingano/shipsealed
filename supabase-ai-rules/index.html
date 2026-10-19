@@ -78,7 +78,7 @@
     <p class="never">Never:</p>
     <ul>
       <li>Ship the <code>service_role</code> key (or <code>sb_secret_…</code>) to the browser or a <code>NEXT_PUBLIC_</code> variable — it bypasses RLS. Server-side only.</li>
-      <li>Use <code>using (true)</code> / <code>with check (true)</code> on a client-reachable table.</li>
+      <li>Use <code>using (true)</code> / <code>with check (true)</code> on private data a client role can reach. (A read-only <code>using (true)</code> is fine for a table that is public on purpose, like a catalog. Say so in a comment.)</li>
       <li>"Fix" a <code>42501 permission denied</code> with <code>grant … on all tables in schema public</code> — it re-exposes every RLS-off table. Grant the one table.</li>
     </ul>
     <p style="margin:0;color:var(--muted);font-size:14px">The <code>anon</code> key is safe in the browser only because RLS limits it — it's not a secret. Full text and every format: <a href="https://github.com/mateuszingano/supabase-security-rules">the repo</a>.</p>
@@ -142,7 +142,7 @@
     "",
     "Never:",
     "- Ship the service_role key (or sb_secret_...) to the browser or a NEXT_PUBLIC_ var. It bypasses RLS. Server-side only.",
-    "- Use using (true) / with check (true) on a client-reachable table.",
+    "- Use using (true) / with check (true) on private data a client role can reach. A read-only using (true) is fine for a table that is public on purpose (a catalog, pricing): say so in a comment and don't add write policies for those roles.",
     "- Fix a 42501 permission denied with grant ... on all tables in schema public. It re-exposes every RLS-off table. Grant the one table.",
     "",
     "The anon key is safe in the browser only because RLS limits it; it is not a secret.",
