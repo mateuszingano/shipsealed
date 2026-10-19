@@ -86,8 +86,9 @@ EXTRA.append({
 <span class="k">create policy</span> <span class="s">"delete own"</span> <span class="k">on</span> notes <span class="k">for delete</span>
   <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
 
-  <h2><span class="n">02b</span> Why UPDATE needs both</h2>
-  <p><code>USING</code> decides which rows you may update; <code>WITH CHECK</code> validates the row <em>after</em> your change. Without <code>WITH CHECK</code>, a user could update their own row and set <code>user_id</code> to someone else's — handing it away. Both clauses close that.</p>
+  <h2><span class="n">02b</span> USING and WITH CHECK on UPDATE</h2>
+  <p><code>USING</code> decides which rows you may update; <code>WITH CHECK</code> validates the row <em>after</em> your change. Leave <code>WITH CHECK</code> out and Postgres reuses <code>USING</code> for the new row, so with <code>user_id = (select auth.uid())</code> a user still can't hand their row away. Writing both keeps the intent visible, and the two only need to differ when the rows you may change are wider than what a row may become, like shared or team rows.</p>
+  <p>Neither clause protects a column it doesn't mention: this policy won't stop a user from flipping <code>is_admin</code> on their own row. For columns like that, grant <code>update</code> only on the columns users may change, e.g. <code>grant update (body) on notes to authenticated;</code></p>
 
   <h2><span class="n">03</span> Prove it</h2>
   <div class="prove">
@@ -551,7 +552,7 @@ EXTRA.append({
   <p>Run every item before you ship. Each links to the guide that shows the exact fix. If any one fails, you have a leak waiting to happen — not a maybe.</p>
   <div class="cause"><h3>1 · RLS on every table</h3><p>No exceptions, even "internal" tables. On with no policy denies everything — that's the safe starting point. → <a href="/rls/enable-row-level-security-supabase-table/">Enable RLS on a table</a></p></div>
   <div class="cause"><h3>2 · Every policy scoped to the caller</h3><p>Compare <code>user_id</code> to <code>(select auth.uid())</code>, or <code>workspace_id</code> to membership. → <a href="/rls/write-owner-scoped-rls-policy-supabase/">Owner-scoped policy</a> · <a href="/rls/multi-tenant-rls-workspaces-supabase/">Workspace policy</a></p></div>
-  <div class="cause"><h3>3 · WITH CHECK on every INSERT and UPDATE</h3><p>No WITH CHECK = users write rows they can't read, or reassign rows to others. → <a href="/rls/fix-new-row-violates-row-level-security-policy/">USING vs WITH CHECK</a></p></div>
+  <div class="cause"><h3>3 · WITH CHECK that matches what a row may become</h3><p>INSERT policies need one (without it nothing gets in). On UPDATE, Postgres reuses USING when WITH CHECK is missing, which is only safe when USING is as strict as what a row may become, not when it has an OR like shared rows. And no policy guards a column it doesn't mention. → <a href="/rls/fix-new-row-violates-row-level-security-policy/">USING vs WITH CHECK</a></p></div>
   <div class="cause"><h3>4 · No <code>USING (true)</code> anywhere</h3><p>The permissive policy that quietly makes a table public. Audit and scope them. → <a href="/rls/fix-permissive-rls-policy-using-true/">Fix a permissive policy</a></p></div>
   <div class="cause"><h3>5 · <code>service_role</code> key server-only</h3><p>It bypasses RLS. Never in the browser, never in <code>NEXT_PUBLIC_*</code>. → <a href="/rls/nextjs-app-router-supabase-auth-rls-ssr/">Next.js SSR the right way</a></p></div>
   <div class="cause"><h3>6 · An isolation test that fails the build</h3><p>Prove tenant A can't read or write tenant B — in CI, on every migration. → <a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation</a> · <a href="/rls/rls-in-ci-fail-build-exposed-table/">RLS gate in CI</a></p></div>
@@ -903,7 +904,7 @@ console.log(data);   <span class="c">// [] → RLS let you touch 0 rows</span></
   <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));
 
 <span class="k">grant select, update, delete on</span> notes <span class="k">to</span> authenticated;</pre>
-  <p>The <code>with check</code> on UPDATE matters: without it, a user could change <code>user_id</code> and hand their row to someone else.</p>
+  <p>The <code>with check</code> on UPDATE is spelled out on purpose. Leave it off and Postgres checks the new row against <code>using</code> too, which is just as strict here; it starts to matter when <code>using</code> is wider than what a row may become, like a policy that also lets users edit shared rows.</p>
 
   <h2><span class="n">04</span> Prove it</h2>
   <div class="prove">

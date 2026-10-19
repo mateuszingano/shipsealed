@@ -282,12 +282,14 @@
     }
     if (writesNew) {
       if (withCheck === null) {
-        if (cmd === 'insert' || cmd === 'all') {
-          lines.push('No WITH CHECK: the new row is not constrained.')
-          if (clientRoles) findings.push({ sev: 'leak', msg: 'INSERT/ALL without WITH CHECK for ' + who + ': a client can write a row with any values (e.g. assign it to another user).' })
+        if (cmd === 'insert') {
+          // Postgres: an INSERT policy without WITH CHECK admits no rows (USING isn't allowed on INSERT).
+          lines.push('No WITH CHECK: an INSERT policy without one lets no rows in.')
+          if (clientRoles) findings.push({ sev: 'review', msg: 'INSERT policy without WITH CHECK for ' + who + ' lets no rows in. If inserts should work, add with check (user_id = (select auth.uid())).' })
         } else {
-          lines.push('No WITH CHECK on UPDATE: the row may be changed to any values (it can be reassigned to someone else).')
-          if (clientRoles) findings.push({ sev: 'review', msg: 'UPDATE without WITH CHECK: nothing stops the new row from being reassigned to another user.' })
+          // Postgres reuses USING for the new row. Only a wide USING (an OR) lets a row be changed into one the caller doesn't own.
+          lines.push('No WITH CHECK: Postgres checks the new row against USING too.')
+          if (clientRoles && using && !isAlwaysTrue(using) && /\bor\b/i.test(using)) findings.push({ sev: 'review', msg: 'No WITH CHECK, and USING has an OR: a row can be changed into any row that still matches USING (e.g. a shared row handed to another user). Add a strict WITH CHECK.' })
         }
       } else if (isAlwaysTrue(withCheck)) {
         lines.push('WITH CHECK is always true: any new row is accepted.')
