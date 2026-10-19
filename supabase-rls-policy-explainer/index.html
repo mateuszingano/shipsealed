@@ -88,7 +88,7 @@
     <h2>What "leak" means here</h2>
     <ul>
       <li><strong>USING (true)</strong> — or a tautology like <code>1=1</code> — means every row matches. On a table a client role can reach, that reads (or changes) every row. <a href="/rls/fix-permissive-rls-policy-using-true/">Fix a permissive policy</a>.</li>
-      <li><strong>No WITH CHECK on INSERT/UPDATE</strong> — the new row isn't constrained, so a client can write a row as another user. <a href="/rls/write-owner-scoped-rls-policy-supabase/">The correct owner-scoped set</a>.</li>
+      <li><strong>WITH CHECK wider than it should be</strong> — on UPDATE, a missing <code>WITH CHECK</code> makes Postgres check the new row against <code>USING</code>, which is fine when <code>USING</code> is strict. When <code>USING</code> has an <code>OR</code> (shared or team rows), a row can be changed into another user's. (An INSERT policy without <code>WITH CHECK</code> doesn't leak: it lets no rows in.) <a href="/rls/write-owner-scoped-rls-policy-supabase/">The correct owner-scoped set</a>.</li>
       <li><strong>anon with no <code>auth.uid()</code> scope</strong> — signed-out visitors read whatever the predicate allows. Fine for a public catalog; a leak for anything private.</li>
       <li><strong>UPDATE with an open USING</strong> — even if <code>WITH CHECK</code> is scoped, an open <code>USING</code> lets any row be <em>targeted</em>. Both matter.</li>
     </ul>
