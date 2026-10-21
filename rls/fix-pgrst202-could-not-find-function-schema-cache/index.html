@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/">
+<title>Fix PGRST202: &quot;Could not find the function ... in the schema cache&quot; (Supabase RPC)</title>
+<meta name="description" content="Why supabase.rpc() returns PGRST202 Could not find the function public.fn(...) in the schema cache: parameter names that don&#x27;t match, the wrong schema, a stale cache, and the grant you&#x27;ll need next.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/">
+<meta property="og:title" content="Fix PGRST202: &quot;Could not find the function ... in the schema cache&quot; (Supabase RPC)">
+<meta property="og:description" content="Why supabase.rpc() returns PGRST202 Could not find the function public.fn(...) in the schema cache: parameter names that don&#x27;t match, the wrong schema, a stale cache, and the grant you&#x27;ll need next.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fix PGRST202: &quot;Could not find the function ... in the schema cache&quot; (Supabase RPC)">
+<meta name="twitter:description" content="Why supabase.rpc() returns PGRST202 Could not find the function public.fn(...) in the schema cache: parameter names that don&#x27;t match, the wrong schema, a stale cache, and the grant you&#x27;ll need next.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Fix PGRST202: Could not find the function in the schema cache", "description": "Why supabase.rpc() returns PGRST202 Could not find the function public.fn(...) in the schema cache: parameter names that don't match, the wrong schema, a stale cache, and the grant you'll need next.", "url": "https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/", "mainEntityOfPage": "https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/", "inLanguage": "en", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Fix PGRST202: Could not find the function in the schema cache", "item": "https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "It works in the SQL editor. Why not through rpc()?", "acceptedAnswer": {"@type": "Answer", "text": "The SQL editor calls the function directly with positional or named arguments and as a privileged role. rpc() goes through the Data API, which matches by argument names, only sees exposed schemas, and runs as anon or authenticated."}}, {"@type": "Question", "name": "Does the order of the arguments matter?", "acceptedAnswer": {"@type": "Answer", "text": "No. The Data API matches arguments by name, so order doesn't matter, but every name has to exist in the function's parameter list."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Fix PGRST202: Could not find the function</p>
+  <p class="eyebrow">Supabase · Error fix</p>
+  <h1>Fix <span class="mono">PGRST202</span>: Could not find the function in the schema cache</h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>The Data API looks a function up by name <b>and by the names of the arguments you send</b>. If you call <code>rpc('get_orders', { userId })</code> and the function's parameter is <code>p_user_id</code>, it isn't found. Send the exact parameter names, keep the function in an exposed schema, and reload the cache after creating it.</p></div>
+  <h2><span class="n">01</span> Read the message</h2>
+  <p class="filelabel">response</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST202"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find the function public.get_orders(userId) in the schema cache"</span>
+}</pre>
+  <p>The parentheses list the argument names <b>your client sent</b>, not the function's. Compare them with the definition: that mismatch is the most common cause. HTTP status is 404.</p>
+
+  <h2><span class="n">02</span> The causes</h2>
+  <div class="cause"><span class="tag">CAUSE 1 · most common</span><h3>Argument names don't match</h3><p>RPC arguments are matched by name. The function below must be called with <code>p_user_id</code>, not <code>userId</code> or <code>user_id</code>.</p></div>
+  <div class="cause"><span class="tag">CAUSE 2</span><h3>The function isn't in an exposed schema</h3><p>Only schemas listed in the Data API settings are served. A function in <code>private</code> is invisible to <code>rpc()</code>, which is usually what you want for helpers.</p></div>
+  <div class="cause"><span class="tag">CAUSE 3</span><h3>A stale cache</h3><p>The function was just created or its signature changed.</p></div>
+  <p class="filelabel">function and call</p>
+  <pre><span class="k">create function</span> public.get_orders(p_user_id uuid)
+<span class="k">returns setof</span> orders <span class="k">language</span> sql <span class="k">stable as</span> $$
+  <span class="k">select</span> * <span class="k">from</span> public.orders <span class="k">where</span> user_id = p_user_id
+$$;
+
+<span class="c">-- client: the key must be the parameter name</span>
+<span class="c">-- await supabase.rpc('get_orders', { p_user_id: user.id })</span>
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;   <span class="c">-- after creating or changing it</span></pre>
+
+  <h2><span class="n">03</span> The error you'll hit next: permissions</h2>
+  <p>Once it's found, the caller's role needs <code>execute</code>, or the error becomes <code>42501 permission denied for function get_orders</code>. Grant only the roles that should call it:</p>
+  <pre><span class="k">revoke execute on function</span> public.get_orders(uuid) <span class="k">from</span> public, anon;
+<span class="k">grant execute on function</span> public.get_orders(uuid) <span class="k">to</span> authenticated;</pre>
+  <p>New functions are executable by everyone by default (Postgres grants <code>execute</code> to <code>public</code>), so revoke first if the function shouldn't be public. A <code>security definer</code> function bypasses RLS: <a href="/rls/lovable-supabase-security-checklist/">list the ones anon can call</a>.</p>
+
+  <h2><span class="n">04</span> Two functions with the same name</h2>
+  <p>Overloads that differ only in types give a different error, <code>PGRST203 Could not choose the best candidate function</code>. Rename one or give the parameters different names.</p>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/fix-pgrst205-could-not-find-table-schema-cache/">Fix PGRST205: Could not find the table in the schema cache <span class="arw">→</span></a><a href="/rls/fix-permission-denied-for-table-supabase-42501/">Fix 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/fix-infinite-recursion-detected-in-policy-supabase/">Fix: infinite recursion detected in policy <span class="arw">→</span></a><a href="/rls/lovable-supabase-security-checklist/">Lovable + Supabase security checklist <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Catch this before it ships</h2>
+    <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Or start from <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> : auth + a table with RLS + an isolation test, so you start from a pattern that's already sealed.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>It works in the SQL editor. Why not through rpc()?</summary><p>The SQL editor calls the function directly with positional or named arguments and as a privileged role. rpc() goes through the Data API, which matches by argument names, only sees exposed schemas, and runs as anon or authenticated.</p></details><details><summary>Does the order of the arguments matter?</summary><p>No. The Data API matches arguments by name, so order doesn't matter, but every name has to exist in the function's parameter list.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>
