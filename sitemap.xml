@@ -7,6 +7,11 @@
   <url><loc>https://shipsealed.com/privacy/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/pt/rls/checklist-seguranca-lovable-supabase/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/pt/rls/erro-42501-permission-denied-for-table-supabase/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/pt/rls/supabase-mudanca-grants-30-outubro/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/refunds/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/</loc><changefreq>weekly</changefreq></url>

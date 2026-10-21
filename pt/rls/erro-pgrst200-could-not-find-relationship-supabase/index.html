@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/">
+<title>Erro PGRST200 &quot;Could not find a relationship between ... in the schema cache&quot; no Supabase</title>
+<meta name="description" content="Por que um select com join no Supabase, como select(&#x27;*, authors(name)&#x27;), devolve PGRST200 Could not find a relationship: falta chave estrangeira, cache desatualizado ou duas chaves entre as mesmas tabelas (PGRST201).">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/">
+<meta property="og:title" content="Erro PGRST200 &quot;Could not find a relationship between ... in the schema cache&quot; no Supabase">
+<meta property="og:description" content="Por que um select com join no Supabase, como select(&#x27;*, authors(name)&#x27;), devolve PGRST200 Could not find a relationship: falta chave estrangeira, cache desatualizado ou duas chaves entre as mesmas tabelas (PGRST201).">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Erro PGRST200 &quot;Could not find a relationship between ... in the schema cache&quot; no Supabase">
+<meta name="twitter:description" content="Por que um select com join no Supabase, como select(&#x27;*, authors(name)&#x27;), devolve PGRST200 Could not find a relationship: falta chave estrangeira, cache desatualizado ou duas chaves entre as mesmas tabelas (PGRST201).">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Erro PGRST200: Could not find a relationship in the schema cache", "description": "Por que um select com join no Supabase, como select('*, authors(name)'), devolve PGRST200 Could not find a relationship: falta chave estrangeira, cache desatualizado ou duas chaves entre as mesmas tabelas (PGRST201).", "url": "https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Erro PGRST200: Could not find a relationship in the schema cache", "item": "https://shipsealed.com/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Dá pra juntar tabelas de schemas diferentes?", "acceptedAnswer": {"@type": "Answer", "text": "A chave estrangeira pode apontar pra outro schema, mas as duas tabelas precisam estar em schemas expostos pela Data API pro join funcionar."}}, {"@type": "Question", "name": "Criei a chave estrangeira e continua dando PGRST200.", "acceptedAnswer": {"@type": "Answer", "text": "Recarregue o cache do schema (notify pgrst, 'reload schema') e confira os nomes das tabelas no select: o join usa nome de tabela (ou o apelido que você der), não nome de coluna."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Erro PGRST200: Could not find a relationship · <a href="https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase · Correção de erro</p>
+  <h1>Erro <span class="mono">PGRST200</span>: Could not find a relationship in the schema cache</h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>Juntar tabelas dentro do <code>select()</code> (embedding) só funciona por uma <b>chave estrangeira</b>. Sem chave estrangeira entre as duas tabelas, não há relação. Crie a chave estrangeira (a coluna referenciada precisa ser chave primária ou única), recarregue o cache e, se houver duas chaves entre as mesmas tabelas, diga qual você quer.</p></div>
+  <h2><span class="n">01</span> O que o erro diz</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST200"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find a relationship between 'books' and 'authors' in the schema cache"</span>,
+  <span class="s">"details"</span>: <span class="s">"Searched for a foreign key relationship between 'books' and 'authors' in the schema 'public', but no matches were found."</span>
+}</pre>
+  <p>Uma query como <code>supabase.from('books').select('title, authors(name)')</code> pede pra Data API juntar as tabelas por uma chave estrangeira. Ela não adivinha o join pelo nome da coluna: só ter <code>author_id</code> não basta.</p>
+
+  <h2><span class="n">02</span> Veja quais chaves estrangeiras existem</h2>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> conrelid::regclass <span class="k">as</span> from_table, confrelid::regclass <span class="k">as</span> to_table, conname
+<span class="k">from</span> pg_constraint
+<span class="k">where</span> contype = <span class="s">'f'</span> <span class="k">and</span> connamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">order by</span> 1;</pre>
+
+  <h2><span class="n">03</span> Crie a chave estrangeira</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">alter table</span> public.books
+  <span class="k">add constraint</span> books_author_id_fkey
+  <span class="k">foreign key</span> (author_id) <span class="k">references</span> public.authors(id);
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;</pre>
+  <p>A coluna referenciada precisa ser chave primária ou única, senão o Postgres recusa a constraint (<code>there is no unique constraint matching given keys</code>).</p>
+
+  <h2><span class="n">04</span> Duas chaves entre as mesmas tabelas: PGRST201</h2>
+  <p>Se <code>books</code> tem <code>author_id</code> e <code>editor_id</code> apontando pra <code>authors</code>, o join fica ambíguo e você recebe <code>PGRST201</code>, cuja dica lista as opções. Diga o nome da chave estrangeira:</p>
+  <pre><span class="c">// escolha a relação pelo nome da constraint</span>
+supabase.from(<span class="s">'books'</span>).select(<span class="s">'title, author:authors!books_author_id_fkey(name)'</span>)</pre>
+
+  <h2><span class="n">05</span> Achou a relação, mas as linhas vêm vazias</h2>
+  <p>Aí é RLS, não a relação: a tabela do join tem as próprias policies, e linhas que quem chama não pode ver voltam como <code>null</code> ou lista vazia. Confira a policy de SELECT da tabela do join.</p>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-pgrst202-could-not-find-function-supabase/">Erro PGRST202: Could not find the function <span class="arw">→</span></a><a href="/rls/fix-pgrst205-could-not-find-table-schema-cache/">Fix PGRST205: Could not find the table (em inglês) <span class="arw">→</span></a><a href="/rls/fix-pgrst116-cannot-coerce-result-single-json-object/">Fix PGRST116: Cannot coerce the result (em inglês) <span class="arw">→</span></a><a href="/supabase-rls-policy-generator/">Gerador de policies RLS (em inglês) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Dá pra juntar tabelas de schemas diferentes?</summary><p>A chave estrangeira pode apontar pra outro schema, mas as duas tabelas precisam estar em schemas expostos pela Data API pro join funcionar.</p></details><details><summary>Criei a chave estrangeira e continua dando PGRST200.</summary><p>Recarregue o cache do schema (notify pgrst, 'reload schema') e confira os nomes das tabelas no select: o join usa nome de tabela (ou o apelido que você der), não nome de coluna.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed é uma marca operada por Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>

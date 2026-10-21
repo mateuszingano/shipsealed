@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/fix-supabase-jwt-expired-pgrst303/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/fix-supabase-jwt-expired-pgrst303/">
+<title>Erro &quot;JWT expired&quot; (PGRST303) no Supabase: como manter a sessão renovada</title>
+<meta name="description" content="Por que as requisições ao Supabase falham com 401 JWT expired (PGRST303), por que isso aparece no código do servidor e depois que o notebook hiberna, e como manter a sessão renovada com @supabase/ssr.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/">
+<meta property="og:title" content="Erro &quot;JWT expired&quot; (PGRST303) no Supabase: como manter a sessão renovada">
+<meta property="og:description" content="Por que as requisições ao Supabase falham com 401 JWT expired (PGRST303), por que isso aparece no código do servidor e depois que o notebook hiberna, e como manter a sessão renovada com @supabase/ssr.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Erro &quot;JWT expired&quot; (PGRST303) no Supabase: como manter a sessão renovada">
+<meta name="twitter:description" content="Por que as requisições ao Supabase falham com 401 JWT expired (PGRST303), por que isso aparece no código do servidor e depois que o notebook hiberna, e como manter a sessão renovada com @supabase/ssr.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Erro JWT expired (PGRST303) no Supabase", "description": "Por que as requisições ao Supabase falham com 401 JWT expired (PGRST303), por que isso aparece no código do servidor e depois que o notebook hiberna, e como manter a sessão renovada com @supabase/ssr.", "url": "https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Erro JWT expired (PGRST303) no Supabase", "item": "https://shipsealed.com/pt/rls/erro-jwt-expired-pgrst303-supabase/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Devo aumentar a validade do JWT?", "acceptedAnswer": {"@type": "Answer", "text": "Isso esconde o sintoma e deixa um token roubado útil por mais tempo. Corrija a renovação: com o proxy funcionando, a validade deixa de importar pro usuário."}}, {"@type": "Question", "name": "A chave service_role expira?", "acceptedAnswer": {"@type": "Answer", "text": "Ela não é uma sessão de usuário, então não há o que renovar. E ela ignora o RLS, então fica só no servidor, nunca como solução pra um token de usuário vencido."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Erro JWT expired (PGRST303) · <a href="https://shipsealed.com/rls/fix-supabase-jwt-expired-pgrst303/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase Auth · Correção de erro</p>
+  <h1>Erro <span class="mono">JWT expired</span> (PGRST303) no Supabase</h1>
+  <div class="byline"><span>Supabase Auth · Next.js</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>O token de acesso da requisição passou da validade, e a Data API responde 401 <code>PGRST303 JWT expired</code>. No navegador, o supabase-js renova sozinho. No servidor, ele só fica válido se algo renovar: no Next.js, é o <code>proxy.ts</code> (<code>middleware.ts</code> antes do Next 16) do <code>@supabase/ssr</code>, chamando <code>supabase.auth.getClaims()</code>.</p></div>
+  <h2><span class="n">01</span> O que é o erro</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{ <span class="s">"code"</span>: <span class="s">"PGRST303"</span>, <span class="s">"message"</span>: <span class="s">"JWT expired"</span> }</pre>
+  <p>Os tokens de acesso do Supabase duram pouco e vêm com um refresh token que gera um novo. O erro quer dizer que uma requisição saiu com um token velho que ninguém renovou. Não é problema de RLS: suas policies nem chegaram a rodar.</p>
+
+  <h2><span class="n">02</span> De onde vem</h2>
+  <div class="cause"><span class="tag">CAUSA 1 · mais comum</span><h3>Código de servidor que lê a sessão sem renovar</h3><p>Server Components do Next.js não podem gravar cookies, então não conseguem salvar um token renovado. Se nenhum proxy/middleware renovar antes, as queries do servidor saem com token vencido.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>Token passado na mão</h3><p>Um cliente criado com o header fixo <code>Authorization: Bearer ...</code>, ou um token guardado no seu próprio estado, para de funcionar quando vence: nada renova ele.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3</span><h3>Aba que hibernou</h3><p>Quando o notebook volta da hibernação, a primeira requisição pode sair antes da renovação. O supabase-js renova sozinho; tentar de novo depois da renovação funciona.</p></div>
+
+  <h2><span class="n">03</span> A correção no Next.js</h2>
+  <p>Use o <code>@supabase/ssr</code> e renove no proxy, que roda antes das páginas e pode gravar cookies. Seguindo o guia do Supabase, o proxy cria um cliente de servidor e chama <code>getClaims()</code>, que renova um token vencido:</p>
+  <p class="filelabel">proxy.ts (middleware.ts antes do Next 16)</p>
+  <pre><span class="c">// dentro do proxy, depois de criar o cliente de servidor com os cookies da requisição</span>
+<span class="k">await</span> supabase.auth.getClaims();   <span class="c">// renova o token e grava os cookies novos</span></pre>
+  <p>Não confie no <code>getSession()</code> no código do servidor: ele lê o cookie sem conferir. E crie o cliente do Supabase a cada requisição, a partir dos cookies, nunca de um token guardado.</p>
+
+  <h2><span class="n">04</span> Não confunda com</h2>
+  <ul>
+    <li><b><code>PGRST301</code></b>: o token não pode ser decodificado ou é inválido (projeto errado, header malformado).</li>
+    <li><b>Sem sessão nenhuma</b>: as requisições rodam como <code>anon</code> e policies <code>to authenticated</code> não devolvem nada. Veja o <a href="/rls/fix-pgrst116-cannot-coerce-result-single-json-object/">PGRST116</a> (em inglês).</li>
+  </ul>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-pgrst202-could-not-find-function-supabase/">Erro PGRST202: Could not find the function <span class="arw">→</span></a><a href="/pt/rls/erro-42501-permission-denied-for-table-supabase/">Erro 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/nextjs-app-router-supabase-auth-rls-ssr/">Next.js App Router + Supabase auth with RLS (em inglês) <span class="arw">→</span></a><a href="/rls/v0-supabase-security-checklist/">v0 + Supabase security checklist (em inglês) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Devo aumentar a validade do JWT?</summary><p>Isso esconde o sintoma e deixa um token roubado útil por mais tempo. Corrija a renovação: com o proxy funcionando, a validade deixa de importar pro usuário.</p></details><details><summary>A chave service_role expira?</summary><p>Ela não é uma sessão de usuário, então não há o que renovar. E ela ignora o RLS, então fica só no servidor, nunca como solução pra um token de usuário vencido.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed é uma marca operada por Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>
