@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/">
+<title>Fix PGRST200: &quot;Could not find a relationship between ... in the schema cache&quot; (Supabase)</title>
+<meta name="description" content="Why a Supabase select with a join, like select(&#x27;*, authors(name)&#x27;), returns PGRST200 Could not find a relationship: no foreign key, a stale cache, or two keys between the same tables (PGRST201).">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/">
+<meta property="og:title" content="Fix PGRST200: &quot;Could not find a relationship between ... in the schema cache&quot; (Supabase)">
+<meta property="og:description" content="Why a Supabase select with a join, like select(&#x27;*, authors(name)&#x27;), returns PGRST200 Could not find a relationship: no foreign key, a stale cache, or two keys between the same tables (PGRST201).">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fix PGRST200: &quot;Could not find a relationship between ... in the schema cache&quot; (Supabase)">
+<meta name="twitter:description" content="Why a Supabase select with a join, like select(&#x27;*, authors(name)&#x27;), returns PGRST200 Could not find a relationship: no foreign key, a stale cache, or two keys between the same tables (PGRST201).">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Fix PGRST200: Could not find a relationship in the schema cache", "description": "Why a Supabase select with a join, like select('*, authors(name)'), returns PGRST200 Could not find a relationship: no foreign key, a stale cache, or two keys between the same tables (PGRST201).", "url": "https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/", "mainEntityOfPage": "https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/", "inLanguage": "en", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "RLS guides", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Fix PGRST200: Could not find a relationship in the schema cache", "item": "https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I join tables that are in different schemas?", "acceptedAnswer": {"@type": "Answer", "text": "The foreign key can point across schemas, but both tables have to be in schemas the Data API exposes for the embed to work."}}, {"@type": "Question", "name": "I added the foreign key and still get PGRST200.", "acceptedAnswer": {"@type": "Answer", "text": "Reload the schema cache (notify pgrst, 'reload schema'), and check the table names in the select: the embed uses table names (or the alias you give it), not column names."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Fix PGRST200: Could not find a relationship</p>
+  <p class="eyebrow">Supabase · Error fix</p>
+  <h1>Fix <span class="mono">PGRST200</span>: Could not find a relationship in the schema cache</h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ code tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>Joining tables inside <code>select()</code> (embedding) works only through a <b>foreign key</b>. No foreign key between the two tables, no relationship. Add the foreign key (the referenced column must be a primary key or unique), reload the cache, and if there are two keys between the same tables, name the one you mean.</p></div>
+  <h2><span class="n">01</span> What the error says</h2>
+  <p class="filelabel">response</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST200"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find a relationship between 'books' and 'authors' in the schema cache"</span>,
+  <span class="s">"details"</span>: <span class="s">"Searched for a foreign key relationship between 'books' and 'authors' in the schema 'public', but no matches were found."</span>
+}</pre>
+  <p>A query like <code>supabase.from('books').select('title, authors(name)')</code> asks the Data API to join through a foreign key. It doesn't guess joins from column names: <code>author_id</code> alone isn't enough.</p>
+
+  <h2><span class="n">02</span> Check which foreign keys exist</h2>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> conrelid::regclass <span class="k">as</span> from_table, confrelid::regclass <span class="k">as</span> to_table, conname
+<span class="k">from</span> pg_constraint
+<span class="k">where</span> contype = <span class="s">'f'</span> <span class="k">and</span> connamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">order by</span> 1;</pre>
+
+  <h2><span class="n">03</span> Add the foreign key</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">alter table</span> public.books
+  <span class="k">add constraint</span> books_author_id_fkey
+  <span class="k">foreign key</span> (author_id) <span class="k">references</span> public.authors(id);
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;</pre>
+  <p>The referenced column must be a primary key or unique, otherwise Postgres refuses the constraint (<code>there is no unique constraint matching given keys</code>).</p>
+
+  <h2><span class="n">04</span> Two keys between the same tables: PGRST201</h2>
+  <p>If <code>books</code> has both <code>author_id</code> and <code>editor_id</code> pointing to <code>authors</code>, the embed is ambiguous and you get <code>PGRST201</code>, whose hint lists the options. Name the foreign key:</p>
+  <pre><span class="c">// pick the relationship by constraint name</span>
+supabase.from(<span class="s">'books'</span>).select(<span class="s">'title, author:authors!books_author_id_fkey(name)'</span>)</pre>
+
+  <h2><span class="n">05</span> Found, but the joined rows are empty</h2>
+  <p>That's RLS, not the relationship: the embedded table has its own policies, and rows the caller can't see come back as <code>null</code> or an empty array. Check the SELECT policy on the joined table.</p>
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/fix-pgrst205-could-not-find-table-schema-cache/">Fix PGRST205: Could not find the table in the schema cache <span class="arw">→</span></a><a href="/rls/fix-pgrst202-could-not-find-function-schema-cache/">Fix PGRST202: Could not find the function in the schema cache <span class="arw">→</span></a><a href="/rls/fix-pgrst116-cannot-coerce-result-single-json-object/">Fix PGRST116: Cannot coerce the result to a single JSON object <span class="arw">→</span></a><a href="/rls/write-owner-scoped-rls-policy-supabase/">Write an owner-scoped RLS policy (SELECT / INSERT / UPDATE / DELETE) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ FREE · 30 SECONDS · NO SIGNUP</span>
+    <h2>Is your app leaking right now?</h2>
+    <p>Paste your live URL. The scanner reads your page and its JavaScript for a Supabase <code>service_role</code> key, the one leak that skips every policy in this guide.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://your-app.com" required maxlength="2048" aria-label="Your app's URL">
+      <button type="submit" class="btn">Scan my app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Catch this before it ships</h2>
+    <p><code>airlock-rls</code> is a CI gate that fails your build when a table ships exposed or a policy is permissive: the same class of bug, caught in CI against a database with your migrations applied, before it reaches prod.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Or start from <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a> : auth + a table with RLS + an isolation test, so you start from a pattern that's already sealed.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Can I join tables that are in different schemas?</summary><p>The foreign key can point across schemas, but both tables have to be in schemas the Data API exposes for the embed to work.</p></details><details><summary>I added the foreign key and still get PGRST200.</summary><p>Reload the schema cache (notify pgrst, 'reload schema'), and check the table names in the select: the embed uses table names (or the alias you give it), not column names.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ on its way — check your inbox. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">grab it now →</a>':'✖ something went wrong — try again.';
+    return false;}
+</script>
+</body>
+</html>

@@ -18,7 +18,10 @@
   <url><loc>https://shipsealed.com/rls/fix-permission-denied-for-table-supabase-42501/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-permissive-rls-policy-using-true/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst116-cannot-coerce-result-single-json-object/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/fix-pgrst200-could-not-find-relationship-schema-cache/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/fix-pgrst205-could-not-find-table-schema-cache/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/fix-supabase-jwt-expired-pgrst303/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/is-the-supabase-anon-key-safe-to-expose/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/lovable-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/multi-tenant-rls-workspaces-supabase/</loc><changefreq>monthly</changefreq></url>
@@ -28,8 +31,10 @@
   <url><loc>https://shipsealed.com/rls/rls-vs-app-layer-authorization/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-october-30-grants-change/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-security-checklist-before-launch/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/supabase-storage-upload-new-row-violates-row-level-security/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-table-public-rls-off/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-update-delete-not-working-rls/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/v0-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>
