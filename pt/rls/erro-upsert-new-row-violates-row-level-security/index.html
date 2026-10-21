@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/">
+<title>Upsert no Supabase: &quot;new row violates row-level security policy&quot; mesmo com policy de INSERT</title>
+<meta name="description" content="O insert funciona, mas o upsert() falha com new row violates row-level security policy. Por que o ON CONFLICT DO UPDATE precisa das policies de SELECT e UPDATE, mesmo pra uma linha nova.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/">
+<meta property="og:title" content="Upsert no Supabase: &quot;new row violates row-level security policy&quot; mesmo com policy de INSERT">
+<meta property="og:description" content="O insert funciona, mas o upsert() falha com new row violates row-level security policy. Por que o ON CONFLICT DO UPDATE precisa das policies de SELECT e UPDATE, mesmo pra uma linha nova.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Upsert no Supabase: &quot;new row violates row-level security policy&quot; mesmo com policy de INSERT">
+<meta name="twitter:description" content="O insert funciona, mas o upsert() falha com new row violates row-level security policy. Por que o ON CONFLICT DO UPDATE precisa das policies de SELECT e UPDATE, mesmo pra uma linha nova.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Upsert no Supabase falha com new row violates row-level security policy", "description": "O insert funciona, mas o upsert() falha com new row violates row-level security policy. Por que o ON CONFLICT DO UPDATE precisa das policies de SELECT e UPDATE, mesmo pra uma linha nova.", "url": "https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Upsert no Supabase falha com new row violates row-level security policy", "item": "https://shipsealed.com/pt/rls/erro-upsert-new-row-violates-row-level-security/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Por que o Postgres precisa de SELECT num upsert?", "acceptedAnswer": {"@type": "Answer", "text": "Pra detectar o conflito ele precisa olhar a linha existente, e essa leitura passa pelas suas policies de SELECT. Sem nenhuma, o upsert não pode ser checado e é recusado."}}, {"@type": "Question", "name": "Isso vale também pro upload no Storage com upsert: true?", "acceptedAnswer": {"@type": "Answer", "text": "Vale. Substituir um arquivo é um upsert em storage.objects, então ele precisa de policies de SELECT e UPDATE além da de INSERT."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Upsert: new row violates RLS · <a href="https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase RLS · Correção de erro</p>
+  <h1>Upsert falha: <span class="mono">new row violates row-level security policy</span></h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>O <code>upsert()</code> vira <code>insert ... on conflict do update</code>. Pra isso, o Postgres confere as policies de UPDATE e SELECT além da de INSERT, e faz isso mesmo quando a linha é nova. Crie uma policy de UPDATE (com a mesma condição de dono) e uma de SELECT, e dê grant de <code>update</code>.</p></div>
+  <h2><span class="n">01</span> Por que o insert funciona e o upsert não</h2>
+  <p>Por padrão, <code>supabase.from('profiles').upsert(row)</code> é enviado como <code>insert ... on conflict (id) do update</code>. Um comando que <i>pode</i> atualizar precisa de todas as policies que talvez use: INSERT pra linha nova, UPDATE pra linha existente e SELECT pra ler a linha com que conflita. Se a de UPDATE ou a de SELECT faltar, o Postgres recusa o comando logo de cara com <code>new row violates row-level security policy</code>, mesmo quando a linha ainda não existe.</p>
+
+  <h2><span class="n">02</span> A correção</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"owner inserts"</span> <span class="k">on</span> profiles <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner updates"</span> <span class="k">on</span> profiles <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> profiles <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">grant select, insert, update on</span> profiles <span class="k">to</span> authenticated;</pre>
+  <p>Mantenha as três com a mesma condição de dono. O usuário continua sem conseguir fazer upsert com o id de outra pessoa: a checagem do INSERT recusa.</p>
+
+  <h2><span class="n">03</span> Se você só insere</h2>
+  <p>Se a linha nunca deve ser sobrescrita, não use <code>upsert()</code>. Use <code>insert()</code> e trate o erro de chave duplicada (<code>23505</code>), ou passe <code>{ ignoreDuplicates: true }</code> pra requisição virar <code>on conflict do nothing</code>.</p>
+
+  <h2><span class="n">04</span> Prove</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> só policy de INSERT, upsert de linha nova &nbsp;<span style="color:var(--dim)">→ new row violates row-level security policy</span></div>
+    <div class="row"><span class="ok">✓</span> insert comum com a mesma policy &nbsp;<span style="color:var(--dim)">→ ok</span></div>
+    <div class="row"><span class="bad">✗</span> INSERT + UPDATE, sem SELECT &nbsp;<span style="color:var(--dim)">→ continua recusado</span></div>
+    <div class="row"><span class="ok">✓</span> INSERT + UPDATE + SELECT &nbsp;<span style="color:var(--dim)">→ ok; id de outro usuário → recusado</span></div>
+  </div>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-upload-storage-new-row-violates-row-level-security/">Upload no Storage: new row violates RLS <span class="arw">→</span></a><a href="/pt/rls/erro-42501-permission-denied-for-table-supabase/">Erro 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/supabase-update-delete-not-working-rls/">Supabase update or delete does nothing (em inglês) <span class="arw">→</span></a><a href="/supabase-rls-policy-generator/">Gerador de policies RLS (em inglês) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Por que o Postgres precisa de SELECT num upsert?</summary><p>Pra detectar o conflito ele precisa olhar a linha existente, e essa leitura passa pelas suas policies de SELECT. Sem nenhuma, o upsert não pode ser checado e é recusado.</p></details><details><summary>Isso vale também pro upload no Storage com upsert: true?</summary><p>Vale. Substituir um arquivo é um upsert em storage.objects, então ele precisa de policies de SELECT e UPDATE além da de INSERT.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed é uma marca operada por Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>

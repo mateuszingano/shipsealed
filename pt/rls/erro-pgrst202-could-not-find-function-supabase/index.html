@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/">
+<title>Erro PGRST202 &quot;Could not find the function ... in the schema cache&quot; no Supabase (RPC)</title>
+<meta name="description" content="Por que o supabase.rpc() devolve PGRST202 Could not find the function public.fn(...) in the schema cache: nomes de parâmetro diferentes, schema errado, cache desatualizado, e o grant que vem depois.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/">
+<meta property="og:title" content="Erro PGRST202 &quot;Could not find the function ... in the schema cache&quot; no Supabase (RPC)">
+<meta property="og:description" content="Por que o supabase.rpc() devolve PGRST202 Could not find the function public.fn(...) in the schema cache: nomes de parâmetro diferentes, schema errado, cache desatualizado, e o grant que vem depois.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Erro PGRST202 &quot;Could not find the function ... in the schema cache&quot; no Supabase (RPC)">
+<meta name="twitter:description" content="Por que o supabase.rpc() devolve PGRST202 Could not find the function public.fn(...) in the schema cache: nomes de parâmetro diferentes, schema errado, cache desatualizado, e o grant que vem depois.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Erro PGRST202: Could not find the function in the schema cache", "description": "Por que o supabase.rpc() devolve PGRST202 Could not find the function public.fn(...) in the schema cache: nomes de parâmetro diferentes, schema errado, cache desatualizado, e o grant que vem depois.", "url": "https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Erro PGRST202: Could not find the function in the schema cache", "item": "https://shipsealed.com/pt/rls/erro-pgrst202-could-not-find-function-supabase/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Funciona no SQL editor. Por que não pelo rpc()?", "acceptedAnswer": {"@type": "Answer", "text": "O SQL editor chama a função direto, com argumentos por posição ou nome, e como um role privilegiado. O rpc() passa pela Data API, que casa os argumentos pelo nome, só enxerga schemas expostos e roda como anon ou authenticated."}}, {"@type": "Question", "name": "A ordem dos argumentos importa?", "acceptedAnswer": {"@type": "Answer", "text": "Não. A Data API casa os argumentos pelo nome, então a ordem não importa, mas cada nome precisa existir na lista de parâmetros da função."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Erro PGRST202: Could not find the function · <a href="https://shipsealed.com/rls/fix-pgrst202-could-not-find-function-schema-cache/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase · Correção de erro</p>
+  <h1>Erro <span class="mono">PGRST202</span>: Could not find the function in the schema cache</h1>
+  <div class="byline"><span>Postgres 15 · Supabase</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>A Data API procura a função pelo nome <b>e pelos nomes dos argumentos que você manda</b>. Se você chama <code>rpc('get_orders', { userId })</code> e o parâmetro da função é <code>p_user_id</code>, ela não é encontrada. Mande os nomes exatos dos parâmetros, mantenha a função num schema exposto e recarregue o cache depois de criá-la.</p></div>
+  <h2><span class="n">01</span> Leia a mensagem</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST202"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find the function public.get_orders(userId) in the schema cache"</span>
+}</pre>
+  <p>Os parênteses listam os nomes dos argumentos que <b>o seu cliente mandou</b>, não os da função. Compare com a definição: essa diferença é a causa mais comum. O status HTTP é 404.</p>
+
+  <h2><span class="n">02</span> As causas</h2>
+  <div class="cause"><span class="tag">CAUSA 1 · mais comum</span><h3>Os nomes dos argumentos não batem</h3><p>Os argumentos da RPC são casados pelo nome. A função abaixo precisa ser chamada com <code>p_user_id</code>, não <code>userId</code> nem <code>user_id</code>.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>A função não está num schema exposto</h3><p>Só os schemas listados nas configurações da Data API são servidos. Uma função em <code>private</code> fica invisível pro <code>rpc()</code>, o que normalmente é o que você quer pra funções auxiliares.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3</span><h3>Cache desatualizado</h3><p>A função acabou de ser criada ou mudou de assinatura.</p></div>
+  <p class="filelabel">função e chamada</p>
+  <pre><span class="k">create function</span> public.get_orders(p_user_id uuid)
+<span class="k">returns setof</span> orders <span class="k">language</span> sql <span class="k">stable as</span> $$
+  <span class="k">select</span> * <span class="k">from</span> public.orders <span class="k">where</span> user_id = p_user_id
+$$;
+
+<span class="c">-- cliente: a chave tem que ser o nome do parâmetro</span>
+<span class="c">-- await supabase.rpc('get_orders', { p_user_id: user.id })</span>
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;   <span class="c">-- depois de criar ou alterar</span></pre>
+
+  <h2><span class="n">03</span> O próximo erro: permissão</h2>
+  <p>Depois de encontrada, o role de quem chama precisa de <code>execute</code>, senão o erro vira <code>42501 permission denied for function get_orders</code>. Dê permissão só pros roles que devem chamar:</p>
+  <pre><span class="k">revoke execute on function</span> public.get_orders(uuid) <span class="k">from</span> public, anon;
+<span class="k">grant execute on function</span> public.get_orders(uuid) <span class="k">to</span> authenticated;</pre>
+  <p>Funções novas podem ser executadas por todo mundo por padrão (o Postgres dá <code>execute</code> pra <code>public</code>), então revogue primeiro se a função não deve ser pública. Uma função <code>security definer</code> ignora o RLS: <a href="/pt/rls/checklist-seguranca-lovable-supabase/">veja como listar as que anon consegue chamar</a>.</p>
+
+  <h2><span class="n">04</span> Duas funções com o mesmo nome</h2>
+  <p>Sobrecargas que só mudam o tipo dão outro erro, <code>PGRST203 Could not choose the best candidate function</code>. Renomeie uma ou dê nomes diferentes aos parâmetros.</p>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/">Erro PGRST200: Could not find a relationship <span class="arw">→</span></a><a href="/pt/rls/erro-42501-permission-denied-for-table-supabase/">Erro 42501: "permission denied for table" <span class="arw">→</span></a><a href="/rls/fix-pgrst205-could-not-find-table-schema-cache/">Fix PGRST205: Could not find the table (em inglês) <span class="arw">→</span></a><a href="/pt/rls/checklist-seguranca-lovable-supabase/">Checklist de segurança: Lovable + Supabase <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Funciona no SQL editor. Por que não pelo rpc()?</summary><p>O SQL editor chama a função direto, com argumentos por posição ou nome, e como um role privilegiado. O rpc() passa pela Data API, que casa os argumentos pelo nome, só enxerga schemas expostos e roda como anon ou authenticated.</p></details><details><summary>A ordem dos argumentos importa?</summary><p>Não. A Data API casa os argumentos pelo nome, então a ordem não importa, mas cada nome precisa existir na lista de parâmetros da função.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed é uma marca operada por Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>

@@ -239,3 +239,283 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
          "Pode, e depois confira com as queries acima. Correções geradas pra erros de permissão às vezes abrem mais do que deveriam, como uma policy sempre verdadeira ou um grant amplo."),
     ],
 })
+
+# ---- Upload no Storage: new row violates row-level security policy -------
+PT.append({
+    "en": "supabase-storage-upload-new-row-violates-row-level-security",
+    "slug": "erro-upload-storage-new-row-violates-row-level-security",
+    "title": 'Upload no Supabase Storage: "new row violates row-level security policy" (como resolver)',
+    "h1_plain": "Upload no Supabase Storage: new row violates row-level security policy",
+    "h1": 'Upload no Storage falha: <span class="mono">new row violates row-level security policy</span>',
+    "desc": "Por que o upload no Supabase Storage devolve 403 new row violates row-level security policy, a policy em storage.objects que resolve (limitada à pasta do usuário) e por que o upsert precisa de mais duas.",
+    "eyebrow": "Supabase Storage · Correção de erro",
+    "crumb": "Upload no Storage: new row violates RLS",
+    "byline": "Postgres 15 · Supabase Storage",
+    "tldr": "Todo arquivo é uma linha em <code>storage.objects</code>, e o RLS está ligado lá. Sem uma policy de INSERT que aceite o caminho, o upload é recusado com 403. Crie uma policy de INSERT pro bucket que amarre a primeira pasta ao <code>auth.uid()</code> e faça o upload em <code>&lt;id do usuário&gt;/arquivo</code>. Substituir um arquivo (<code>upsert: true</code>) também exige policies de SELECT e UPDATE.",
+    "body": """  <h2><span class="n">01</span> O que é o erro</h2>
+  <p>A API do Storage transforma o erro do Postgres em HTTP 403:</p>
+  <p class="filelabel">resposta</p>
+  <pre>{ <span class="s">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="s">"message"</span>: <span class="s">"new row violates row-level security policy"</span> }</pre>
+  <p>Um upload insere uma linha em <code>storage.objects</code> (bucket, caminho, dono). Essa tabela tem RLS ligado e, por padrão, nenhuma policy deixa alguém inserir, então todo upload feito pelo cliente é recusado até você criar uma. Deixar o bucket público não muda isso: "público" só vale pra download.</p>
+
+  <h2><span class="n">02</span> A policy: cada usuário sobe na própria pasta</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"users upload to their folder"</span> <span class="k">on</span> storage.objects
+  <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (
+    bucket_id = <span class="s">'avatars'</span>
+    <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text
+  );</pre>
+  <p><code>storage.foldername(name)</code> devolve as pastas do caminho, então em <code>&lt;id do usuário&gt;/avatar.png</code> a primeira é o id do usuário. O upload precisa usar esse caminho:</p>
+  <p class="filelabel">upload.ts</p>
+  <pre><span class="k">const</span> { data: { <span class="u">user</span> } } = <span class="k">await</span> supabase.auth.getUser();
+<span class="k">await</span> supabase.storage.from(<span class="s">'avatars'</span>).upload(<span class="s">`${<span class="u">user</span>.id}/avatar.png`</span>, file);</pre>
+
+  <h2><span class="n">03</span> Por que ainda falha</h2>
+  <div class="cause"><span class="tag">CAUSA 1</span><h3>O caminho não começa com o id do usuário</h3><p>Um arquivo na raiz do bucket (<code>avatar.png</code>) não tem pasta, então a checagem dá falso. A pasta de outro usuário também.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>Usuário não logado</h3><p>O cliente chama como <code>anon</code>, o <code>auth.uid()</code> vem nulo e uma policy <code>to authenticated</code> não se aplica.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3 · upsert</span><h3>Substituir arquivo com <span class="mono">upsert: true</span></h3><p>Sobrescrever um caminho que já existe é um insert que vira update, e o Postgres exige também policies de SELECT e UPDATE. Só com a de INSERT, o upsert é recusado até pra um caminho que ainda não existe.</p></div>
+  <p class="filelabel">migration.sql (só se você usa upsert ou lê os arquivos de volta)</p>
+  <pre><span class="k">create policy</span> <span class="s">"users read their folder"</span> <span class="k">on</span> storage.objects <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (bucket_id = <span class="s">'avatars'</span> <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text);
+
+<span class="k">create policy</span> <span class="s">"users update their folder"</span> <span class="k">on</span> storage.objects <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (bucket_id = <span class="s">'avatars'</span> <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text);</pre>
+
+  <h2><span class="n">04</span> Prove</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> sem policy de INSERT &nbsp;<span style="color:var(--dim)">→ new row violates row-level security policy</span></div>
+    <div class="row"><span class="ok">✓</span> A sobe em <code>A/me.png</code> &nbsp;<span style="color:var(--dim)">→ ok</span></div>
+    <div class="row"><span class="ok">✓</span> A sobe em <code>B/x.png</code>, na raiz ou em outro bucket &nbsp;<span style="color:var(--dim)">→ recusado</span></div>
+    <div class="row"><span class="ok">✓</span> upsert só com INSERT, depois INSERT + UPDATE &nbsp;<span style="color:var(--dim)">→ recusado; com SELECT também → ok</span></div>
+  </div>
+  <p>Não "resolva" com <code>with check (true)</code>: isso deixa qualquer um com a sua anon key pública gravar em qualquer lugar do bucket.</p>""",
+    "related": [
+        ("/pt/rls/erro-upsert-new-row-violates-row-level-security/", "Upsert: new row violates row-level security policy"),
+        ("/pt/rls/checklist-seguranca-lovable-supabase/", "Checklist de segurança: Lovable + Supabase"),
+        ("/rls/fix-new-row-violates-row-level-security-policy/", 'Fix: "new row violates row-level security policy" (em inglês)'),
+        ("/rls/fix-permissive-rls-policy-using-true/", "USING (true) is a security hole (em inglês)"),
+    ],
+    "faq": [
+        ("Deixei o bucket público. Por que o upload ainda falha?",
+         "Público só quer dizer que os arquivos podem ser baixados sem token. Upload, atualização e exclusão continuam passando pelas policies de RLS em storage.objects."),
+        ("Posso fazer o upload com a chave service_role?",
+         "De um servidor, sim: ela ignora o RLS. Nunca do navegador, onde a chave ficaria exposta. Pra upload do usuário, uma policy de INSERT restrita é o caminho certo."),
+    ],
+})
+
+# ---- Upsert: new row violates row-level security policy -------------------
+PT.append({
+    "en": "supabase-upsert-new-row-violates-row-level-security",
+    "slug": "erro-upsert-new-row-violates-row-level-security",
+    "title": 'Upsert no Supabase: "new row violates row-level security policy" mesmo com policy de INSERT',
+    "h1_plain": "Upsert no Supabase falha com new row violates row-level security policy",
+    "h1": 'Upsert falha: <span class="mono">new row violates row-level security policy</span>',
+    "desc": "O insert funciona, mas o upsert() falha com new row violates row-level security policy. Por que o ON CONFLICT DO UPDATE precisa das policies de SELECT e UPDATE, mesmo pra uma linha nova.",
+    "eyebrow": "Supabase RLS · Correção de erro",
+    "crumb": "Upsert: new row violates RLS",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "O <code>upsert()</code> vira <code>insert ... on conflict do update</code>. Pra isso, o Postgres confere as policies de UPDATE e SELECT além da de INSERT, e faz isso mesmo quando a linha é nova. Crie uma policy de UPDATE (com a mesma condição de dono) e uma de SELECT, e dê grant de <code>update</code>.",
+    "body": """  <h2><span class="n">01</span> Por que o insert funciona e o upsert não</h2>
+  <p>Por padrão, <code>supabase.from('profiles').upsert(row)</code> é enviado como <code>insert ... on conflict (id) do update</code>. Um comando que <i>pode</i> atualizar precisa de todas as policies que talvez use: INSERT pra linha nova, UPDATE pra linha existente e SELECT pra ler a linha com que conflita. Se a de UPDATE ou a de SELECT faltar, o Postgres recusa o comando logo de cara com <code>new row violates row-level security policy</code>, mesmo quando a linha ainda não existe.</p>
+
+  <h2><span class="n">02</span> A correção</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"owner inserts"</span> <span class="k">on</span> profiles <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner updates"</span> <span class="k">on</span> profiles <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> profiles <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (id = (<span class="k">select</span> auth.uid()));
+
+<span class="k">grant select, insert, update on</span> profiles <span class="k">to</span> authenticated;</pre>
+  <p>Mantenha as três com a mesma condição de dono. O usuário continua sem conseguir fazer upsert com o id de outra pessoa: a checagem do INSERT recusa.</p>
+
+  <h2><span class="n">03</span> Se você só insere</h2>
+  <p>Se a linha nunca deve ser sobrescrita, não use <code>upsert()</code>. Use <code>insert()</code> e trate o erro de chave duplicada (<code>23505</code>), ou passe <code>{ ignoreDuplicates: true }</code> pra requisição virar <code>on conflict do nothing</code>.</p>
+
+  <h2><span class="n">04</span> Prove</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> só policy de INSERT, upsert de linha nova &nbsp;<span style="color:var(--dim)">→ new row violates row-level security policy</span></div>
+    <div class="row"><span class="ok">✓</span> insert comum com a mesma policy &nbsp;<span style="color:var(--dim)">→ ok</span></div>
+    <div class="row"><span class="bad">✗</span> INSERT + UPDATE, sem SELECT &nbsp;<span style="color:var(--dim)">→ continua recusado</span></div>
+    <div class="row"><span class="ok">✓</span> INSERT + UPDATE + SELECT &nbsp;<span style="color:var(--dim)">→ ok; id de outro usuário → recusado</span></div>
+  </div>""",
+    "related": [
+        ("/pt/rls/erro-upload-storage-new-row-violates-row-level-security/", "Upload no Storage: new row violates RLS"),
+        ("/pt/rls/erro-42501-permission-denied-for-table-supabase/", 'Erro 42501: "permission denied for table"'),
+        ("/rls/supabase-update-delete-not-working-rls/", "Supabase update or delete does nothing (em inglês)"),
+        ("/supabase-rls-policy-generator/", "Gerador de policies RLS (em inglês)"),
+    ],
+    "faq": [
+        ("Por que o Postgres precisa de SELECT num upsert?",
+         "Pra detectar o conflito ele precisa olhar a linha existente, e essa leitura passa pelas suas policies de SELECT. Sem nenhuma, o upsert não pode ser checado e é recusado."),
+        ("Isso vale também pro upload no Storage com upsert: true?",
+         "Vale. Substituir um arquivo é um upsert em storage.objects, então ele precisa de policies de SELECT e UPDATE além da de INSERT."),
+    ],
+})
+
+# ---- PGRST202 Could not find the function --------------------------------
+PT.append({
+    "en": "fix-pgrst202-could-not-find-function-schema-cache",
+    "slug": "erro-pgrst202-could-not-find-function-supabase",
+    "title": 'Erro PGRST202 "Could not find the function ... in the schema cache" no Supabase (RPC)',
+    "h1_plain": "Erro PGRST202: Could not find the function in the schema cache",
+    "h1": 'Erro <span class="mono">PGRST202</span>: Could not find the function in the schema cache',
+    "desc": "Por que o supabase.rpc() devolve PGRST202 Could not find the function public.fn(...) in the schema cache: nomes de parâmetro diferentes, schema errado, cache desatualizado, e o grant que vem depois.",
+    "eyebrow": "Supabase · Correção de erro",
+    "crumb": "Erro PGRST202: Could not find the function",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "A Data API procura a função pelo nome <b>e pelos nomes dos argumentos que você manda</b>. Se você chama <code>rpc('get_orders', { userId })</code> e o parâmetro da função é <code>p_user_id</code>, ela não é encontrada. Mande os nomes exatos dos parâmetros, mantenha a função num schema exposto e recarregue o cache depois de criá-la.",
+    "body": """  <h2><span class="n">01</span> Leia a mensagem</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST202"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find the function public.get_orders(userId) in the schema cache"</span>
+}</pre>
+  <p>Os parênteses listam os nomes dos argumentos que <b>o seu cliente mandou</b>, não os da função. Compare com a definição: essa diferença é a causa mais comum. O status HTTP é 404.</p>
+
+  <h2><span class="n">02</span> As causas</h2>
+  <div class="cause"><span class="tag">CAUSA 1 · mais comum</span><h3>Os nomes dos argumentos não batem</h3><p>Os argumentos da RPC são casados pelo nome. A função abaixo precisa ser chamada com <code>p_user_id</code>, não <code>userId</code> nem <code>user_id</code>.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>A função não está num schema exposto</h3><p>Só os schemas listados nas configurações da Data API são servidos. Uma função em <code>private</code> fica invisível pro <code>rpc()</code>, o que normalmente é o que você quer pra funções auxiliares.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3</span><h3>Cache desatualizado</h3><p>A função acabou de ser criada ou mudou de assinatura.</p></div>
+  <p class="filelabel">função e chamada</p>
+  <pre><span class="k">create function</span> public.get_orders(p_user_id uuid)
+<span class="k">returns setof</span> orders <span class="k">language</span> sql <span class="k">stable as</span> $$
+  <span class="k">select</span> * <span class="k">from</span> public.orders <span class="k">where</span> user_id = p_user_id
+$$;
+
+<span class="c">-- cliente: a chave tem que ser o nome do parâmetro</span>
+<span class="c">-- await supabase.rpc('get_orders', { p_user_id: user.id })</span>
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;   <span class="c">-- depois de criar ou alterar</span></pre>
+
+  <h2><span class="n">03</span> O próximo erro: permissão</h2>
+  <p>Depois de encontrada, o role de quem chama precisa de <code>execute</code>, senão o erro vira <code>42501 permission denied for function get_orders</code>. Dê permissão só pros roles que devem chamar:</p>
+  <pre><span class="k">revoke execute on function</span> public.get_orders(uuid) <span class="k">from</span> public, anon;
+<span class="k">grant execute on function</span> public.get_orders(uuid) <span class="k">to</span> authenticated;</pre>
+  <p>Funções novas podem ser executadas por todo mundo por padrão (o Postgres dá <code>execute</code> pra <code>public</code>), então revogue primeiro se a função não deve ser pública. Uma função <code>security definer</code> ignora o RLS: <a href="/pt/rls/checklist-seguranca-lovable-supabase/">veja como listar as que anon consegue chamar</a>.</p>
+
+  <h2><span class="n">04</span> Duas funções com o mesmo nome</h2>
+  <p>Sobrecargas que só mudam o tipo dão outro erro, <code>PGRST203 Could not choose the best candidate function</code>. Renomeie uma ou dê nomes diferentes aos parâmetros.</p>""",
+    "related": [
+        ("/pt/rls/erro-pgrst200-could-not-find-relationship-supabase/", "Erro PGRST200: Could not find a relationship"),
+        ("/pt/rls/erro-42501-permission-denied-for-table-supabase/", 'Erro 42501: "permission denied for table"'),
+        ("/rls/fix-pgrst205-could-not-find-table-schema-cache/", "Fix PGRST205: Could not find the table (em inglês)"),
+        ("/pt/rls/checklist-seguranca-lovable-supabase/", "Checklist de segurança: Lovable + Supabase"),
+    ],
+    "faq": [
+        ("Funciona no SQL editor. Por que não pelo rpc()?",
+         "O SQL editor chama a função direto, com argumentos por posição ou nome, e como um role privilegiado. O rpc() passa pela Data API, que casa os argumentos pelo nome, só enxerga schemas expostos e roda como anon ou authenticated."),
+        ("A ordem dos argumentos importa?",
+         "Não. A Data API casa os argumentos pelo nome, então a ordem não importa, mas cada nome precisa existir na lista de parâmetros da função."),
+    ],
+})
+
+# ---- PGRST200 Could not find a relationship -------------------------------
+PT.append({
+    "en": "fix-pgrst200-could-not-find-relationship-schema-cache",
+    "slug": "erro-pgrst200-could-not-find-relationship-supabase",
+    "title": 'Erro PGRST200 "Could not find a relationship between ... in the schema cache" no Supabase',
+    "h1_plain": "Erro PGRST200: Could not find a relationship in the schema cache",
+    "h1": 'Erro <span class="mono">PGRST200</span>: Could not find a relationship in the schema cache',
+    "desc": "Por que um select com join no Supabase, como select('*, authors(name)'), devolve PGRST200 Could not find a relationship: falta chave estrangeira, cache desatualizado ou duas chaves entre as mesmas tabelas (PGRST201).",
+    "eyebrow": "Supabase · Correção de erro",
+    "crumb": "Erro PGRST200: Could not find a relationship",
+    "byline": "Postgres 15 · Supabase",
+    "tldr": "Juntar tabelas dentro do <code>select()</code> (embedding) só funciona por uma <b>chave estrangeira</b>. Sem chave estrangeira entre as duas tabelas, não há relação. Crie a chave estrangeira (a coluna referenciada precisa ser chave primária ou única), recarregue o cache e, se houver duas chaves entre as mesmas tabelas, diga qual você quer.",
+    "body": """  <h2><span class="n">01</span> O que o erro diz</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{
+  <span class="s">"code"</span>: <span class="s">"PGRST200"</span>,
+  <span class="s">"message"</span>: <span class="s">"Could not find a relationship between 'books' and 'authors' in the schema cache"</span>,
+  <span class="s">"details"</span>: <span class="s">"Searched for a foreign key relationship between 'books' and 'authors' in the schema 'public', but no matches were found."</span>
+}</pre>
+  <p>Uma query como <code>supabase.from('books').select('title, authors(name)')</code> pede pra Data API juntar as tabelas por uma chave estrangeira. Ela não adivinha o join pelo nome da coluna: só ter <code>author_id</code> não basta.</p>
+
+  <h2><span class="n">02</span> Veja quais chaves estrangeiras existem</h2>
+  <p class="filelabel">check.sql</p>
+  <pre><span class="k">select</span> conrelid::regclass <span class="k">as</span> from_table, confrelid::regclass <span class="k">as</span> to_table, conname
+<span class="k">from</span> pg_constraint
+<span class="k">where</span> contype = <span class="s">'f'</span> <span class="k">and</span> connamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">order by</span> 1;</pre>
+
+  <h2><span class="n">03</span> Crie a chave estrangeira</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">alter table</span> public.books
+  <span class="k">add constraint</span> books_author_id_fkey
+  <span class="k">foreign key</span> (author_id) <span class="k">references</span> public.authors(id);
+
+<span class="k">notify</span> pgrst, <span class="s">'reload schema'</span>;</pre>
+  <p>A coluna referenciada precisa ser chave primária ou única, senão o Postgres recusa a constraint (<code>there is no unique constraint matching given keys</code>).</p>
+
+  <h2><span class="n">04</span> Duas chaves entre as mesmas tabelas: PGRST201</h2>
+  <p>Se <code>books</code> tem <code>author_id</code> e <code>editor_id</code> apontando pra <code>authors</code>, o join fica ambíguo e você recebe <code>PGRST201</code>, cuja dica lista as opções. Diga o nome da chave estrangeira:</p>
+  <pre><span class="c">// escolha a relação pelo nome da constraint</span>
+supabase.from(<span class="s">'books'</span>).select(<span class="s">'title, author:authors!books_author_id_fkey(name)'</span>)</pre>
+
+  <h2><span class="n">05</span> Achou a relação, mas as linhas vêm vazias</h2>
+  <p>Aí é RLS, não a relação: a tabela do join tem as próprias policies, e linhas que quem chama não pode ver voltam como <code>null</code> ou lista vazia. Confira a policy de SELECT da tabela do join.</p>""",
+    "related": [
+        ("/pt/rls/erro-pgrst202-could-not-find-function-supabase/", "Erro PGRST202: Could not find the function"),
+        ("/rls/fix-pgrst205-could-not-find-table-schema-cache/", "Fix PGRST205: Could not find the table (em inglês)"),
+        ("/rls/fix-pgrst116-cannot-coerce-result-single-json-object/", "Fix PGRST116: Cannot coerce the result (em inglês)"),
+        ("/supabase-rls-policy-generator/", "Gerador de policies RLS (em inglês)"),
+    ],
+    "faq": [
+        ("Dá pra juntar tabelas de schemas diferentes?",
+         "A chave estrangeira pode apontar pra outro schema, mas as duas tabelas precisam estar em schemas expostos pela Data API pro join funcionar."),
+        ("Criei a chave estrangeira e continua dando PGRST200.",
+         "Recarregue o cache do schema (notify pgrst, 'reload schema') e confira os nomes das tabelas no select: o join usa nome de tabela (ou o apelido que você der), não nome de coluna."),
+    ],
+})
+
+# ---- JWT expired (PGRST303) ----------------------------------------------
+PT.append({
+    "en": "fix-supabase-jwt-expired-pgrst303",
+    "slug": "erro-jwt-expired-pgrst303-supabase",
+    "title": 'Erro "JWT expired" (PGRST303) no Supabase: como manter a sessão renovada',
+    "h1_plain": "Erro JWT expired (PGRST303) no Supabase",
+    "h1": 'Erro <span class="mono">JWT expired</span> (PGRST303) no Supabase',
+    "desc": "Por que as requisições ao Supabase falham com 401 JWT expired (PGRST303), por que isso aparece no código do servidor e depois que o notebook hiberna, e como manter a sessão renovada com @supabase/ssr.",
+    "eyebrow": "Supabase Auth · Correção de erro",
+    "crumb": "Erro JWT expired (PGRST303)",
+    "byline": "Supabase Auth · Next.js",
+    "tldr": "O token de acesso da requisição passou da validade, e a Data API responde 401 <code>PGRST303 JWT expired</code>. No navegador, o supabase-js renova sozinho. No servidor, ele só fica válido se algo renovar: no Next.js, é o <code>proxy.ts</code> (<code>middleware.ts</code> antes do Next 16) do <code>@supabase/ssr</code>, chamando <code>supabase.auth.getClaims()</code>.",
+    "body": """  <h2><span class="n">01</span> O que é o erro</h2>
+  <p class="filelabel">resposta</p>
+  <pre>{ <span class="s">"code"</span>: <span class="s">"PGRST303"</span>, <span class="s">"message"</span>: <span class="s">"JWT expired"</span> }</pre>
+  <p>Os tokens de acesso do Supabase duram pouco e vêm com um refresh token que gera um novo. O erro quer dizer que uma requisição saiu com um token velho que ninguém renovou. Não é problema de RLS: suas policies nem chegaram a rodar.</p>
+
+  <h2><span class="n">02</span> De onde vem</h2>
+  <div class="cause"><span class="tag">CAUSA 1 · mais comum</span><h3>Código de servidor que lê a sessão sem renovar</h3><p>Server Components do Next.js não podem gravar cookies, então não conseguem salvar um token renovado. Se nenhum proxy/middleware renovar antes, as queries do servidor saem com token vencido.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>Token passado na mão</h3><p>Um cliente criado com o header fixo <code>Authorization: Bearer ...</code>, ou um token guardado no seu próprio estado, para de funcionar quando vence: nada renova ele.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3</span><h3>Aba que hibernou</h3><p>Quando o notebook volta da hibernação, a primeira requisição pode sair antes da renovação. O supabase-js renova sozinho; tentar de novo depois da renovação funciona.</p></div>
+
+  <h2><span class="n">03</span> A correção no Next.js</h2>
+  <p>Use o <code>@supabase/ssr</code> e renove no proxy, que roda antes das páginas e pode gravar cookies. Seguindo o guia do Supabase, o proxy cria um cliente de servidor e chama <code>getClaims()</code>, que renova um token vencido:</p>
+  <p class="filelabel">proxy.ts (middleware.ts antes do Next 16)</p>
+  <pre><span class="c">// dentro do proxy, depois de criar o cliente de servidor com os cookies da requisição</span>
+<span class="k">await</span> supabase.auth.getClaims();   <span class="c">// renova o token e grava os cookies novos</span></pre>
+  <p>Não confie no <code>getSession()</code> no código do servidor: ele lê o cookie sem conferir. E crie o cliente do Supabase a cada requisição, a partir dos cookies, nunca de um token guardado.</p>
+
+  <h2><span class="n">04</span> Não confunda com</h2>
+  <ul>
+    <li><b><code>PGRST301</code></b>: o token não pode ser decodificado ou é inválido (projeto errado, header malformado).</li>
+    <li><b>Sem sessão nenhuma</b>: as requisições rodam como <code>anon</code> e policies <code>to authenticated</code> não devolvem nada. Veja o <a href="/rls/fix-pgrst116-cannot-coerce-result-single-json-object/">PGRST116</a> (em inglês).</li>
+  </ul>""",
+    "related": [
+        ("/pt/rls/erro-pgrst202-could-not-find-function-supabase/", "Erro PGRST202: Could not find the function"),
+        ("/pt/rls/erro-42501-permission-denied-for-table-supabase/", 'Erro 42501: "permission denied for table"'),
+        ("/rls/nextjs-app-router-supabase-auth-rls-ssr/", "Next.js App Router + Supabase auth with RLS (em inglês)"),
+        ("/rls/v0-supabase-security-checklist/", "v0 + Supabase security checklist (em inglês)"),
+    ],
+    "faq": [
+        ("Devo aumentar a validade do JWT?",
+         "Isso esconde o sintoma e deixa um token roubado útil por mais tempo. Corrija a renovação: com o proxy funcionando, a validade deixa de importar pro usuário."),
+        ("A chave service_role expira?",
+         "Ela não é uma sessão de usuário, então não há o que renovar. E ela ignora o RLS, então fica só no servidor, nunca como solução pra um token de usuário vencido."),
+    ],
+})

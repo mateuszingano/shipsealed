@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="en" href="https://shipsealed.com/rls/supabase-storage-upload-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="pt-BR" href="https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/">
+<link rel="alternate" hreflang="x-default" href="https://shipsealed.com/rls/supabase-storage-upload-new-row-violates-row-level-security/">
+<title>Upload no Supabase Storage: &quot;new row violates row-level security policy&quot; (como resolver)</title>
+<meta name="description" content="Por que o upload no Supabase Storage devolve 403 new row violates row-level security policy, a policy em storage.objects que resolve (limitada à pasta do usuário) e por que o upsert precisa de mais duas.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/">
+<meta property="og:title" content="Upload no Supabase Storage: &quot;new row violates row-level security policy&quot; (como resolver)">
+<meta property="og:description" content="Por que o upload no Supabase Storage devolve 403 new row violates row-level security policy, a policy em storage.objects que resolve (limitada à pasta do usuário) e por que o upsert precisa de mais duas.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Upload no Supabase Storage: &quot;new row violates row-level security policy&quot; (como resolver)">
+<meta name="twitter:description" content="Por que o upload no Supabase Storage devolve 403 new row violates row-level security policy, a policy em storage.objects que resolve (limitada à pasta do usuário) e por que o upsert precisa de mais duas.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "TechArticle", "headline": "Upload no Supabase Storage: new row violates row-level security policy", "description": "Por que o upload no Supabase Storage devolve 403 new row violates row-level security policy, a policy em storage.objects que resolve (limitada à pasta do usuário) e por que o upsert precisa de mais duas.", "url": "https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/", "mainEntityOfPage": "https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/", "inLanguage": "pt-BR", "author": {"@type": "Organization", "name": "ShipSealed"}, "publisher": {"@type": "Organization", "name": "ShipSealed"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Início", "item": "https://shipsealed.com/"}, {"@type": "ListItem", "position": 2, "name": "Guias de RLS", "item": "https://shipsealed.com/rls/"}, {"@type": "ListItem", "position": 3, "name": "Upload no Supabase Storage: new row violates row-level security policy", "item": "https://shipsealed.com/pt/rls/erro-upload-storage-new-row-violates-row-level-security/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Deixei o bucket público. Por que o upload ainda falha?", "acceptedAnswer": {"@type": "Answer", "text": "Público só quer dizer que os arquivos podem ser baixados sem token. Upload, atualização e exclusão continuam passando pelas policies de RLS em storage.objects."}}, {"@type": "Question", "name": "Posso fazer o upload com a chave service_role?", "acceptedAnswer": {"@type": "Answer", "text": "De um servidor, sim: ela ignora o RLS. Nunca do navegador, onde a chave ficaria exposta. Pra upload do usuário, uma policy de INSERT restrita é o caminho certo."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Ferramentas grátis</a>
+      <a href="/rls/">Guias de RLS</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Início</a> / <a href="/rls/">RLS</a> / Upload no Storage: new row violates RLS · <a href="https://shipsealed.com/rls/supabase-storage-upload-new-row-violates-row-level-security/" hreflang="en" lang="en">Read in English</a></p>
+  <p class="eyebrow">Supabase Storage · Correção de erro</p>
+  <h1>Upload no Storage falha: <span class="mono">new row violates row-level security policy</span></h1>
+  <div class="byline"><span>Postgres 15 · Supabase Storage</span><span class="ok">✓ código testado num banco de verdade</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>Todo arquivo é uma linha em <code>storage.objects</code>, e o RLS está ligado lá. Sem uma policy de INSERT que aceite o caminho, o upload é recusado com 403. Crie uma policy de INSERT pro bucket que amarre a primeira pasta ao <code>auth.uid()</code> e faça o upload em <code>&lt;id do usuário&gt;/arquivo</code>. Substituir um arquivo (<code>upsert: true</code>) também exige policies de SELECT e UPDATE.</p></div>
+  <h2><span class="n">01</span> O que é o erro</h2>
+  <p>A API do Storage transforma o erro do Postgres em HTTP 403:</p>
+  <p class="filelabel">resposta</p>
+  <pre>{ <span class="s">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="s">"message"</span>: <span class="s">"new row violates row-level security policy"</span> }</pre>
+  <p>Um upload insere uma linha em <code>storage.objects</code> (bucket, caminho, dono). Essa tabela tem RLS ligado e, por padrão, nenhuma policy deixa alguém inserir, então todo upload feito pelo cliente é recusado até você criar uma. Deixar o bucket público não muda isso: "público" só vale pra download.</p>
+
+  <h2><span class="n">02</span> A policy: cada usuário sobe na própria pasta</h2>
+  <p class="filelabel">migration.sql</p>
+  <pre><span class="k">create policy</span> <span class="s">"users upload to their folder"</span> <span class="k">on</span> storage.objects
+  <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (
+    bucket_id = <span class="s">'avatars'</span>
+    <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text
+  );</pre>
+  <p><code>storage.foldername(name)</code> devolve as pastas do caminho, então em <code>&lt;id do usuário&gt;/avatar.png</code> a primeira é o id do usuário. O upload precisa usar esse caminho:</p>
+  <p class="filelabel">upload.ts</p>
+  <pre><span class="k">const</span> { data: { <span class="u">user</span> } } = <span class="k">await</span> supabase.auth.getUser();
+<span class="k">await</span> supabase.storage.from(<span class="s">'avatars'</span>).upload(<span class="s">`${<span class="u">user</span>.id}/avatar.png`</span>, file);</pre>
+
+  <h2><span class="n">03</span> Por que ainda falha</h2>
+  <div class="cause"><span class="tag">CAUSA 1</span><h3>O caminho não começa com o id do usuário</h3><p>Um arquivo na raiz do bucket (<code>avatar.png</code>) não tem pasta, então a checagem dá falso. A pasta de outro usuário também.</p></div>
+  <div class="cause"><span class="tag">CAUSA 2</span><h3>Usuário não logado</h3><p>O cliente chama como <code>anon</code>, o <code>auth.uid()</code> vem nulo e uma policy <code>to authenticated</code> não se aplica.</p></div>
+  <div class="cause"><span class="tag">CAUSA 3 · upsert</span><h3>Substituir arquivo com <span class="mono">upsert: true</span></h3><p>Sobrescrever um caminho que já existe é um insert que vira update, e o Postgres exige também policies de SELECT e UPDATE. Só com a de INSERT, o upsert é recusado até pra um caminho que ainda não existe.</p></div>
+  <p class="filelabel">migration.sql (só se você usa upsert ou lê os arquivos de volta)</p>
+  <pre><span class="k">create policy</span> <span class="s">"users read their folder"</span> <span class="k">on</span> storage.objects <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (bucket_id = <span class="s">'avatars'</span> <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text);
+
+<span class="k">create policy</span> <span class="s">"users update their folder"</span> <span class="k">on</span> storage.objects <span class="k">for update to</span> authenticated
+  <span class="k">using</span> (bucket_id = <span class="s">'avatars'</span> <span class="k">and</span> (storage.foldername(name))[1] = (<span class="k">select</span> auth.uid())::text);</pre>
+
+  <h2><span class="n">04</span> Prove</h2>
+  <div class="prove">
+    <div class="row"><span class="bad">✗</span> sem policy de INSERT &nbsp;<span style="color:var(--dim)">→ new row violates row-level security policy</span></div>
+    <div class="row"><span class="ok">✓</span> A sobe em <code>A/me.png</code> &nbsp;<span style="color:var(--dim)">→ ok</span></div>
+    <div class="row"><span class="ok">✓</span> A sobe em <code>B/x.png</code>, na raiz ou em outro bucket &nbsp;<span style="color:var(--dim)">→ recusado</span></div>
+    <div class="row"><span class="ok">✓</span> upsert só com INSERT, depois INSERT + UPDATE &nbsp;<span style="color:var(--dim)">→ recusado; com SELECT também → ok</span></div>
+  </div>
+  <p>Não "resolva" com <code>with check (true)</code>: isso deixa qualquer um com a sua anon key pública gravar em qualquer lugar do bucket.</p>
+<div class="related"><div class="lbl">Guias relacionados</div><a href="/pt/rls/erro-upsert-new-row-violates-row-level-security/">Upsert: new row violates row-level security policy <span class="arw">→</span></a><a href="/pt/rls/checklist-seguranca-lovable-supabase/">Checklist de segurança: Lovable + Supabase <span class="arw">→</span></a><a href="/rls/fix-new-row-violates-row-level-security-policy/">Fix: "new row violates row-level security policy" (em inglês) <span class="arw">→</span></a><a href="/rls/fix-permissive-rls-policy-using-true/">USING (true) is a security hole (em inglês) <span class="arw">→</span></a></div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · 30 SEGUNDOS · SEM CADASTRO</span>
+    <h2>Seu app está vazando agora?</h2>
+    <p>Cole a URL do seu app no ar. O scanner lê a página e o JavaScript atrás de uma chave <code>service_role</code> do Supabase, o vazamento que passa por cima de todas as policies deste guia.</p>
+    <form action="/service-role-scanner/" method="get">
+      <input class="scanurl" type="text" name="url" inputmode="url" placeholder="https://seu-app.com" required maxlength="2048" aria-label="URL do seu app">
+      <button type="submit" class="btn">Escanear meu app →</button>
+    </form>
+  </div>
+  <div class="cta">
+    <span class="soon">◆ GRÁTIS · MIT · npm + GitHub Action</span>
+    <h2>Pegue isso antes de ir pro ar</h2>
+    <p><code>airlock-rls</code> é um gate de CI que quebra o build quando uma tabela vai pro ar exposta ou uma policy é permissiva: o mesmo tipo de bug, pego no CI contra um banco com as suas migrations aplicadas, antes de chegar em produção.</p>
+    <div class="cmd"><span>npx airlock-rls</span><span class="arw">→</span></div>
+    <p style="margin-top:18px">Ou comece pelo <a href="https://github.com/mateuszingano/nextjs-supabase-starter"><code>nextjs-supabase-starter</code></a>: auth + uma tabela com RLS + um teste de isolamento, pra começar de um padrão que já vem selado.</p>
+  </div>
+  <div class="cta plain">
+    <span class="soon">PDF GRÁTIS</span>
+    <h2 style="font-size:20px">Baixe o cheat sheet de RLS do Supabase</h2>
+    <p>As regras de ouro, as armadilhas que vazam em produção, policies corretas e o teste de isolamento, numa página só (em inglês).</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="voce@suastartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Quero o cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+  <h2><span class="n">FAQ</span></h2>
+  <details><summary>Deixei o bucket público. Por que o upload ainda falha?</summary><p>Público só quer dizer que os arquivos podem ser baixados sem token. Upload, atualização e exclusão continuam passando pelas policies de RLS em storage.objects.</p></details><details><summary>Posso fazer o upload com a chave service_role?</summary><p>De um servidor, sim: ela ignora o RLS. Nunca do navegador, onde a chave ficaria exposta. Pra upload do usuário, uma policy de INSERT restrita é o caminho certo.</p></details>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Ferramentas grátis</a><a href="/rls/">Guias de RLS</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Preços</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Termos</a><a href="/privacy/">Privacidade</a><a href="/refunds/">Reembolsos</a>
+    </div>
+    <div class="legal">ShipSealed — apps Supabase que não vazam 🦭 · Exemplos de código fornecidos como estão; teste no seu próprio banco.<br>ShipSealed é uma marca operada por Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brasil. Pagamentos processados pela Paddle.com, nossa Merchant of Record. Sem vínculo com o Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ digite um email válido';return false;}
+    msg.style.color='var(--dim)';msg.textContent='enviando…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-guide-pt'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.innerHTML=ok?'✔ a caminho — confira seu email. <a href="/assets/supabase-rls-cheatsheet.pdf" style="text-decoration:underline">baixe agora →</a>':'✖ algo deu errado — tente de novo.';
+    return false;}
+</script>
+</body>
+</html>
