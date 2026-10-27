@@ -269,10 +269,10 @@ PAGES = []
 # ---- 1. FLAGSHIP: fix "new row violates row-level security policy" -------
 PAGES.append({
     "slug": "fix-new-row-violates-row-level-security-policy",
-    "title": 'Fix: "new row violates row-level security policy" (Supabase)',
+    "title": 'new row violates row-level security policy for table: Supabase fix',
     "h1_plain": 'Fix: new row violates row-level security policy',
     "h1": 'Fix: <span class="mono">new row violates row-level security policy</span>',
-    "desc": "Why Supabase throws new row violates row-level security policy on INSERT, the three real causes, and the correct fix — with a WITH CHECK policy and a test that proves it.",
+    "desc": "Supabase insert fails with new row violates row-level security policy for table? The 3 causes (no INSERT policy, wrong user_id, no session) and the fix.",
     "eyebrow": "Supabase RLS · Error fix",
     "crumb": "Fix: new row violates row-level security policy",
     "byline": "Postgres 15 · Supabase",
