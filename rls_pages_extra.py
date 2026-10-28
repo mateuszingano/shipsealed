@@ -589,10 +589,10 @@ EXTRA.append({
 # Ângulo nosso: o conserto rápido do 42501 (grant em massa) reexpõe tabela sem RLS.
 EXTRA.append({
     "slug": "supabase-october-30-grants-change",
-    "title": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
+    "title": "Supabase October 30 grants change: what breaks + the fix",
     "h1_plain": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
     "h1": "Supabase's Oct 30 grants change: what breaks, and the fix that leaks",
-    "desc": "From Oct 30, 2026, new Supabase tables need an explicit GRANT to reach the Data API. What breaks (42501), the migration that works, and the fix that leaks.",
+    "desc": "From October 30, 2026, new Supabase tables get no grants, so the API returns 42501. The one-line GRANT per table that fixes it, and the bulk fix that leaks.",
     "eyebrow": "Supabase RLS · Platform change",
     "crumb": "Oct 30 grants change",
     "byline": "Supabase · October 2026",
@@ -814,10 +814,10 @@ console.log(data.length);   <span class="c">// 0 with a valid id → RLS is hidi
 # ---- 16. Fix: 42501 permission denied for table ---------------------------
 EXTRA.append({
     "slug": "fix-permission-denied-for-table-supabase-42501",
-    "title": 'Fix 42501: "permission denied for table" in Supabase',
+    "title": 'Supabase "permission denied for table" (42501): the right fix',
     "h1_plain": "Fix 42501: permission denied for table",
     "h1": 'Fix <span class="mono">42501</span>: permission denied for table',
-    "desc": "Why Supabase returns 42501 permission denied for table (or for schema), how it differs from an RLS error, and the per-table GRANT that fixes it without exposing other tables.",
+    "desc": "Supabase says permission denied for table (42501)? It's a missing GRANT, not RLS. The per-table grant that fixes it, and the bulk grant that leaks.",
     "eyebrow": "Supabase RLS · Error fix",
     "crumb": "Fix 42501: permission denied for table",
     "byline": "Postgres 15 · Supabase",
@@ -931,10 +931,10 @@ console.log(data);   <span class="c">// [] → RLS let you touch 0 rows</span></
 # ---- 18. Fix: PGRST205 Could not find the table in the schema cache -------
 EXTRA.append({
     "slug": "fix-pgrst205-could-not-find-table-schema-cache",
-    "title": "Fix PGRST205: \"Could not find the table in the schema cache\" (Supabase)",
+    "title": "PGRST205 Could not find the table in the schema cache: Supabase fix",
     "h1_plain": "Fix PGRST205: Could not find the table in the schema cache",
     "h1": 'Fix <span class="mono">PGRST205</span>: Could not find the table in the schema cache',
-    "desc": "Why Supabase returns PGRST205 Could not find the table 'public.x' in the schema cache, the three causes (name, exposed schema, stale cache), and the grants you'll need right after.",
+    "desc": "Supabase returns PGRST205 Could not find the table 'public.x' in the schema cache? Check the name, expose the schema, reload the cache, then grant.",
     "eyebrow": "Supabase · Error fix",
     "crumb": "Fix PGRST205: Could not find the table",
     "byline": "Postgres 15 · Supabase",
@@ -1038,10 +1038,10 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
 
 EXTRA.append({
     "slug": "lovable-supabase-security-checklist",
-    "title": "Lovable + Supabase security checklist: is your app leaking data?",
+    "title": "Lovable Supabase security checklist: 6 checks before launch",
     "h1_plain": "Lovable + Supabase security checklist",
     "h1": "Lovable + Supabase security checklist",
-    "desc": "Built your app with Lovable on Supabase? Six checks with tested SQL: an exposed service_role key, public tables, always-true RLS policies, callable functions, and how to prove it as a stranger.",
+    "desc": "Is your Lovable app leaking data? 6 checks with tested SQL: exposed service_role key, public tables, always-true policies, open functions, signed-out test.",
     "eyebrow": "Supabase security · Lovable",
     "crumb": "Lovable + Supabase security checklist",
     "byline": "Postgres 15 · Supabase · Lovable",
