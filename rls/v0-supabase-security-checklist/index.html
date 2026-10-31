@@ -67,6 +67,7 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
 <span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
 <span class="k">order by</span> 1;</pre>
   <p>Any row with <code>anon_can_read = true</code> and <code>rls_on = false</code> is public: <a href="/rls/supabase-table-public-rls-off/">close it</a>.</p>
+  <div class="cause"><h3>Column grants</h3><p><code>grant select (id, email) on profiles to anon</code> doesn't show up as a table privilege, but the API still serves those columns. <code>has_any_column_privilege</code> catches table and column grants alike.</p></div>
 
   <h2><span class="n">04</span> RLS is on, but is it doing anything?</h2>
   <p>"RLS enabled" isn't the same as "data protected". A policy that is always true lets everyone in, and generated code often contains one. List them:</p>

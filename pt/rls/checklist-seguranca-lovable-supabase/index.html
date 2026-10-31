@@ -71,6 +71,7 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
 <span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
 <span class="k">order by</span> 1;</pre>
   <p>Toda linha com <code>anon_can_read = true</code> e <code>rls_on = false</code> é uma tabela pública: ligue o RLS e crie as policies.</p>
+  <div class="cause"><h3>Grants de coluna</h3><p><code>grant select (id, email) on profiles to anon</code> não aparece como privilégio de tabela, mas a API continua servindo essas colunas. <code>has_any_column_privilege</code> pega grant de tabela e de coluna.</p></div>
 
   <h2><span class="n">04</span> O RLS está ligado, mas está fazendo alguma coisa?</h2>
   <p>"RLS ligado" não é o mesmo que "dado protegido". Uma policy sempre verdadeira deixa todo mundo entrar, e código gerado muitas vezes tem uma. Liste:</p>
