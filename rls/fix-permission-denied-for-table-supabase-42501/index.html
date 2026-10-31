@@ -71,7 +71,7 @@
   <p>It removes the 42501 and also grants every other table in <code>public</code>. Any of them with RLS off becomes readable by anyone holding your public anon key. Check what each role can reach before and after any grant:</p>
   <p class="filelabel">check.sql</p>
   <pre><span class="k">select</span> c.relname,
-       has_table_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       has_any_column_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
        c.relrowsecurity <span class="k">as</span> rls_on
 <span class="k">from</span> pg_class c <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
 <span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>

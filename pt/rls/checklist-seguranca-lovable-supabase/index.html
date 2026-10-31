@@ -65,7 +65,7 @@ SUPABASE_SERVICE_ROLE_KEY=...</pre>
   <p>Sua anon key é pública por natureza; o RLS é a única coisa entre ela e seus dados. Rode no SQL editor do Supabase:</p>
   <p class="filelabel">check.sql</p>
   <pre><span class="k">select</span> c.relname,
-       has_table_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
+       has_any_column_privilege(<span class="s">'anon'</span>, c.oid, <span class="s">'select'</span>) <span class="k">as</span> anon_can_read,
        c.relrowsecurity <span class="k">as</span> rls_on
 <span class="k">from</span> pg_class c <span class="k">join</span> pg_namespace n <span class="k">on</span> n.oid = c.relnamespace
 <span class="k">where</span> n.nspname = <span class="s">'public'</span> <span class="k">and</span> c.relkind = <span class="s">'r'</span>
