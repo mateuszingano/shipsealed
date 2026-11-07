@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/rls/taxonomy/">
+<title>The 18 ways Supabase RLS breaks — and how Airlock catches each one</title>
+<meta name="description" content="A public taxonomy of every Row Level Security failure mode in Supabase, with reproducible SQL examples and how Airlock detects each one — static analysis, dynamic probes, or both.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/rls/taxonomy/">
+<meta property="og:title" content="The 18 ways Supabase RLS breaks — and how Airlock catches each one">
+<meta property="og:description" content="A public taxonomy of every Row Level Security failure mode in Supabase, with reproducible SQL examples and how Airlock detects each one.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The 18 ways Supabase RLS breaks — and how Airlock catches each one">
+<meta name="twitter:description" content="A public taxonomy of every Row Level Security failure mode in Supabase, with reproducible SQL examples and how Airlock detects each one.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","headline":"The 18 ways Supabase RLS breaks — and how Airlock catches each one","description":"A public taxonomy of every Row Level Security failure mode in Supabase, with reproducible SQL examples and how Airlock detects each one — static analysis, dynamic probes, or both.","url":"https://shipsealed.com/rls/taxonomy/","mainEntityOfPage":"https://shipsealed.com/rls/taxonomy/","inLanguage":"en","author":{"@type":"Organization","name":"ShipSealed"},"publisher":{"@type":"Organization","name":"ShipSealed"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://shipsealed.com/"},{"@type":"ListItem","position":2,"name":"RLS guides","item":"https://shipsealed.com/rls/"},{"@type":"ListItem","position":3,"name":"RLS failure taxonomy","item":"https://shipsealed.com/rls/taxonomy/"}]}]}</script>
+<style>
+.tax-grid{display:grid;gap:32px;margin:40px 0}
+.tax-card{border:1px solid var(--line);border-radius:var(--radius);padding:24px;background:var(--panel)}
+.tax-card:hover{border-color:var(--line-2)}
+.tax-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.tax-code{font-family:var(--mono);font-size:13px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.tax-code.fail{background:#ff6b5a22;color:var(--red)}
+.tax-code.warn{background:#f5c45122;color:var(--amber)}
+.tax-kind{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.tax-card h3{margin:0 0 8px;font-size:17px;color:var(--text)}
+.tax-card p{color:var(--muted);font-size:14.5px;line-height:1.6;margin:0 0 14px}
+.tax-card pre{font-size:13px;margin:0 0 14px;padding:14px 16px;border-radius:10px;background:var(--bg);overflow-x:auto;line-height:1.5}
+.tax-detect{font-size:13px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.tax-detect .dot-s{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-static{background:var(--green)}
+.dot-dynamic{background:var(--wax)}
+.dot-both{background:linear-gradient(135deg,var(--green) 50%,var(--wax) 50%)}
+.tax-legend{display:flex;gap:20px;margin:16px 0 32px;font-size:13px;color:var(--dim)}
+.tax-legend span{display:flex;align-items:center;gap:6px}
+.section-label{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin:48px 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.stat-row{display:flex;gap:24px;flex-wrap:wrap;margin:24px 0 40px}
+.stat-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;min-width:120px}
+.stat-box .num{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--text)}
+.stat-box .lbl{font-size:13px;color:var(--dim);margin-top:4px}
+.stat-box.fail .num{color:var(--red)}
+.stat-box.warn .num{color:var(--amber)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/rls/">RLS</a> / Failure taxonomy</p>
+  <p class="eyebrow">Supabase RLS · Reference</p>
+  <h1>The 18 ways Supabase RLS breaks</h1>
+  <div class="byline"><span>Postgres 15+ · Supabase · Airlock</span><span class="ok">✓ every example tested against a real database</span></div>
+  <div class="tldr"><div class="lbl">What this is</div><p>A public, reproducible taxonomy of every Row Level Security failure mode Airlock checks for. Each entry has a code, a severity, a minimal SQL example that opens the gap, and how Airlock detects it. Use it to audit your own app, or run <code>npx airlock-rls</code> to check automatically.</p></div>
+
+  <div class="stat-row">
+    <div class="stat-box fail"><div class="num">6</div><div class="lbl">Fail (leak confirmed)</div></div>
+    <div class="stat-box warn"><div class="num">12</div><div class="lbl">Warn (review needed)</div></div>
+    <div class="stat-box"><div class="num">18</div><div class="lbl">Total checks</div></div>
+  </div>
+
+  <div class="tax-legend">
+    <span><span class="dot-s dot-static"></span> Static analysis (catalog queries)</span>
+    <span><span class="dot-s dot-dynamic"></span> Dynamic probe (real API request)</span>
+    <span><span class="dot-s dot-both"></span> Both layers</span>
+  </div>
+
+  <div class="section-label">Static findings — policy and configuration analysis</div>
+
+  <div class="tax-grid">
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">T1 · fail</span><span class="tax-kind">rls_disabled</span></div>
+      <h3>RLS turned off</h3>
+      <p>The table has Row Level Security disabled entirely. No policy applies — every row is exposed to <code>anon</code> and <code>authenticated</code> through the API. This is the most common leak in new Supabase projects.</p>
+      <pre><span class="c">-- reproduce: create a table without enabling RLS</span>
+<span class="k">create table</span> secrets (id int, value text);
+<span class="c">-- anon can: SELECT * FROM secrets → all rows</span>
+<span class="c">-- fix:</span>
+<span class="k">alter table</span> secrets <span class="k">enable row level security</span>;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_tables.rowsecurity</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">T2 · fail</span><span class="tax-kind">permissive_true</span></div>
+      <h3>Tautology policy — USING(true) or WITH CHECK(true)</h3>
+      <p>RLS is on, but a permissive policy evaluates <code>true</code> for every caller. The effect is identical to RLS being off: the table is publicly readable or writable. Usually copy-pasted from a tutorial.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create policy</span> <span class="s">"allow all"</span> <span class="k">on</span> notes <span class="k">for select using</span> (true);
+<span class="c">-- anon can: SELECT * FROM notes → all rows</span>
+<span class="c">-- fix: scope to the caller</span>
+<span class="k">drop policy</span> <span class="s">"allow all"</span> <span class="k">on</span> notes;
+<span class="k">create policy</span> <span class="s">"owner reads"</span> <span class="k">on</span> notes <span class="k">for select</span>
+  <span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()));</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by parsing <code>pg_policies.qual</code> and <code>with_check</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">T3 · fail</span><span class="tax-kind">anon_unscoped</span></div>
+      <h3>Anon reads without scoping to a user</h3>
+      <p>A permissive SELECT/ALL policy applies to the <code>anon</code> role with a USING clause that doesn't reference <code>auth.uid()</code> or a membership subquery. Any visitor with the public <code>anon</code> key reads every row.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create policy</span> <span class="s">"anon reads"</span> <span class="k">on</span> profiles <span class="k">for select to</span> anon
+  <span class="k">using</span> (is_active = true);  <span class="c">-- not scoped to a user</span>
+<span class="c">-- anon can: read every active profile</span>
+<span class="c">-- fix: restrict to authenticated, or scope</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by checking if USING references <code>auth.uid()</code> or a membership query</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">T4 · fail</span><span class="tax-kind">authenticated_unscoped</span></div>
+      <h3>Any authenticated user reads all rows (cross-tenant IDOR)</h3>
+      <p>A permissive policy applies to <code>authenticated</code> with a USING clause that doesn't scope to the current user. Any logged-in user reads every other user's rows — a classic insecure direct object reference.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create policy</span> <span class="s">"users read"</span> <span class="k">on</span> orders <span class="k">for select to</span> authenticated
+  <span class="k">using</span> (true);
+<span class="c">-- user B can: SELECT * FROM orders → sees user A's orders</span>
+<span class="c">-- fix:</span>
+<span class="k">using</span> (user_id = (<span class="k">select</span> auth.uid()))</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by checking if USING scopes to <code>auth.uid()</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T5 · warn</span><span class="tax-kind">write_unchecked</span></div>
+      <h3>INSERT/UPDATE with no WITH CHECK guard</h3>
+      <p>A write policy (INSERT, UPDATE, or ALL) has no <code>WITH CHECK</code> clause and the USING clause doesn't scope to the caller. A user can insert or update rows attributed to another user — a row-forging vector.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create policy</span> <span class="s">"insert any"</span> <span class="k">on</span> tasks
+  <span class="k">for insert to</span> authenticated
+  <span class="k">with check</span> (true);
+<span class="c">-- user B can: INSERT INTO tasks (user_id, title)</span>
+<span class="c">--   VALUES (user_A_id, 'forged') → succeeds</span>
+<span class="c">-- fix:</span>
+<span class="k">with check</span> (user_id = (<span class="k">select</span> auth.uid()))</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by checking <code>pg_policies.with_check</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T6 · warn</span><span class="tax-kind">helper_scoped</span></div>
+      <h3>Policy scoped through a helper function</h3>
+      <p>The USING clause delegates scoping to a function call (e.g. <code>is_member(org_id)</code>). Static analysis can't see inside the function body — the policy might be correctly scoped or completely open. Manual review required.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create policy</span> <span class="s">"member reads"</span> <span class="k">on</span> projects <span class="k">for select</span>
+  <span class="k">using</span> (is_member(org_id));  <span class="c">-- what does is_member do?</span>
+<span class="c">-- could be fine, could be USING(true) in disguise</span>
+<span class="c">-- fix: verify the function body restricts to auth.uid()</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by identifying function calls in USING that are not <code>auth.uid()</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T7 · warn</span><span class="tax-kind">security_definer</span></div>
+      <h3>SECURITY DEFINER function bypasses RLS</h3>
+      <p>A function marked <code>SECURITY DEFINER</code> runs as its owner (usually <code>postgres</code>), not the caller. If it reads or writes a table, RLS policies don't apply. Fine for RLS helper functions — dangerous for data-access functions.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create function</span> get_all_orders()
+  <span class="k">returns setof</span> orders
+  <span class="k">language sql security definer</span>
+  <span class="k">as</span> $$ <span class="k">select</span> * <span class="k">from</span> orders $$;
+<span class="c">-- any authenticated user: SELECT * FROM get_all_orders()</span>
+<span class="c">--   → returns ALL orders, regardless of RLS</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_proc.prosecdef</code> and checking execute grants</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T8 · warn</span><span class="tax-kind">anon_executes_definer</span></div>
+      <h3>Anon can EXECUTE a SECURITY DEFINER function</h3>
+      <p>A <code>SECURITY DEFINER</code> function is callable by the <code>anon</code> role. An unauthenticated visitor can call a function that runs as its owner, bypassing every RLS policy. This is the highest-risk variant of T7.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">grant execute on function</span> get_all_orders() <span class="k">to</span> anon;
+<span class="c">-- now an unauthenticated visitor can call it</span>
+<span class="c">-- fix:</span>
+<span class="k">revoke execute on function</span> get_all_orders() <span class="k">from</span> anon;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected via <code>has_function_privilege('anon', oid, 'EXECUTE')</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T9 · warn</span><span class="tax-kind">definer_search_path_mutable</span></div>
+      <h3>SECURITY DEFINER with no pinned search_path</h3>
+      <p>A <code>SECURITY DEFINER</code> function resolves unqualified table names against the caller's <code>search_path</code>. An attacker can prepend a schema with a trojan table, and the function — running as owner — reads from the attacker's table instead. A privilege-escalation vector.</p>
+      <pre><span class="c">-- reproduce: function without SET search_path</span>
+<span class="k">create function</span> count_orders()
+  <span class="k">returns</span> bigint
+  <span class="k">language sql security definer</span>
+  <span class="k">as</span> $$ <span class="k">select count</span>(*) <span class="k">from</span> orders $$;
+<span class="c">-- attacker sets search_path = attacker_schema, public</span>
+<span class="c">-- fix:</span>
+<span class="k">alter function</span> count_orders() <span class="k">set</span> search_path = <span class="s">''</span>;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_proc.proconfig</code> for a <code>search_path</code> setting</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T10 · warn</span><span class="tax-kind">view_bypasses_rls</span></div>
+      <h3>View without security_invoker — owner-rights bypass</h3>
+      <p>A view runs as its owner by default (Postgres &lt; 15 behavior). If the view reads a table with RLS, the policies don't apply because the owner bypasses them. Set <code>security_invoker = true</code> (Postgres 15+) so the view runs as the caller.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">create view</span> all_profiles <span class="k">as select</span> * <span class="k">from</span> profiles;
+<span class="c">-- anon can: SELECT * FROM all_profiles → all rows</span>
+<span class="c">--   (the view's owner bypasses profiles' RLS)</span>
+<span class="c">-- fix:</span>
+<span class="k">alter view</span> all_profiles <span class="k">set</span> (security_invoker = true);</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_class.reloptions</code> for <code>security_invoker</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T11 · warn</span><span class="tax-kind">public_bucket</span></div>
+      <h3>Storage bucket is public</h3>
+      <p>A Supabase Storage bucket is marked <code>public = true</code>. Anyone with the file URL can download its contents — no authentication, no RLS. Fine for public assets; dangerous for user documents.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">update</span> storage.buckets <span class="k">set</span> public = true
+  <span class="k">where</span> id = <span class="s">'documents'</span>;
+<span class="c">-- anyone can: GET /storage/v1/object/public/documents/...</span>
+<span class="c">-- fix:</span>
+<span class="k">update</span> storage.buckets <span class="k">set</span> public = false
+  <span class="k">where</span> id = <span class="s">'documents'</span>;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>storage.buckets.public</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T12 · warn</span><span class="tax-kind">realtime_exposure</span></div>
+      <h3>Anon-readable table streams via Realtime</h3>
+      <p>A table that is already anon-readable (T1/T2/T3) is also published to Supabase Realtime. Every INSERT, UPDATE, and DELETE on that table is broadcast to anonymous WebSocket subscribers in real time.</p>
+      <pre><span class="c">-- reproduce: table with RLS off + Realtime enabled</span>
+<span class="k">alter publication</span> supabase_realtime <span class="k">add table</span> messages;
+<span class="c">-- anon subscribers see every row change in real time</span>
+<span class="c">-- fix: remove from Realtime or fix the RLS leak first</span>
+<span class="k">alter publication</span> supabase_realtime <span class="k">drop table</span> messages;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by cross-referencing <code>pg_publication_tables</code> with anon-readable findings</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T13 · warn</span><span class="tax-kind">bypassrls_role</span></div>
+      <h3>Role with BYPASSRLS or SUPERUSER</h3>
+      <p>A database role has <code>BYPASSRLS</code> or is a superuser. RLS never applies to it — every policy on every table is skipped. On stock Supabase, managed roles like <code>postgres</code> and <code>supabase_admin</code> have this legitimately. The danger is when a client-reachable role (<code>anon</code>, <code>authenticated</code>) has it, or when a custom role bypasses without review.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">alter role</span> authenticated <span class="k">bypassrls</span>;
+<span class="c">-- now every authenticated user bypasses every policy</span>
+<span class="c">-- fix:</span>
+<span class="k">alter role</span> authenticated <span class="k">nobypassrls</span>;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_roles.rolbypassrls</code> and <code>rolsuper</code></div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code warn">T14 · warn</span><span class="tax-kind">owner_bypasses_rls</span></div>
+      <h3>Table owned by a client-reachable role without FORCE RLS</h3>
+      <p>A table's owner is a role the API caller can reach (e.g. <code>authenticated</code>). The table owner always bypasses its own RLS — unless <code>FORCE ROW LEVEL SECURITY</code> is set. On stock Supabase the owner is <code>postgres</code> (safe), but a custom setup may differ.</p>
+      <pre><span class="c">-- reproduce:</span>
+<span class="k">alter table</span> invoices <span class="k">owner to</span> authenticated;
+<span class="c">-- authenticated bypasses all RLS on invoices</span>
+<span class="c">-- fix:</span>
+<span class="k">alter table</span> invoices <span class="k">owner to</span> postgres;
+<span class="c">-- or:</span>
+<span class="k">alter table</span> invoices <span class="k">force row level security</span>;</pre>
+      <div class="tax-detect"><span class="dot-s dot-static"></span> Detected by reading <code>pg_class.relowner</code> and <code>relforcerowsecurity</code></div>
+    </div>
+
+  </div>
+
+  <div class="section-label">Dynamic findings — real API probes (DAST)</div>
+
+  <div class="tax-grid">
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">D1 · fail</span><span class="tax-kind">anon_read_leak</span></div>
+      <h3>Anon key reads real rows over the REST API</h3>
+      <p>A GET request to the Supabase REST API with only the <code>anon</code> key returns actual rows from a table. The leak isn't inferred from policy text — it's proven by the data that came back. If the columns include personal data (email, phone, SSN), the finding says so.</p>
+      <pre><span class="c">-- the probe (not SQL — this is an HTTP request):</span>
+GET /rest/v1/profiles?select=*&amp;limit=1
+apikey: &lt;anon_key&gt;
+<span class="c">-- if HTTP 200 with rows → PROVEN LEAK</span>
+<span class="c">-- if HTTP 200 with [] or 401/403 → safe</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-dynamic"></span> Detected by sending a real GET through the project's public API</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">D2 · fail</span><span class="tax-kind">anon_write_leak</span></div>
+      <h3>Anon key inserts a row over the REST API</h3>
+      <p>A POST request to the REST API with only the <code>anon</code> key successfully creates a row. An unauthenticated visitor can write to your database. If the insert passes RLS but fails on a column constraint, the finding still reports it — the RLS gate was open.</p>
+      <pre><span class="c">-- the probe:</span>
+POST /rest/v1/profiles
+apikey: &lt;anon_key&gt;
+body: {}
+<span class="c">-- if HTTP 201 → PROVEN LEAK (row created)</span>
+<span class="c">-- if 400/409 without "row-level security" → RLS passed</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-dynamic"></span> Detected by sending a real POST through the project's public API</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">D3 · fail</span><span class="tax-kind">cross_tenant_read_leak</span></div>
+      <h3>User B reads user A's rows</h3>
+      <p>Two temporary test users are created. User A inserts a row. User B — a different tenant — reads the same table and gets User A's row back. The cross-tenant isolation is broken: this is the leak that lets one customer see another's data.</p>
+      <pre><span class="c">-- the probe (simplified):</span>
+<span class="c">-- 1. Create user_a, create user_b</span>
+<span class="c">-- 2. As user_a: INSERT INTO tasks (user_id, title)</span>
+<span class="c">--    VALUES (user_a_id, 'secret task')</span>
+<span class="c">-- 3. As user_b: SELECT * FROM tasks</span>
+<span class="c">--    WHERE user_id = user_a_id</span>
+<span class="c">-- if rows come back → CROSS-TENANT LEAK</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-both"></span> Detected by API probe with two test users + SQL simulation</div>
+    </div>
+
+    <div class="tax-card">
+      <div class="tax-head"><span class="tax-code fail">D4 · fail</span><span class="tax-kind">cross_tenant_write_leak</span></div>
+      <h3>User B writes to user A's rows</h3>
+      <p>User B successfully updates or deletes a row that belongs to User A. The USING clause might scope reads correctly, but a missing <code>WITH CHECK</code> on UPDATE lets the write through. This is how one customer modifies another's data.</p>
+      <pre><span class="c">-- the probe (simplified):</span>
+<span class="c">-- 1. As user_a: INSERT INTO tasks (...) → row_id</span>
+<span class="c">-- 2. As user_b: PATCH /rest/v1/tasks?id=eq.row_id</span>
+<span class="c">--    body: {"title": "changed-by-b"}</span>
+<span class="c">-- if HTTP 200 and row changed → CROSS-TENANT LEAK</span></pre>
+      <div class="tax-detect"><span class="dot-s dot-both"></span> Detected by API probe with two test users + SQL simulation</div>
+    </div>
+
+  </div>
+
+  <h2>Coverage summary</h2>
+  <p>Airlock checks all 18 failure modes. 14 are caught by static analysis alone (reading the database catalog in a single read-only transaction). 2 are caught by dynamic probes (real HTTP requests with the anon key). 2 require cross-tenant probes with temporary test users.</p>
+  <p>Static analysis is fast and safe — it never writes to your database. Dynamic probes confirm what static analysis suspects. A finding that both layers agree on is stronger than either one alone.</p>
+  <p>If you find a failure mode we don't cover, <a href="https://github.com/mateuszingano/airlock-rls/issues">open an issue</a>. We'll add it.</p>
+
+<div class="related"><div class="lbl">Related RLS guides</div><a href="/rls/supabase-table-public-rls-off/">Why is my Supabase table public? (RLS is off) <span class="arw">→</span></a><a href="/rls/fix-permissive-rls-policy-using-true/">Fix a permissive USING (true) policy <span class="arw">→</span></a><a href="/rls/test-tenant-isolation-supabase/">Test tenant isolation in Supabase <span class="arw">→</span></a><a href="/rls/rls-in-ci-fail-build-exposed-table/">Catch exposed tables in CI <span class="arw">→</span></a></div>
+
+  <div class="cta">
+    <span class="soon">◆ FREE · MIT · npm + GitHub Action</span>
+    <h2>Check your app against all 18</h2>
+    <p><code>airlock-rls</code> runs the static checks (T1–T14) against your database in CI. One command, exit code 1 on any fail. The DAST probes (D1–D4) run when you provide a project URL and anon key.</p>
+    <div class="cmd"><span>npx airlock-rls --db-url $SUPABASE_DB_URL</span><span class="arw">→</span></div>
+    <p style="margin-top:18px"><a href="https://www.npmjs.com/package/airlock-rls">npm</a> · <a href="https://github.com/mateuszingano/airlock-rls">GitHub</a> · <a href="https://github.com/mateuszingano/airlock-rls-mcp">MCP server</a></p>
+  </div>
+
+  <div class="cta">
+    <span class="soon">AIRLOCK MONITOR</span>
+    <h2>Continuous checks, not just one-off</h2>
+    <p>The hosted Airlock Monitor runs these checks against your live database every hour — not just once in CI. Dashboard, alerts, fix suggestions, and a history of every run.</p>
+    <a class="btn" href="/#monitor">Learn more about the Monitor →</a>
+  </div>
+
+  <div class="cta plain">
+    <span class="soon">FREE PDF</span>
+    <h2 style="font-size:20px">Grab the Supabase RLS cheat sheet</h2>
+    <p>The golden rules, the footguns that leak in prod, correct policy snippets, and the isolation test — on one page.</p>
+    <form onsubmit="return joinList(event)">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+      <input type="email" id="email" placeholder="you@yourstartup.dev" required aria-label="Email">
+      <button type="submit" class="btn">Email me the cheat sheet →</button>
+    </form>
+    <div class="msg mono" id="msg" style="margin-top:12px;font-size:13.5px;min-height:18px"></div>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+  var SUPABASE_URL='https://ukaelmxvgggvudlwwexk.supabase.co';
+  var SUPABASE_KEY='sb_publishable_ZfgF6NCfzH0T32Gjx5l-bw_DwleKw2S';
+  async function joinList(e){e.preventDefault();
+    var email=document.getElementById('email').value.trim();var msg=document.getElementById('msg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--red)';msg.textContent='✖ enter a valid email';return false;}
+    msg.style.color='var(--dim)';msg.textContent='joining…';var ok=false;
+    try{var r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,source:'rls-taxonomy'})});ok=r.ok;}catch(x){}
+    if(!ok){try{var r2=await fetch(SUPABASE_URL+'/rest/v1/waitlist',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email:email,source:'rls-taxonomy'})});ok=r2.ok||r2.status===409;}catch(x){}}
+    msg.style.color=ok?'var(--green)':'var(--red)';
+    msg.textContent=ok?'✓ sent — check your inbox':'✖ something went wrong — try again';
+    return false;}
+</script>
+</body>
+</html>

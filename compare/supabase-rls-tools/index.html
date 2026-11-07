@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/compare/supabase-rls-tools/">
+<title>Five ways to check Supabase RLS — and when to use each one (2026)</title>
+<meta name="description" content="Honest comparison of Supabase RLS checking tools — RLS Tester, Security Advisor, Lovable scan, SQL audit kit, RowAttest, Airlock Monitor — on scope, automation, writes, cross-tenant, price.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shipsealed.com/compare/supabase-rls-tools/">
+<meta property="og:title" content="Five ways to check Supabase RLS — and when to use each one (2026)">
+<meta property="og:description" content="Supabase RLS Tester vs Security Advisor vs Lovable scan vs SQL audit kit vs RowAttest vs Airlock Monitor — compared on scope, automation, writes, cross-tenant testing, and price.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Five ways to check Supabase RLS — honest comparison of RLS checking tools.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Five ways to check Supabase RLS — and when to use each one (2026)">
+<meta name="twitter:description" content="Supabase RLS Tester vs Lovable vs SQL kit vs RowAttest vs Airlock Monitor — scope, automation, price.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<style>
+  .cmp-wrap{overflow-x:auto;margin:22px 0}
+  .cmp-table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .cmp-table th,.cmp-table td{text-align:left;padding:10px 11px;border-bottom:1px solid var(--line,#20242a);vertical-align:top}
+  .cmp-table thead th{font-family:var(--mono);font-size:11.5px;color:var(--muted,#8a95a0);font-weight:600;white-space:nowrap}
+  .cmp-table tbody th{font-weight:600;color:var(--text,#e7ecef);white-space:nowrap}
+  .cmp-table .us{color:var(--green,#1fe3b8);font-weight:600}
+  .cmp-table .y{color:var(--green,#1fe3b8)}
+  .cmp-table .n{color:var(--dim,#5b636e)}
+  .cmp-table .p{color:var(--amber,#f5c451)}
+  .guide-box{background:var(--panel,#0f1113);border:1px solid var(--line,#20242a);border-radius:var(--radius,14px);padding:22px 24px;margin:28px 0}
+  .guide-box h3{font-family:var(--mono);font-size:14px;margin-bottom:14px;color:var(--green,#1fe3b8)}
+  .guide-box ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .guide-box li{font-size:14.5px;color:var(--muted,#8a95a0);line-height:1.5}
+  .guide-box li b{color:var(--text,#e7ecef)}
+  .not-us{background:var(--panel,#0f1113);border:1px solid var(--line,#20242a);border-radius:var(--radius,14px);padding:22px 24px;margin:28px 0}
+  .not-us h3{font-family:var(--mono);font-size:14px;margin-bottom:14px;color:var(--wax,#e9603e)}
+  .not-us ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .not-us li{font-size:14.5px;color:var(--muted,#8a95a0);line-height:1.5}
+  .not-us li b{color:var(--text,#e7ecef)}
+  .sources{margin-top:32px;font-size:13px;color:var(--dim,#5b636e);line-height:1.7}
+  .sources a{color:var(--dim,#5b636e);text-decoration:underline}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","headline":"Five ways to check Supabase RLS — and when to use each one (2026)","description":"Honest comparison of Supabase RLS checking tools — RLS Tester, Security Advisor, Lovable scan, SQL audit kit, RowAttest, Airlock Monitor — on scope, automation, writes, cross-tenant testing, and price.","url":"https://shipsealed.com/compare/supabase-rls-tools/","inLanguage":"en","author":{"@type":"Organization","name":"ShipSealed"},"publisher":{"@type":"Organization","name":"ShipSealed"},"datePublished":"2026-11-07","dateModified":"2026-11-07"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://shipsealed.com/"},{"@type":"ListItem","position":2,"name":"Compare","item":"https://shipsealed.com/compare/"},{"@type":"ListItem","position":3,"name":"RLS tools","item":"https://shipsealed.com/compare/supabase-rls-tools/"}]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is the difference between static RLS analysis and dynamic testing?","acceptedAnswer":{"@type":"Answer","text":"Static analysis reads your policies, grants and database catalog to find configuration problems — a table with RLS off, a USING(true) policy, a missing WITH CHECK. Dynamic testing (DAST) actually sends requests through the API as a real user and checks whether data comes back. Static catches the obvious faster; dynamic proves the actual exposure. The strongest check uses both."}},{"@type":"Question","name":"Do I need a paid tool to check Supabase RLS?","acceptedAnswer":{"@type":"Answer","text":"No. Supabase's built-in RLS Tester and Security Advisor are free and catch the most common issues. The free tier of Airlock Monitor and RowAttest adds automated checks. A paid tool adds continuous monitoring, signed reports, CI gates, or auto-fix — worth it when your app handles real user data and you want to catch regressions before they ship."}}]}]}</script>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/#paid">Pricing</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / <a href="/compare/">Compare</a> / Supabase RLS tools</p>
+  <p class="eyebrow">Comparison · Supabase RLS checking tools</p>
+  <h1>Five ways to check Supabase RLS — and when to use each one</h1>
+  <div class="byline"><span>November 2026</span><span class="ok">✓ we build one of these tools — we'll be fair about all of them</span></div>
+  <div class="tldr"><div class="lbl">TL;DR</div><p>"RLS enabled" is a setting. Whether your policies actually stop another user from reading the data is a result. These are five ways people get from one to the other. Pick the one that fits the question you're asking today. Sometimes that's not Airlock.</p></div>
+
+  <h2>The quick guide</h2>
+
+  <div class="guide-box">
+    <h3>Match the tool to the question</h3>
+    <ul>
+      <li><b>Why does this one policy behave this way?</b> → Use <b>Supabase's RLS Tester</b> — it shows you which policies were evaluated for a specific query.</li>
+      <li><b>Did I forget to turn on RLS or leave a setting wide open?</b> → Run the <b>Supabase Security Advisor</b> or <b>Lovable's Quick scan</b> — they catch configuration problems fast.</li>
+      <li><b>I know SQL and want to audit it myself, on my schedule.</b> → Buy or write a <b>SQL audit kit</b> and run the queries yourself.</li>
+      <li><b>I want someone else to sign in as two users, try every table, and give me a signed result I can hand to a customer.</b> → Run <b>RowAttest</b> on a staging project.</li>
+      <li><b>I want continuous automated checks that catch regressions after every migration, with fix suggestions.</b> → Connect <b>Airlock Monitor</b>.</li>
+    </ul>
+  </div>
+
+  <h2>Side by side</h2>
+  <p>Fair and high-level — feature sets and prices change, so verify current details on each tool's site (links in the sources section). This is about <b>what each tool checks and how</b>, which is stable.</p>
+
+  <div class="cmp-wrap">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>What it does</th>
+          <th>Tests writes?</th>
+          <th>Cross-tenant?</th>
+          <th>Continuous?</th>
+          <th>Auto-fix SQL?</th>
+          <th>Signed report?</th>
+          <th>MCP?</th>
+          <th>CI gate?</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Supabase RLS Tester</th>
+          <td>Runs one SQL query as a chosen role and shows which policies were evaluated</td>
+          <td class="n">No — SELECT only (preview)</td>
+          <td class="y">Yes, one role at a time</td>
+          <td class="n">No — manual, in the dashboard</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td>Free (included with Supabase)</td>
+        </tr>
+        <tr>
+          <th>Supabase Security Advisor</th>
+          <td>Checks project settings and flags common misconfigurations</td>
+          <td class="n">No — reads settings, not data</td>
+          <td class="n">No</td>
+          <td class="n">No — manual, in the dashboard</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td>Free (included with Supabase)</td>
+        </tr>
+        <tr>
+          <th>Lovable Quick &amp; Deep scan</th>
+          <td>Static analysis of your code and database configuration to flag risky patterns</td>
+          <td class="n">No — static analysis only</td>
+          <td class="n">No</td>
+          <td class="p">Partial — runs on deploy in Lovable</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td>Free (included with Lovable)</td>
+        </tr>
+        <tr>
+          <th>SQL audit kit ($29)</th>
+          <td>Catalog queries you run yourself, plus an optional two-user harness for staging</td>
+          <td class="p">Optional — if you set up the harness</td>
+          <td class="p">Optional — two staging users, manual</td>
+          <td class="n">No — you run it when you want</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td class="n">No</td>
+          <td>$29 one-time</td>
+        </tr>
+        <tr>
+          <th>RowAttest</th>
+          <td>Creates temporary users, runs real reads and writes across tenants through the API, signs the result</td>
+          <td class="y">Yes — real writes, rolled back or torn down</td>
+          <td class="y">Yes — seeded test users across tenants</td>
+          <td class="p">On-demand — 10 free runs/month</td>
+          <td class="n">Fix direction (text), not SQL</td>
+          <td class="y">Yes — Ed25519 signed PDF, public verify link</td>
+          <td class="y">Yes — 7 MCP tools</td>
+          <td class="y">Yes — <code>gate</code> npm package</td>
+          <td>Free: 10 runs/mo. Signed: $49/run. Pro: $99/mo</td>
+        </tr>
+        <tr>
+          <th class="us">Airlock Monitor</th>
+          <td>Continuous static + dynamic analysis (anon DAST + cross-tenant DAST), signed attestation, auto-fix SQL, MCP + CI gate</td>
+          <td class="y">Yes — anonymous write probes + cross-tenant CRUD via the REST API</td>
+          <td class="y">Yes — creates two temp users, seeds a row as A, attacks as B (SELECT/INSERT/UPDATE/DELETE)</td>
+          <td class="y">Yes — automated on a schedule (weekly free, hourly paid)</td>
+          <td class="y">Yes — copy-paste SQL fix for every finding</td>
+          <td class="y">Yes — Ed25519 signed attestation, verifiable at shipsealed.com/verify</td>
+          <td class="y">Yes — 7 MCP tools (2 local + 5 hosted Monitor)</td>
+          <td class="y">Yes — <code>npx airlock-gate</code> (exit 1 on leak) + <code>npx airlock-rls</code></td>
+          <td>Free: 1 project, weekly. Pro: $19.99/mo (14-day trial)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Honest notes</h2>
+  <p>In each tool's own words, or from what we verified ourselves:</p>
+  <ul>
+    <li><b>Supabase RLS Tester:</b> "Verifying the correctness of your RLS policies set up has always been a gap." Feature preview — "Only SELECT queries are supported for now to simplify things."</li>
+    <li><b>Supabase Security Advisor:</b> checks settings like RLS enabled, leaked keys, and email confirmation. A project health check, not an isolation test.</li>
+    <li><b>Lovable:</b> "The built-in scanners perform static analysis by reading your code and configuration to flag patterns that look risky." They add that these tools "cannot guarantee complete security."</li>
+    <li><b>SQL audit kit ($29):</b> "Diagnostic and verification tooling, not a penetration test or security certification. Results need human review."</li>
+    <li><b>RowAttest:</b> "Not a linter, not a checklist, and not a test of Supabase's own platform." A check reports PASS only when two independent paths agree; when only one path can run, the verdict is marked provisional. Staging only.</li>
+    <li><b>Airlock Monitor:</b> not a penetration test — it reads catalog metadata, probes the REST API as the anonymous caller, and (when given a service_role key) creates temporary authenticated users to test cross-tenant isolation with real CRUD attacks. It catches RLS-off tables, permissive policies, unscoped reads, missing write checks, exposed SECURITY DEFINER functions, public buckets, anonymous data leaks, and cross-tenant leaks between authenticated users. Reports are signed with Ed25519 and verifiable without an account.</li>
+  </ul>
+
+  <div class="not-us">
+    <h3>When Airlock Monitor is the wrong choice</h3>
+    <ul>
+      <li><b>You need to debug why a specific policy behaves the way it does.</b> The RLS Tester shows the evaluated policies for a single query — we show the outcome, not the internal evaluation trace.</li>
+      <li><b>You want an independent third party signing your reports.</b> RowAttest is a separate company — their signature proves they ran the test, not you. Our Ed25519 attestation proves the report is untampered, but we are the tool and the signer. If the audit needs to come from an independent party, use RowAttest.</li>
+      <li><b>You need a full application penetration test or compliance certificate.</b> None of these tools cover that — hire a pen tester.</li>
+    </ul>
+  </div>
+
+  <div class="guide-box">
+    <h3>When Airlock Monitor is the right choice</h3>
+    <ul>
+      <li><b>You want continuous automated checks</b> that run after every migration and catch regressions before they reach users — not a one-time scan you have to remember to run.</li>
+      <li><b>You want copy-paste SQL fixes</b>, not just a finding — every Airlock finding comes with the exact SQL to fix it.</li>
+      <li><b>You're building and want the fastest feedback loop.</b> Connect once, and the monitor watches your database on a schedule. No setup per run.</li>
+      <li><b>You want free coverage for a side project.</b> The free tier gives you weekly checks on one project — no card, no time limit.</li>
+    </ul>
+  </div>
+
+  <h2>The bottom line</h2>
+  <p>There is no single tool that covers everything. The Supabase built-ins are free and catch the obvious — start there. Add a dedicated tool when your app handles real user data and you want to catch regressions before they ship.</p>
+  <p>Pick the one that fits the question you're asking today. Sometimes that's not Airlock.</p>
+  <p style="margin-top:22px"><a href="https://monitor.shipsealed.com/signup" class="btn btn-primary" style="display:inline-flex">Start on Airlock Free</a>&nbsp;&nbsp;<a href="/" class="btn btn-ghost">← Back to ShipSealed</a></p>
+
+  <div class="sources">
+    <p><b>Sources</b> (pages read November 2026; verify current details before you rely on this table):</p>
+    <p>
+      <a href="https://supabase.com/docs/guides/database/postgres/row-level-security" target="_blank" rel="noopener">Supabase RLS Tester docs</a> ·
+      <a href="https://supabase.com/docs/guides/database/database-advisors" target="_blank" rel="noopener">Supabase Security Advisor</a> ·
+      <a href="https://docs.lovable.dev/features/security" target="_blank" rel="noopener">Lovable security docs</a> ·
+      <a href="https://rowattest.com/methodology" target="_blank" rel="noopener">RowAttest methodology</a> ·
+      <a href="https://rowattest.com/compare" target="_blank" rel="noopener">RowAttest comparison</a> ·
+      <a href="https://shipsealed.com/" target="_blank" rel="noopener">ShipSealed / Airlock Monitor</a>
+    </p>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <a href="/rls/">Supabase RLS guides</a>
+      <a href="/rls/supabase-october-30-grants-change/">Oct 30 grants change</a>
+      <a href="/service-role-scanner/">service_role key scanner</a>
+      <a href="/supabase-rls-policy-generator/">RLS policy generator</a>
+      <a href="/compare/supabase-saas-boilerplate/">Boilerplate comparison</a>
+      <a href="terms/">Terms</a>
+      <a href="privacy/">Privacy</a>
+      <a href="refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <span style="max-width:880px;line-height:1.6">ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil.<br>Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</span>
+  </div>
+</footer>
+</body>
+</html>
