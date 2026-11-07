@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Is your Supabase app leaking? Free security scanner</title>
-<meta name="description" content="Scan your live Supabase app: a service_role key leaked to the browser, and tables anyone can read without logging in. No signup, your rows never shown.">
+<meta name="description" content="Scan your live Supabase app: a service_role key in the browser, an exposed .env or .git, and tables anyone can read without login. Free, no signup.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="canonical" href="https://shipsealed.com/service-role-scanner/">
 <link rel="stylesheet" href="../assets/page.css">
@@ -52,6 +52,9 @@
   .scanout ul{margin:0 0 10px;padding-left:18px;color:var(--muted);font:13px var(--mono);word-break:break-all}
   .sharerow{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
   .sharerow .btn{font-size:14px;padding:9px 14px}
+  .fixp{font:13px var(--mono);padding:7px 12px;margin:0 0 12px;cursor:pointer;background:var(--panel-2);
+    color:var(--green);border:1px solid var(--green-dim);border-radius:10px}
+  .fixp:hover{border-color:var(--green)}
 </style>
 </head>
 <body>
@@ -76,8 +79,9 @@
     <p class="lede">
 Two things leak most in Supabase apps: the <span class="mono">service_role</span> master key
       shipped to the browser, and tables anyone can read without logging in. Paste your app's URL —
-      this checks <strong>both</strong> in seconds, reads only what any visitor's browser can see, and
-      never shows your data. No signup.
+      this checks <strong>both</strong>, plus a downloadable <span class="mono">.env</span>, a public
+      <span class="mono">.git</span> folder and public source maps. It reads only what any visitor's
+      browser can see, never shows your data, and gives you a fix prompt for your AI tool. No signup.
     </p>
   </header>
 
@@ -89,7 +93,7 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
         <input id="scanurl" name="url" type="text" inputmode="url" placeholder="https://your-app.com" required maxlength="2048">
         <button type="submit" class="btn btn-primary" id="scanbtn">Scan now →</button>
       </div>
-      <p class="scanhint">Reads only what any visitor could: your JavaScript (for a leaked key) and the tables your anon key can reach (row counts only). Nothing is stored; your row data is never read or shown.</p>
+      <p class="scanhint">Reads only what any visitor could: your JavaScript (for a leaked key), the standard addresses <span class="mono">/.env</span> and <span class="mono">/.git/HEAD</span>, and the tables your anon key can reach (row counts only). Nothing is stored; your row data and secret values are never read back or shown.</p>
     </form>
     <div id="scanout" class="scanout" aria-live="polite" hidden></div>
   </section>
@@ -99,17 +103,22 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
   <div class="prose">
     <div class="term" aria-label="Run the scan">
 <pre><span class="dim">$</span> <span class="cmd">npx airlock-rls --site https://your-app.com</span>
+<span class="bad">✗ 2 problem(s) in "public":</span>
+    <span class="bad">✗</span> https://your-app.com/app.js <span class="dim">Supabase service key exposed in the browser</span>
+      <span class="dim">(service_role JWT) — it bypasses ALL Row Level Security. Rotate it now and</span>
+      <span class="dim">move it server-side. Found: eyJhbGciOiJI… (72 chars)</span>
+    <span class="bad">✗</span> https://your-app.com/.env <span class="dim">Your .env file is downloadable by anyone</span>
+      <span class="dim">(3 variable(s) in it). Remove it from the deployed site and rotate every secret.</span>
 
-<span class="bad">✗ 1 problem(s):</span>
-    <span class="bad">✗</span> https://your-app.com/app.js  <span class="dim">Supabase service key exposed in the</span>
-      <span class="dim">browser — it bypasses ALL Row Level Security. Rotate it now.</span>
-
-<span class="bad">RLS audit failed: 1 problem(s) found.</span>  <span class="dim">(exit 1)</span></pre>
+<span class="bad">Site scan failed: 2 problem(s) found.</span>  <span class="dim">(exit 1)</span>
+<span class="dim">  Run again with --prompts for a copy-paste fix for each problem (Cursor, Lovable, Bolt, Claude Code).</span></pre>
     </div>
     <p class="mono" style="color:var(--dim);font-size:13px">On a clean site it stays quiet:</p>
     <div class="term">
 <pre><span class="dim">$</span> <span class="cmd">npx airlock-rls --site https://your-app.com</span>
-<span class="ok">✓ No problems.  RLS audit passed.</span>  <span class="dim">(exit 0)</span></pre>
+<span class="ok">✓ No service key, .env, .git or source map exposed on https://your-app.com (2 file(s) scanned).</span>
+
+<span class="ok">Site scan passed.</span>  <span class="dim">(exit 0)</span></pre>
     </div>
 
     <h2>Why a leaked service key is the worst case</h2>
@@ -124,7 +133,9 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
       <li>Fetches your live page and the JavaScript it loads, and looks for a <span class="mono">service_role</span> JWT or a new-format <span class="mono">sb_secret_…</span> key.</li>
       <li><strong>Never flags the anon key</strong> — it decodes each token and only fires on the real master key. No crying wolf.</li>
       <li><strong>Never prints the key</strong> it finds — a security tool must not echo the secret.</li>
-      <li>Exits <span class="mono">1</span> when it finds one, so you can drop it straight into CI.</li>
+      <li>Checks for a downloadable <span class="mono">.env</span>, a public <span class="mono">.git</span> folder and public source maps — each <strong>confirmed by content</strong>, so a site that answers every address with its home page never gets a false alarm. It counts a <span class="mono">.env</span>'s variables but never shows a value.</li>
+      <li>Every problem comes with a <strong>fix prompt</strong> to paste into Cursor, Lovable, Bolt or Claude Code (in the terminal: <span class="mono">--prompts</span>).</li>
+      <li>Exits <span class="mono">1</span> when it finds a problem, so you can drop it straight into CI.</li>
     </ul>
 
     <div class="box">
@@ -181,6 +192,9 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
   function ev(name,params){try{if(window.gtag)gtag('event',name,params||{});}catch(e){}}
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function show(html){out.hidden=false;out.innerHTML=html}
+  // Fix prompts for this result: rendered as buttons that copy the text.
+  var PROMPTS=[];
+  function fixBtn(text,what){if(!text)return'';PROMPTS.push(text);return'<button type="button" class="fixp" data-fix="'+(PROMPTS.length-1)+'">Copy fix prompt'+(what?' ('+esc(what)+')':'')+'</button>'}
   var LOCAL='Run it locally instead: npx airlock-rls --site <url>';
   var ERR={invalid_url:'That doesn\'t look like a public URL. Try something like https://your-app.com.',
     blocked_host:'Only public websites can be scanned (no localhost, private or internal addresses).',
@@ -218,7 +232,8 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
     if(d.leaked){
       return{state:'bad',html:'<p class="v bad">\u2717 Your service_role key is exposed on '+esc(d.host)+'</p>'+
         '<p>Found in:</p><ul>'+d.leaks.map(function(l){return'<li>'+esc(l.where)+'</li>'}).join('')+'</ul>'+
-        '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings \u2192 API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'};
+        '<p><strong>If this is your app:</strong> rotate the key now in your Supabase dashboard (Settings \u2192 API), move it to a server-only environment variable, redeploy, and scan again. Anyone who opened your site could have copied it, so check your data too.</p>'+
+        fixBtn(d.leaks[0]&&d.leaks[0].prompt)};
     }
     if(!d.complete){
       var why=d.truncated?'it loads more JavaScript bundles than the online scan reads':(d.skipped+' file(s) couldn\'t be fetched');
@@ -227,6 +242,23 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
     }
     return{state:'ok',share:d.share,html:'<p class="v ok">\u2713 No exposed service_role key on '+esc(d.host)+'</p>'+
       '<p>Checked the page and '+bundles+' JavaScript bundle(s): no <span class="mono">service_role</span> JWT and no <span class="mono">sb_secret_</span> key. The public anon key is fine to ship.</p>'};
+  }
+  // Check 1b: files a host should never serve (.env, .git, source maps). Same /api/scan response.
+  function renderFiles(d){
+    if(!d||d.error||!d.files)return null;
+    var bad=d.files.filter(function(f){return f.severity==='fail'}), warn=d.files.filter(function(f){return f.severity!=='fail'});
+    var NAME={env_file_exposed:'.env file',git_exposed:'.git folder',source_map_exposed:'source maps'};
+    if(bad.length){
+      return{state:'bad',html:'<p class="v bad">\u2717 '+bad.length+' file'+(bad.length===1?'':'s')+' anyone can download on '+esc(d.host)+'</p>'+
+        bad.map(function(f){var n=NAME[f.kind]||f.kind;
+          return'<p><strong>'+esc(n)+'</strong> <span class="mono" style="font-size:13px;word-break:break-all">'+esc(f.where)+'</span><br>'+esc(f.detail)+'</p>'+fixBtn(f.prompt,n)}).join('')+
+        (warn.length?'<p class="v warn">\u26a0 Also: your source maps are public, so anyone can download your original source code.</p>'+fixBtn(warn[0].prompt,'source maps'):'')};
+    }
+    if(warn.length){
+      return{state:'warn',html:'<p class="v warn">\u26a0 Your source maps are public on '+esc(d.host)+'</p>'+
+        '<p>Anyone can download your original source code from <span class="mono">'+esc(warn[0].where)+'</span>. Not a leak by itself, but check it for hard-coded secrets and turn source maps off in production.</p>'+fixBtn(warn[0].prompt)};
+    }
+    return{state:'ok',html:'<p class="v ok">\u2713 No .env, .git folder or source maps exposed on '+esc(d.host)+'</p>'};
   }
   // Check 2: tables readable without logging in. Returns {html, state}.
   function renderTables(status,d){
@@ -237,17 +269,23 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
       var rows=d.open.map(function(o){return'<li>'+esc(o.table)+' <span class="dim">\u2014 '+o.rows+' row'+(o.rows===1?'':'s')+' readable</span></li>'}).join('');
       return{state:'bad',html:'<p class="v bad">\u2717 '+d.open.length+' table'+(d.open.length===1?'':'s')+' anyone can read without logging in on '+esc(d.host)+'</p>'+
         '<p>Using only the public anon key your app already ships, these returned rows \u2014 no login:</p><ul>'+rows+'</ul>'+
-        '<p>(We read only the row count, never your data.) <strong>If this is your app:</strong> turn on Row Level Security for each table and add a policy that scopes rows to the signed-in user. Step by step: <a href="/rls/enable-row-level-security-supabase-table/">enable RLS</a> and <a href="/rls/write-owner-scoped-rls-policy-supabase/">write an owner-scoped policy</a>.</p>'};
+        '<p>(We read only the row count, never your data.) <strong>If this is your app:</strong> turn on Row Level Security for each table and add a policy that scopes rows to the signed-in user. Step by step: <a href="/rls/enable-row-level-security-supabase-table/">enable RLS</a> and <a href="/rls/write-owner-scoped-rls-policy-supabase/">write an owner-scoped policy</a>.</p>'+
+        fixBtn('A scan with my public Supabase anon key read rows from these tables without logging in: '+d.open.map(function(o){return o.table}).join(', ')+'.\n\n'+
+          'For each table: enable Row Level Security and add policies so each user can only read and change their own rows (usually by comparing a user_id / owner column to (select auth.uid())). If some rows must be public, write a SELECT-only policy that names exactly which rows.\n\n'+
+          'Do not fix this by disabling Row Level Security or by adding a policy with USING (true). Show me the SQL migration and explain each change before applying it. When done, I will re-scan to confirm no table is readable without login.')};
     }
     return{state:'ok',html:'<p class="v ok">\u2713 None of your app\'s tables returned rows without login on '+esc(d.host)+'</p>'+
       '<p>Checked the '+d.checked+' table'+(d.checked===1?'':'s')+' your app queries: none returned rows to the anon key. (An empty table also looks clean, so this isn\'t proof RLS is on \u2014 run <span class="mono">npx airlock-rls</span> for the full audit.)</p>'};
   }
   function renderCombined(keyRes,tblRes){
-    var k=renderKey(keyRes.d), t=renderTables(tblRes.status,tblRes.d);
-    ev('scan_result',{key:k.state,tables:t.state});
-    var clean=(k.state==='ok'&&t.state==='ok');
-    var html=k.html+'<hr style="border:0;border-top:1px solid var(--line);margin:14px 0">'+t.html;
-    if(k.state==='bad'||t.state==='bad'){
+    PROMPTS=[];
+    var k=renderKey(keyRes.d), f=renderFiles(keyRes.d), t=renderTables(tblRes.status,tblRes.d);
+    ev('scan_result',{key:k.state,files:f?f.state:'none',tables:t.state});
+    // Source maps alone (warn) don't block the A; an exposed .env/.git does.
+    var clean=(k.state==='ok'&&t.state==='ok'&&(!f||f.state!=='bad'));
+    var HR='<hr style="border:0;border-top:1px solid var(--line);margin:14px 0">';
+    var html=k.html+(f?HR+f.html:'')+HR+t.html;
+    if(k.state==='bad'||t.state==='bad'||(f&&f.state==='bad')){
       html+='<p>A leak you fix today can reopen on the next deploy. <a href="'+MON+'-leak">Airlock Monitor</a> re-checks your app on a schedule and emails you the moment something reopens.</p>';
     }
     if(clean&&k.share){
@@ -262,6 +300,12 @@ Two things leak most in Supabase apps: the <span class="mono">service_role</span
     }
     show(html);
     out.querySelectorAll('[data-net]').forEach(function(a){a.addEventListener('click',function(){ev('scan_share',{network:a.getAttribute('data-net')})})});
+    out.querySelectorAll('[data-fix]').forEach(function(b){b.addEventListener('click',function(){
+      var text=PROMPTS[+b.getAttribute('data-fix')];
+      ev('scan_fix_prompt');
+      if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){b.textContent='Copied \u2713 Paste it into your AI tool'},function(){prompt('Copy this prompt:',text)})}
+      else{prompt('Copy this prompt:',text)}
+    })});
     var cp=document.getElementById('copylink');
     if(cp)cp.addEventListener('click',function(){
       var b=this, tbltok=(tblRes.d&&tblRes.d.share)?'&t='+encodeURIComponent(tblRes.d.share):'', link=location.origin+'/api/scan-share?r='+encodeURIComponent(k.share)+tbltok;
