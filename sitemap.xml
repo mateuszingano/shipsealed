@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://shipsealed.com/</loc><changefreq>weekly</changefreq> <priority>1.0</priority></url>
   <url><loc>https://shipsealed.com/cheatsheet/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://shipsealed.com/compare/supabase-rls-tools/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/compare/supabase-saas-boilerplate/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/demo/</loc><changefreq>weekly</changefreq></url>
   <url><loc>https://shipsealed.com/privacy/</loc><changefreq>weekly</changefreq></url>
@@ -40,6 +41,7 @@
   <url><loc>https://shipsealed.com/rls/supabase-table-public-rls-off/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-update-delete-not-working-rls/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/taxonomy/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/v0-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>
