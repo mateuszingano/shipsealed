@@ -1,4 +1,4 @@
-// VENDORED from airlock-rls v0.5.1 (commit c2717a0), src/fix-prompts.mjs, unmodified.
+// VENDORED from airlock-rls v0.6.0 (commit 0c9c599), src/fix-prompts.mjs, unmodified.
 // Source: https://github.com/mateuszingano/airlock-rls (MIT).
 
 // Airlock — copy-paste fix prompts for AI coding tools (Cursor, Lovable, Bolt,
@@ -81,6 +81,18 @@ const ASK = {
   owner_bypasses_rls:
     'The table owner bypasses RLS on this table. If anything client-facing connects as the owner, enable ' +
     'ALTER TABLE ... FORCE ROW LEVEL SECURITY, or switch that connection to a non-owner role.',
+  default_privileges_to_api_roles:
+    'Default privileges in my database make every new table readable/writable by the anon and authenticated roles, ' +
+    'probably added to silence 42501 errors after Supabase stopped auto-granting new tables. Write a migration that ' +
+    'revokes these default privileges (ALTER DEFAULT PRIVILEGES FOR ROLE <owner> IN SCHEMA <schema> REVOKE ... ON ' +
+    'TABLES FROM anon, authenticated), and from now on grant each new table explicitly, only the commands its RLS ' +
+    'policies allow, right after ENABLE ROW LEVEL SECURITY. Do not revoke grants that existing tables need.',
+  policy_trusts_user_metadata:
+    'This check reads user_metadata (auth.jwt() -> \'user_metadata\' or auth.users.raw_user_meta_data), which any ' +
+    'signed-in user can change for themselves with supabase.auth.updateUser({ data: ... }), so anyone can pass it. ' +
+    'Move the role or tenant id to app_metadata (only the server / service role can write it, read it with ' +
+    'auth.jwt() -> \'app_metadata\') or to a table users cannot write (e.g. a memberships table with its own RLS), ' +
+    'update the policy or function to read it from there, and make sure nothing lets users write that value.',
   service_role_exposed:
     'My Supabase service key (service_role / sb_secret) is in the JavaScript that ships to the browser. It bypasses ' +
     'all Row Level Security. Move every use of it to server-side code (API route, server action or Edge Function), ' +

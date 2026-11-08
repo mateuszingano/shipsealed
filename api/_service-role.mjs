@@ -1,4 +1,4 @@
-// VENDORED from airlock-rls v0.5.1 (commit c2717a0), src/service-role.mjs, unmodified.
+// VENDORED from airlock-rls v0.6.0 (commit 0c9c599), src/service-role.mjs, unmodified.
 // Source: https://github.com/mateuszingano/airlock-rls (MIT). Vendored so the
 // static site needs no package.json/node_modules. Update by copying the file again.
 
