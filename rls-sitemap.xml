@@ -26,6 +26,7 @@
   <url><loc>https://shipsealed.com/rls/supabase-table-public-rls-off/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-update-delete-not-working-rls/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/supabase-upsert-new-row-violates-row-level-security/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://shipsealed.com/rls/taxonomy/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/test-tenant-isolation-supabase/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/v0-supabase-security-checklist/</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://shipsealed.com/rls/write-owner-scoped-rls-policy-supabase/</loc><changefreq>monthly</changefreq></url>

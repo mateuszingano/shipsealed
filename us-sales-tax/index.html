@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Sales Tax Calculator — rate + tax by state (ShipSealed)</title>
+<meta name="description" content="Free US sales tax calculator. Pick a state, enter an amount, get the sales tax and total — state base rate or average combined (state + local). Handles tax-exclusive and tax-inclusive pricing. Runs in your browser; nothing is uploaded.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="canonical" href="https://shipsealed.com/us-sales-tax/">
+<link rel="stylesheet" href="../assets/page.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/us-sales-tax/">
+<meta property="og:title" content="US Sales Tax Calculator — rate + tax by state">
+<meta property="og:description" content="Pick a state, enter an amount, get the sales tax and total. State base rate or average combined (state + local). Tax-exclusive or tax-inclusive. Runs in your browser.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="US sales tax calculated for a given state and amount.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="US Sales Tax Calculator — rate + tax by state">
+<meta name="twitter:description" content="Pick a state, enter an amount, get the sales tax and total. State or average combined rate. Runs in your browser.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"US Sales Tax Calculator","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Calculate US sales tax by state: state base rate or average combined (state + local). Supports tax-exclusive and tax-inclusive pricing. Runs in the browser.","url":"https://shipsealed.com/us-sales-tax/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Organization","name":"ShipSealed","url":"https://shipsealed.com/"}}
+</script>
+<style>
+  .tool{display:grid;gap:16px;margin-top:8px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .field input,.field select{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--green-dim)}
+  .amount-wrap{position:relative}
+  .amount-wrap span{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:var(--mono);font-size:15px}
+  .amount-wrap input{padding-left:26px}
+  .seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+  .seg button{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:12.5px;padding:7px 12px;border-radius:7px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--green);color:#041b0f;font-weight:700}
+  .result{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;display:grid;gap:2px}
+  .result .big{font-size:34px;font-family:var(--mono);color:var(--green);font-weight:700;letter-spacing:-.01em}
+  .result .big small{font-size:14px;color:var(--muted);font-weight:400;margin-left:8px}
+  .breakdown{display:flex;flex-direction:column;gap:0;margin-top:12px;font-family:var(--mono);font-size:14px}
+  .breakdown .row{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line)}
+  .breakdown .row span:first-child{color:var(--muted)}
+  .breakdown .row span:last-child{color:var(--text)}
+  .breakdown .row.total span{color:var(--text);font-weight:700}
+  .rate-tag{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:2px}
+  .rate-tag b{color:var(--green-2)}
+  .note{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:var(--radius);padding:12px 15px;font-size:13.5px;color:var(--muted);line-height:1.55}
+  .note b{color:var(--text)} .note code{color:var(--green-2)}
+  .cta{margin-top:34px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+  .cta h2{margin:0 0 6px;font-size:18px}
+  .cta p{margin:0 0 12px;color:var(--muted);font-size:14px;line-height:1.55}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="../"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="../#tools">Free tools</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../cheatsheet/">Cheat sheet</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="page-head">
+    <span class="kicker">Free tool · runs in your browser</span>
+    <h1>US Sales Tax Calculator</h1>
+    <p class="mono" style="color:var(--muted);font-size:15px;max-width:640px">
+      Pick a state, enter an amount, and get the sales tax and total. Use the <b>state base rate</b> or the <b>average combined</b> (state + local) rate, and handle prices that are tax-exclusive or tax-inclusive. Nothing is uploaded.
+    </p>
+  </header>
+
+  <section class="tool">
+    <div class="grid">
+      <div class="field">
+        <label for="state">State</label>
+        <select id="state" aria-label="US state"></select>
+      </div>
+      <div class="field">
+        <label for="amount">Amount (USD)</label>
+        <div class="amount-wrap"><span>$</span><input id="amount" type="text" inputmode="decimal" value="100.00" aria-label="amount in US dollars"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label>Rate basis</label>
+        <div class="seg" id="basis" role="group" aria-label="rate basis">
+          <button type="button" data-basis="state" aria-pressed="true">State rate</button>
+          <button type="button" data-basis="combined" aria-pressed="false">Avg combined</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>The amount is</label>
+        <div class="seg" id="mode" role="group" aria-label="price mode">
+          <button type="button" data-mode="exclusive" aria-pressed="true">Tax-exclusive</button>
+          <button type="button" data-mode="inclusive" aria-pressed="false">Tax-inclusive</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result" id="result" aria-live="polite">
+      <div class="big" id="taxBig">$0.00 <small>sales tax</small></div>
+      <div class="rate-tag" id="rateTag"></div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <div class="note">
+      <b>Read this before you remit.</b> The <b>state rate</b> is exact; the <b>average combined</b> rate is a statewide average — actual local rates vary by city, county and district, so the real rate at a specific address can be higher or lower. This calculator is for <b>quick estimates</b>, not filing. Rates change; figures reflect Tax Foundation state &amp; local averages (2024). For collection and remittance across many jurisdictions, use a tax engine or a <b>Merchant of Record</b>.
+    </div>
+
+    <div class="note" style="border-left-color:var(--green-dim)">
+      <b>Selling SaaS or digital goods?</b> Whether software, SaaS or digital downloads are taxable is decided <b>per state</b> and changes often — a rate alone won't tell you if you owe. And once you cross a state's <b>economic nexus</b> threshold, you're on the hook to register and collect there. A Merchant of Record (like the one ShipSealed uses) takes that on for you.
+    </div>
+  </section>
+
+  <div class="cta">
+    <h2>Don't want to babysit sales tax at all?</h2>
+    <p>Every ShipSealed boilerplate ships checkout through <b>Paddle</b> — a Merchant of Record that becomes the seller of record, so calculating, collecting and remitting sales tax and VAT in every jurisdiction is <b>their</b> job, not yours. Ship the app; skip the tax filings.</p>
+    <a class="btn btn-primary" href="../pricing/">See the boilerplates →</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="../">Home</a>
+      <a href="../pricing/">Pricing</a>
+      <a href="../terms/">Terms</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../refunds/">Refunds</a>
+      <a href="mailto:support@shipsealed.com">Contact</a>
+    </div>
+    <div class="foot-legal">
+      ShipSealed, CNPJ 23.878.157/0001-10, Canela/RS, Brazil.<br>
+      Payments are processed by Paddle.com Market Ltd, our Merchant of Record. This tool is an estimate, not tax advice. Contact: <a href="mailto:support@shipsealed.com">support@shipsealed.com</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // State base rate + average combined (state + local) rate, in percent.
+  // Source: Tax Foundation, "State and Local Sales Tax Rates, 2024". Combined = statewide average.
+  // NOMAD states (No sales tax): Alaska*, Delaware, Montana, New Hampshire, Oregon. *AK has local sales taxes.
+  const STATES = [
+    ['AL','Alabama',4.00,9.29],   ['AK','Alaska',0.00,1.82],     ['AZ','Arizona',5.60,8.38],
+    ['AR','Arkansas',6.50,9.45],  ['CA','California',7.25,8.85],  ['CO','Colorado',2.90,7.81],
+    ['CT','Connecticut',6.35,6.35],['DE','Delaware',0.00,0.00],   ['DC','District of Columbia',6.00,6.00],
+    ['FL','Florida',6.00,7.00],   ['GA','Georgia',4.00,7.38],     ['HI','Hawaii',4.00,4.50],
+    ['ID','Idaho',6.00,6.03],     ['IL','Illinois',6.25,8.86],    ['IN','Indiana',7.00,7.00],
+    ['IA','Iowa',6.00,6.94],      ['KS','Kansas',6.50,8.66],      ['KY','Kentucky',6.00,6.00],
+    ['LA','Louisiana',5.00,10.11],['ME','Maine',5.50,5.50],       ['MD','Maryland',6.00,6.00],
+    ['MA','Massachusetts',6.25,6.25],['MI','Michigan',6.00,6.00], ['MN','Minnesota',6.875,8.04],
+    ['MS','Mississippi',7.00,7.06],['MO','Missouri',4.225,8.39],  ['MT','Montana',0.00,0.00],
+    ['NE','Nebraska',5.50,6.97],  ['NV','Nevada',6.85,8.24],      ['NH','New Hampshire',0.00,0.00],
+    ['NJ','New Jersey',6.625,6.60],['NM','New Mexico',4.875,7.62],['NY','New York',4.00,8.53],
+    ['NC','North Carolina',4.75,7.00],['ND','North Dakota',5.00,7.04],['OH','Ohio',5.75,7.24],
+    ['OK','Oklahoma',4.50,8.99],  ['OR','Oregon',0.00,0.00],      ['PA','Pennsylvania',6.00,6.34],
+    ['RI','Rhode Island',7.00,7.00],['SC','South Carolina',6.00,7.50],['SD','South Dakota',4.20,6.11],
+    ['TN','Tennessee',7.00,9.55], ['TX','Texas',6.25,8.20],       ['UT','Utah',6.10,7.25],
+    ['VT','Vermont',6.00,6.36],   ['VA','Virginia',5.30,5.77],    ['WA','Washington',6.50,9.38],
+    ['WV','West Virginia',6.00,6.57],['WI','Wisconsin',5.00,5.70],['WY','Wyoming',4.00,5.44]
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const sel = $('state');
+  STATES.forEach(([abbr, name]) => {
+    const o = document.createElement('option');
+    o.value = abbr; o.textContent = name;
+    sel.appendChild(o);
+  });
+  sel.value = 'CA';
+
+  let basis = 'state';   // 'state' | 'combined'
+  let mode = 'exclusive'; // 'exclusive' | 'inclusive'
+
+  const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+  function render() {
+    const row = STATES.find((s) => s[0] === sel.value) || STATES[0];
+    const [abbr, name, stateRate, combinedRate] = row;
+    const ratePct = basis === 'combined' ? combinedRate : stateRate;
+    const rate = ratePct / 100;
+
+    const raw = parseFloat(String($('amount').value).replace(/[^0-9.]/g, ''));
+    const amount = isFinite(raw) ? raw : 0;
+
+    let net, tax, gross;
+    if (mode === 'inclusive') {
+      gross = amount;
+      net = rate > 0 ? amount / (1 + rate) : amount;
+      tax = gross - net;
+    } else {
+      net = amount;
+      tax = amount * rate;
+      gross = net + tax;
+    }
+
+    $('taxBig').innerHTML = fmt.format(tax) + ' <small>sales tax</small>';
+
+    const basisLabel = basis === 'combined'
+      ? 'avg combined (state + local)'
+      : 'state base rate';
+    let tag = '<b>' + trimPct(ratePct) + '%</b> — ' + name + ' ' + basisLabel;
+    if (basis === 'combined' && combinedRate !== stateRate) {
+      tag += ' <span style="color:var(--dim)">(state ' + trimPct(stateRate) + '%)</span>';
+    }
+    if (ratePct === 0) tag = '<b>No sales tax</b> — ' + name + (abbr === 'AK' ? ' has no <em>state</em> sales tax (local taxes may apply)' : ' does not levy sales tax');
+    $('rateTag').innerHTML = tag;
+
+    $('breakdown').innerHTML =
+      row3('Net (pre-tax)', fmt.format(net)) +
+      row3('Sales tax (' + trimPct(ratePct) + '%)', fmt.format(tax)) +
+      '<div class="row total"><span>Total</span><span>' + fmt.format(gross) + '</span></div>';
+  }
+
+  function trimPct(n) {
+    // up to 3 decimals, strip trailing zeros
+    return parseFloat(n.toFixed(3)).toString();
+  }
+  function row3(label, val) {
+    return '<div class="row"><span>' + label + '</span><span>' + val + '</span></div>';
+  }
+
+  sel.addEventListener('change', render);
+  $('amount').addEventListener('input', render);
+
+  $('basis').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    basis = b.dataset.basis;
+    [...$('basis').children].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    render();
+  });
+  $('mode').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    mode = b.dataset.mode;
+    [...$('mode').children].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
