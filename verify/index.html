@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NEVWFBZ3N4"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NEVWFBZ3N4');</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://shipsealed.com/verify/">
+<title>Verify an Airlock attestation — ShipSealed</title>
+<meta name="description" content="Independently verify an Airlock Monitor audit attestation. Client-side Ed25519 signature verification — nothing leaves your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231fe3b8'/><path d='M9 16.5l4.5 4.5L23 10' stroke='%23041b0f' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipsealed.com/verify/">
+<meta property="og:title" content="Verify an Airlock attestation — ShipSealed">
+<meta property="og:description" content="Independently verify an Airlock Monitor audit attestation. Client-side Ed25519 signature verification — nothing leaves your browser.">
+<meta property="og:image" content="https://shipsealed.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Verify an Airlock attestation — ShipSealed">
+<meta name="twitter:description" content="Independently verify an Airlock Monitor audit attestation. Client-side Ed25519 signature verification.">
+<meta name="twitter:image" content="https://shipsealed.com/assets/og.png">
+<link rel="stylesheet" href="/assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Verify an Airlock attestation","description":"Independently verify an Airlock Monitor audit attestation using client-side Ed25519 signature verification.","url":"https://shipsealed.com/verify/","publisher":{"@type":"Organization","name":"ShipSealed"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://shipsealed.com/"},{"@type":"ListItem","position":2,"name":"Verify attestation","item":"https://shipsealed.com/verify/"}]}]}</script>
+<style>
+.drop-zone{border:2px dashed var(--line-2);border-radius:var(--radius);padding:40px 24px;text-align:center;
+  cursor:pointer;transition:border-color .2s,background .2s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--green-dim);background:rgba(31,227,184,.04)}
+.drop-zone textarea{width:100%;min-height:180px;background:var(--panel-2);border:1px solid var(--line);
+  color:var(--text);font-family:var(--mono);font-size:12.5px;border-radius:10px;padding:14px 16px;
+  resize:vertical;margin-top:16px;line-height:1.5}
+.drop-zone textarea:focus{outline:none;border-color:var(--green-dim);box-shadow:0 0 0 3px rgba(31,227,184,.12)}
+.drop-zone .hint{font-family:var(--mono);font-size:13px;color:var(--dim);margin-bottom:8px}
+.drop-zone .hint b{color:var(--muted)}
+
+.result-card{border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin:24px 0;
+  background:var(--panel);display:none}
+.result-card.show{display:block}
+.result-card.pass{border-color:var(--green-dim);background:linear-gradient(180deg,rgba(31,227,184,.08),rgba(31,227,184,.015))}
+.result-card.fail{border-color:rgba(255,107,90,.3);background:linear-gradient(180deg,rgba(255,107,90,.08),rgba(255,107,90,.015))}
+
+.verdict{font-family:var(--mono);font-size:22px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.verdict.pass{color:var(--green)}
+.verdict.fail{color:var(--red)}
+
+.check-row{font-family:var(--mono);font-size:13.5px;color:var(--muted);padding:6px 0;display:flex;align-items:baseline;gap:8px}
+.check-row .icon{flex-shrink:0;width:18px}
+.check-row .icon.ok{color:var(--green)}
+.check-row .icon.bad{color:var(--red)}
+.check-row .icon.warn{color:var(--amber)}
+
+.detail-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:20px 0 0;font-size:13.5px}
+.detail-grid .label{font-family:var(--mono);color:var(--dim);white-space:nowrap}
+.detail-grid .value{font-family:var(--mono);color:var(--text);word-break:break-all}
+.detail-grid .value.ok{color:var(--green)}
+.detail-grid .value.bad{color:var(--red)}
+
+.error-msg{font-family:var(--mono);font-size:13.5px;color:var(--red);margin:16px 0;display:none}
+.error-msg.show{display:block}
+
+.how-it-works{margin:40px 0}
+.how-it-works ol{counter-reset:step;list-style:none;padding:0}
+.how-it-works li{counter-increment:step;padding:10px 0 10px 36px;position:relative;font-size:15px}
+.how-it-works li::before{content:counter(step);position:absolute;left:0;top:10px;
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);
+  width:24px;height:24px;border:1px solid var(--green-dim);border-radius:50%;
+  display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><span class="dot"></span>ShipSealed</a>
+    <div class="nav-links">
+      <a href="/#tools">Free tools</a>
+      <a href="/rls/">RLS guides</a>
+      <a href="/cheatsheet/">Cheat sheet</a>
+      <a class="gh" href="https://github.com/mateuszingano">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <p class="crumb"><a href="/">Home</a> / Verify attestation</p>
+  <p class="eyebrow">Airlock Monitor · Verification</p>
+  <h1>Verify an audit attestation</h1>
+  <div class="byline"><span>Ed25519 · SHA-256 · client-side only</span><span class="ok">✓ nothing leaves your browser</span></div>
+  <div class="tldr"><div class="lbl">What this does</div><p>Every Airlock Monitor audit run is signed with an Ed25519 key. This page lets you independently verify that a report is genuine and unmodified — the signature check runs entirely in your browser using the Web Crypto API.</p></div>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="hint">Paste the attestation JSON below, or <b>drag &amp; drop a .json file</b></div>
+    <textarea id="jsonInput" placeholder='{"version":1,"header":{...},"result":{...},"signature":{...}}' spellcheck="false"></textarea>
+    <div style="margin-top:14px">
+      <button class="btn" id="verifyBtn" type="button">Verify attestation →</button>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="result-card" id="resultCard">
+    <div class="verdict" id="verdict"></div>
+    <div id="checks"></div>
+    <div class="detail-grid" id="details"></div>
+  </div>
+
+  <div class="how-it-works">
+    <h2>How verification works</h2>
+    <ol>
+      <li><b>Canonical form.</b> The <code>{header, result}</code> payload is re-serialized with recursively sorted keys — the same deterministic encoding the signer uses.</li>
+      <li><b>SHA-256 integrity.</b> The SHA-256 hash of the canonical string is computed and compared against the one in the attestation.</li>
+      <li><b>Ed25519 signature.</b> The Ed25519 signature is verified against the canonical bytes using the signer's public key (SPKI DER format).</li>
+      <li><b>Trusted key check.</b> The public key in the attestation is compared against ShipSealed's known production signing key.</li>
+    </ol>
+  </div>
+
+  <div class="cta plain">
+    <span class="soon">AIRLOCK MONITOR</span>
+    <h2 style="font-size:20px">Every run, signed and verifiable</h2>
+    <p>Airlock Monitor signs every audit run with Ed25519. The attestation includes the full audit result, a SHA-256 integrity hash, and a cryptographic signature — so you can prove to auditors and customers that the security check actually ran.</p>
+    <a class="btn" href="/#monitor" style="margin-top:16px;display:inline-flex">Learn more about the Monitor →</a>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/#tools">Free tools</a><a href="/rls/">RLS guides</a><a href="/cheatsheet/">Cheat sheet</a>
+      <a href="/#paid">Pricing</a><a href="https://github.com/mateuszingano">GitHub ↗</a>
+      <a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a href="/refunds/">Refunds</a>
+    </div>
+    <div class="legal">ShipSealed — ship Supabase apps that don't leak 🦭 · Code samples are provided as-is; test against your own database.<br>ShipSealed is a brand operated by Mateus Zingano Mendes Eventos (CNPJ 23.878.157/0001-10), Canela/RS, Brazil. Payments processed by Paddle.com, our Merchant of Record. Not affiliated with Supabase.</div>
+  </div>
+</footer>
+<script>
+(function(){
+  var TRUSTED_KEY = '302a300506032b65700321005a85b1767e127981b9cf1ff3ef6fe128b936d4d06fe234fe6ae545e98b850bfc';
+
+  function canonicalize(obj) {
+    return JSON.stringify(obj, function(_key, value) {
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        return Object.keys(value).sort().reduce(function(sorted, k) {
+          sorted[k] = value[k];
+          return sorted;
+        }, {});
+      }
+      return value;
+    });
+  }
+
+  function hexToBytes(hex) {
+    var bytes = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < hex.length; i += 2) {
+      bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    }
+    return bytes;
+  }
+
+  function bytesToHex(bytes) {
+    return Array.from(new Uint8Array(bytes)).map(function(b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+  }
+
+  var dropZone = document.getElementById('dropZone');
+  var jsonInput = document.getElementById('jsonInput');
+  var verifyBtn = document.getElementById('verifyBtn');
+  var errorMsg = document.getElementById('errorMsg');
+  var resultCard = document.getElementById('resultCard');
+
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('drag-over');
+  });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) { jsonInput.value = ev.target.result; };
+      reader.readAsText(file);
+    }
+  });
+
+  verifyBtn.addEventListener('click', function() { runVerification(); });
+
+  async function runVerification() {
+    errorMsg.classList.remove('show');
+    resultCard.classList.remove('show', 'pass', 'fail');
+
+    if (!crypto.subtle) {
+      showError('Web Crypto API requires a secure context (HTTPS). This page must be served over HTTPS to verify attestations.');
+      return;
+    }
+
+    var raw = jsonInput.value.trim();
+    if (!raw) { showError('Paste an attestation JSON to verify.'); return; }
+
+    var att;
+    try { att = JSON.parse(raw); }
+    catch (e) { showError('Invalid JSON: ' + e.message); return; }
+
+    if (!att.version || !att.header || !att.result || !att.signature) {
+      showError('Not an Airlock attestation — missing version, header, result, or signature fields.');
+      return;
+    }
+    if (att.signature.algorithm !== 'Ed25519') {
+      showError('Unsupported algorithm: ' + att.signature.algorithm + '. Expected Ed25519.');
+      return;
+    }
+
+    var checks = [];
+    var allPass = true;
+
+    // 1. SHA-256 integrity
+    var payload = { header: att.header, result: att.result };
+    var canonical = canonicalize(payload);
+    var encoder = new TextEncoder();
+    var canonicalBytes = encoder.encode(canonical);
+
+    var hashBuffer = await crypto.subtle.digest('SHA-256', canonicalBytes);
+    var computedSha = bytesToHex(hashBuffer);
+    var shaMatch = computedSha === att.signature.sha256;
+    if (!shaMatch) allPass = false;
+    checks.push({
+      ok: shaMatch,
+      text: 'SHA-256 integrity: ' + (shaMatch ? 'matches' : 'MISMATCH — payload was modified')
+    });
+
+    // 2. Ed25519 signature
+    var sigOk = false;
+    var sigError = null;
+    try {
+      var pubKeyBytes = hexToBytes(att.signature.publicKey);
+      var cryptoKey = await crypto.subtle.importKey(
+        'spki', pubKeyBytes.buffer, { name: 'Ed25519' }, false, ['verify']
+      );
+      var sigBytes = hexToBytes(att.signature.sig);
+      sigOk = await crypto.subtle.verify('Ed25519', cryptoKey, sigBytes.buffer, canonicalBytes);
+    } catch (e) {
+      sigError = e.message;
+    }
+    if (!sigOk) allPass = false;
+    checks.push({
+      ok: sigOk,
+      text: sigError
+        ? 'Ed25519 signature: ERROR — ' + sigError
+        : 'Ed25519 signature: ' + (sigOk ? 'valid' : 'INVALID — signature does not match payload')
+    });
+
+    // 3. Trusted key
+    var keyTrusted = att.signature.publicKey === TRUSTED_KEY;
+    checks.push({
+      ok: keyTrusted ? 'ok' : 'warn',
+      text: keyTrusted
+        ? 'Signing key: matches ShipSealed production key'
+        : 'Signing key: not the known ShipSealed production key (may be a test or self-hosted key)'
+    });
+
+    // Render
+    var verdict = document.getElementById('verdict');
+    var checksEl = document.getElementById('checks');
+    var detailsEl = document.getElementById('details');
+
+    resultCard.classList.add('show', allPass ? 'pass' : 'fail');
+    verdict.className = 'verdict ' + (allPass ? 'pass' : 'fail');
+    verdict.innerHTML = (allPass ? '&#x2713;' : '&#x2717;') + ' ' +
+      (allPass ? 'Attestation is valid' : 'Attestation verification failed');
+
+    checksEl.innerHTML = checks.map(function(c) {
+      var icon = c.ok === true ? 'ok' : (c.ok === 'ok' ? 'ok' : (c.ok === 'warn' ? 'warn' : 'bad'));
+      var symbol = icon === 'ok' ? '&#x2713;' : (icon === 'warn' ? '&#x26A0;' : '&#x2717;');
+      return '<div class="check-row"><span class="icon ' + icon + '">' + symbol + '</span><span>' + c.text + '</span></div>';
+    }).join('');
+
+    var h = att.header;
+    var r = att.result;
+    var rows = [
+      ['Project', h.projectRef || '—'],
+      ['Schema', h.schema || 'public'],
+      ['Run ID', h.runId || '—'],
+      ['Ran at', h.ranAt ? new Date(h.ranAt).toLocaleString() : '—'],
+      ['Engine', h.engine || '—'],
+      ['Passed', r.passed ? '<span class="value ok">yes</span>' : '<span class="value bad">no</span>'],
+      ['Tables', (r.tables ? r.tables.length : '?') + ''],
+      ['Findings', (r.findings ? r.findings.length : 0) + ' (' + (r.problems || 0) + ' fail, ' + (r.warnings || 0) + ' warn)'],
+    ];
+    detailsEl.innerHTML = rows.map(function(row) {
+      return '<span class="label">' + row[0] + '</span><span class="value">' + row[1] + '</span>';
+    }).join('');
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('show');
+  }
+})();
+</script>
+</body>
+</html>
