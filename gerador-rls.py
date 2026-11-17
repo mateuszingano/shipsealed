@@ -514,12 +514,70 @@ def build_sitemap():
     return len(slugs)
 
 
+RE_TITLE = re.compile(r"<title>(.*?)</title>", re.I | re.S)
+RE_DESC = re.compile(r'<meta\s+name="description"\s+content="([^"]*)"', re.I)
+# Páginas institucionais: entram no llms.txt só na seção "Optional" (o padrão
+# llmstxt.org diz que ela pode ser pulada quando o contexto é curto).
+LLMS_OPCIONAIS = {"/privacy/", "/terms/", "/refunds/", "/us-sales-tax/", "/compare/"}
+
+
+def _sem_tags(s):
+    return html.unescape(re.sub(r"<[^>]+>", "", s)).strip()
+
+
+def build_llms():
+    """llms.txt (llmstxt.org): o mapa do site pra ChatGPT, Claude e Perplexity.
+
+    Gerado do mesmo PAGES dos guias e do mesmo scan do sitemap, pra nunca sair
+    da realidade: página nova entra sozinha na próxima geração.
+    """
+    linhas = ["# ShipSealed", "",
+              "> Tested guides and free tools for Supabase security: Row-Level Security "
+              "(RLS) policies, the errors they cause (42501, PGRST116, PGRST205, \"new row "
+              "violates row-level security policy\"), and leak checks for apps built with "
+              "AI tools (Lovable, Bolt, v0, Cursor). Every SQL snippet is tested against "
+              "a real Postgres. Maker of Airlock (npm: airlock-rls), an open-source CI "
+              "gate and MCP server for Supabase RLS.", ""]
+    linhas += ["## Tools", ""]
+    ferramentas, opcionais = [], []
+    for path in paginas_indexaveis():
+        if path == "/" or path.startswith("/rls/") or path.startswith("/pt/"):
+            continue
+        doc = io.open(os.path.join(HERE, path.strip("/"), "index.html"),
+                      encoding="utf-8", errors="replace").read()
+        t, d = RE_TITLE.search(doc), RE_DESC.search(doc)
+        if not t:
+            continue
+        item = "- [%s](%s%s)%s" % (_sem_tags(t.group(1)), BASE, path,
+                                   ": " + _sem_tags(d.group(1)) if d else "")
+        (opcionais if path in LLMS_OPCIONAIS else ferramentas).append(item)
+    linhas += ferramentas + [""]
+    linhas += ["## Guides (English)", ""]
+    linhas += ["- [%s](%s/rls/%s/): %s" % (_sem_tags(p["title"]), BASE, p["slug"], _sem_tags(p["desc"]))
+               for p in PAGES] + [""]
+    if PAGES_PT:
+        linhas += ["## Guides (Português)", ""]
+        linhas += ["- [%s](%s/pt/rls/%s/): %s" % (_sem_tags(p["title"]), BASE, p["slug"], _sem_tags(p["desc"]))
+                   for p in PAGES_PT] + [""]
+    linhas += ["## Open source", "",
+               "- [airlock-rls on GitHub](https://github.com/mateuszingano/airlock-rls): "
+               "CLI and GitHub Action that fails the build on tables without RLS, always-true "
+               "policies, tenant leaks, public buckets and risky SECURITY DEFINER functions.",
+               "- [airlock-rls-mcp on GitHub](https://github.com/mateuszingano/airlock-rls-mcp): "
+               "MCP server so Cursor, Claude Code or any MCP client can run the same checks while building.",
+               ""]
+    if opcionais:
+        linhas += ["## Optional", ""] + opcionais + [""]
+    io.open(os.path.join(HERE, "llms.txt"), "w", encoding="utf-8", newline="\n").write("\n".join(linhas))
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     done = [write(p) for p in PAGES]
     done_pt = [write(p) for p in PAGES_PT]
     build_index()
     n = build_sitemap()
+    build_llms()
     print("Páginas geradas:", len(done))
     for s in done:
         print("  ·", "/rls/" + s + "/")
