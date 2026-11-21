@@ -128,7 +128,7 @@
     var txt=pol.value.trim();
     if(!txt){ errs.hidden=true; res.innerHTML='<p style="color:var(--dim)">Paste a policy to see what it allows.</p>'; return }
     var r=RLSGen.explainPolicy(txt);
-    if(r.error){ errs.hidden=false; errs.textContent='⚠ '+r.error; res.innerHTML=''; return }
+    if(r.error){ errs.hidden=false; errs.textContent='⚠ '+r.error; res.replaceChildren(); return }
     errs.hidden=true;
     var html='<div class="verdict '+r.verdict+'">'+LABEL[r.verdict]+'</div>';
     html+='<ul class="plain">'+r.lines.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>';
